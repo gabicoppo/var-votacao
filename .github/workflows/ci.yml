@@ -1,0 +1,77 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [develop, main]
+  push:
+    branches: [develop, main]
+
+permissions:
+  contents: read
+
+jobs:
+  # Check obrigatorio 1: build a partir de um clone limpo
+  build:
+    name: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+          cache: maven
+      - name: Build (resolve dependencias e empacota)
+        run: mvn -B -ntp -DskipTests package
+
+  # Check obrigatorio 2: analise estatica / lint
+  lint:
+    name: lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+          cache: maven
+      - name: Checkstyle
+        run: mvn -B -ntp checkstyle:check
+      - name: SpotBugs
+        run: mvn -B -ntp compile spotbugs:check
+
+  # Check obrigatorio 3: testes + cobertura
+  test:
+    name: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+          cache: maven
+      - name: Testes e cobertura (JaCoCo)
+        run: mvn -B -ntp verify
+      - name: Resumo de cobertura
+        if: always()
+        run: |
+          CSV=target/site/jacoco/jacoco.csv
+          if [ -f "$CSV" ]; then
+            awk -F, 'NR>1 { lm+=$8; lc+=$9; bm+=$6; bc+=$7 }
+              END {
+                lt = lm + lc; bt = bm + bc
+                printf "### Cobertura de testes (JaCoCo)\n\n"
+                printf "- Linhas: %.1f%% (%d de %d)\n", (lt ? 100*lc/lt : 0), lc, lt
+                printf "- Branches: %.1f%% (%d de %d)\n", (bt ? 100*bc/bt : 0), bc, bt
+              }' "$CSV" >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "Relatorio de cobertura nao encontrado." >> "$GITHUB_STEP_SUMMARY"
+          fi
+      - name: Publicar relatorio de cobertura (HTML)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: jacoco-report
+          path: target/site/jacoco
+          if-no-files-found: warn
