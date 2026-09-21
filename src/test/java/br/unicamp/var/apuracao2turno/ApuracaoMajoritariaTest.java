@@ -12,8 +12,8 @@ class ApuracaoMajoritariaTest {
     @Test
     void candidatoVenceComMaioriaAbsolutaClara() {
         Map<String, Integer> votos = new LinkedHashMap<>();
-        votos.put("Gabriela", 65);
-        votos.put("Fabricio", 35);
+        votos.put("Gabriela", 67);
+        votos.put("Fabricio", 33);
 
         ResultadoApuracao resultado = ApuracaoMajoritaria.apurar(votos);
 
