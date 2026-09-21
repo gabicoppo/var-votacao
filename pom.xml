@@ -29,7 +29,12 @@
 
   <build>
     <plugins>
-
+      <!-- Plugin do Compilador para suportar Java 21 -->
+      <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-compiler-plugin</artifactId>
+          <version>3.13.0</version>
+      </plugin>
       <!-- Testes: falha em qualquer teste => build (e pipeline) falham -->
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
