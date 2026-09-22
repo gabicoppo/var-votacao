@@ -5,11 +5,12 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Cálculo de pontos do Top 3 ponderado: cada voto de categoria dá pontos ao candidato conforme a posição (1o = 5, 2o = 3, 3o = 1 ponto), multiplicados pelo peso da categoria.
- * 
- *  Os pontos são somados por candidato.
+ * Cálculo de pontos do Top 3 ponderado: cada voto de categoria dá pontos ao
+ * candidato conforme a posição (1º = 5, 2º = 3, 3º = 1 ponto), multiplicados
+ * pelo peso da categoria. Os pontos são somados por candidato.
  *
- * <p>Escopo desta classe: apenas o cálculo de pontos. Não há ranking final nem critério de desempate.</p>
+ * <p>Escopo desta classe: apenas o cálculo de pontos. Não há ranking final
+ * nem critério de desempate; isso fica fora deste escopo.</p>
  */
 public final class PontuacaoTop3 {
 
