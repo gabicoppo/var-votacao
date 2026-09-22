@@ -8,7 +8,7 @@
        das secoes abaixo no pom.xml do repositorio (nao sobrescreva). -->
   <groupId>br.unicamp.var</groupId>
   <artifactId>var</artifactId>
-  <version>1.0.0-SNAPSHOT</version>
+  <version>1.0.0</version>
   <packaging>jar</packaging>
   <name>VAR - Votacao, Apuracao e Resultados</name>
 
