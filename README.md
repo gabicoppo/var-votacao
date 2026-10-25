@@ -3,6 +3,9 @@
 Plataforma configurável para processos de votação e decisão coletiva no futebol
 (MC656 — Engenharia de Software).
 
+## Arquitetura
+Diagrama C4 de componentes, estilo arquitetural e decisões: [docs/arquitetura.md](docs/arquitetura.md).
+
 ## Requisitos
 - JDK 21
 - Maven 3.9+ (ou use o wrapper `./mvnw`)
