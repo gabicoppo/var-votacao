@@ -72,8 +72,7 @@ class PontuacaoTop3Test {
 
     @Test
     void posicaoForaDeUmATresLancaExcecao() {
-        List<VotoCategoria> votos = List.of(new VotoCategoria("Ana", 4, 1.0));
-
-        assertThrows(IllegalArgumentException.class, () -> PontuacaoTop3.calcularPontos(votos));
+        assertThrows(IllegalArgumentException.class,
+                () -> PontuacaoTop3.calcularPontos(List.of(new VotoCategoria("Ana", 4, 1.0))));
     }
 }
