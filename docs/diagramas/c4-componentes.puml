@@ -1,0 +1,46 @@
+@startuml c4-componentes
+' Diagrama C4 nivel 3 (componentes) do VAR.
+' Gerar a imagem (nao precisa de Graphviz, usa o layout interno smetana):
+'   java -jar plantuml.jar -tpng docs/diagramas/c4-componentes.puml
+!pragma layout smetana
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
+
+LAYOUT_TOP_DOWN()
+
+AddElementTag("planejado", $fontColor="#777777", $borderColor="#999999", $bgColor="#F2F2F2", $borderStyle=DashedLine(), $legendText="planejado (ainda não existe no código)")
+AddRelTag("planejado", $textColor="#777777", $lineColor="#999999", $lineStyle=DashedLine(), $legendText="relação planejada")
+AddElementTag("padrao", $bgColor="#85BBF0", $fontColor="#000000", $borderColor="#0B4884", $borderThickness=3, $legendText="componente com padrão de projeto (A4)")
+
+title VAR – Votação, Apuração e Resultados: componentes da biblioteca de domínio
+
+Person(organizador, "Organizador [planejado]", "Diretoria de clube, atlética ou organizador de premiação.", $tags="planejado")
+Person(eleitor, "Eleitor [planejado]", "Sócio, membro ou votante apto.", $tags="planejado")
+
+System_Boundary(var, "VAR") {
+    Container(web, "Aplicação web [planejado]", "a definir", "Interface para configurar votações, votar e ver resultados.", $tags="planejado")
+
+    Container_Boundary(lib, "Biblioteca de domínio VAR [Java 21, Maven]") {
+        Component(processo, "Ciclo da Votação", "Java, pacote processo – padrão State", "Votacao e EstadoVotacao (Rascunho, Aberta, Encerrada, Apurada): controla o que cada etapa permite.", $tags="padrao")
+        Component(apuracao, "Regras de Apuração", "Java, pacote apuracao – padrão Strategy", "RegraApuracao (MaioriaSimples, MaioriaAbsoluta, MaioriaQualificada) sobre ContagemVotos.", $tags="padrao")
+        Component(apur2, "Apuração Majoritária", "Java, pacote apuracao2turno", "ApuracaoMajoritaria decide eleito ou 2º turno; ResultadoApuracao (sealed) representa o resultado.")
+        Component(votacao, "Regras de Votação", "Java, pacote votacao", "RegrasVotacao: quórum mínimo e fração de aprovação.")
+        Component(top3, "Pontuação Top 3", "Java, pacote top3", "PontuacaoTop3, VotoCategoria e Posicao: pontos por posição ponderados pelo peso.")
+        Component(cadastro, "Cadastro de Candidatos", "Java, pacote cadastro", "CadastroCandidatos e Candidato: cadastro em memória com código único.")
+    }
+}
+
+' Direcoes explicitas (_D, _R, _L) para manter as setas retas e sem cruzamentos.
+Rel_D(organizador, web, "configura e acompanha votações em", $tags="planejado")
+Rel_D(eleitor, web, "vota em", $tags="planejado")
+Rel_D(web, processo, "abre, registra votos e apura com", $tags="planejado")
+
+Rel_L(processo, top3, "pontua premiações com (#23)", $tags="planejado")
+Rel_R(processo, cadastro, "obtém candidatos de (#19)", $tags="planejado")
+
+Rel_D(processo, apuracao, "delega apuração a")
+Rel_D(processo, apur2, "devolve e guarda ResultadoApuracao de")
+Rel_R(apuracao, apur2, "decide 1º turno com e produz ResultadoApuracao de")
+Rel_D(apuracao, votacao, "verifica quórum e fração com")
+
+SHOW_LEGEND()
+@enduml
