@@ -162,7 +162,7 @@ entram como adaptadores, sem mudar as regras.
 | Strategy: regra de apuração intercambiável (`apuracao`) | [#36](https://github.com/gabicoppo/var-votacao/issues/36) | [#38](https://github.com/gabicoppo/var-votacao/pull/38) |
 | State: ciclo de vida da votação (`processo`) | [#37](https://github.com/gabicoppo/var-votacao/issues/37) | [#39](https://github.com/gabicoppo/var-votacao/pull/39) |
 | Refatoração: enum `Posicao` no Top 3 | [#33](https://github.com/gabicoppo/var-votacao/issues/33) | [#34](https://github.com/gabicoppo/var-votacao/pull/34) |
-| Esta documentação | [#35](https://github.com/gabicoppo/var-votacao/issues/35) | #N |
+| Esta documentação | [#35](https://github.com/gabicoppo/var-votacao/issues/35) | [#40](https://github.com/gabicoppo/var-votacao/pull/40) |
 
 Histórias relacionadas: [#21](https://github.com/gabicoppo/var-votacao/issues/21)
 (Escolher a regra de apuração, Strategy), [#19](https://github.com/gabicoppo/var-votacao/issues/19)
