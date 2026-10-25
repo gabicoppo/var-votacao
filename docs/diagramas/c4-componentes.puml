@@ -29,17 +29,18 @@ System_Boundary(var, "VAR") {
     }
 }
 
-Rel(organizador, web, "configura e acompanha votações em", $tags="planejado")
-Rel(eleitor, web, "vota em", $tags="planejado")
-Rel(web, processo, "abre, registra votos e apura com", $tags="planejado")
+' Direcoes explicitas (_D, _R, _L) para manter as setas retas e sem cruzamentos.
+Rel_D(organizador, web, "configura e acompanha votações em", $tags="planejado")
+Rel_D(eleitor, web, "vota em", $tags="planejado")
+Rel_D(web, processo, "abre, registra votos e apura com", $tags="planejado")
 
-Rel(processo, apuracao, "delega apuração a")
-Rel(apuracao, apur2, "decide 1º turno com")
-Rel(apuracao, votacao, "verifica quórum e fração com")
-Rel(apuracao, apur2, "produz ResultadoApuracao definido em")
+Rel_L(processo, top3, "pontua premiações com (#23)", $tags="planejado")
+Rel_R(processo, cadastro, "obtém candidatos de (#19)", $tags="planejado")
 
-Rel(processo, cadastro, "obtém candidatos de (#19)", $tags="planejado")
-Rel(processo, top3, "pontua premiações com (#23)", $tags="planejado")
+Rel_D(processo, apuracao, "delega apuração a")
+Rel_D(processo, apur2, "devolve e guarda ResultadoApuracao de")
+Rel_R(apuracao, apur2, "decide 1º turno com e produz ResultadoApuracao de")
+Rel_D(apuracao, votacao, "verifica quórum e fração com")
 
 SHOW_LEGEND()
 @enduml

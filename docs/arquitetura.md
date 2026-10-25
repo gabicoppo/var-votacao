@@ -34,8 +34,8 @@ nível que de fato tem conteúdo é o **nível 3 (componentes)**, documentado a 
 
 | Componente | Pacote / classes | Responsabilidade | Relações |
 |---|---|---|---|
-| **Ciclo da Votação** | `processo`: `Votacao`, `EstadoVotacao` (package-private), `Rascunho`, `Aberta`, `Encerrada`, `Apurada` | Agregado com estado de uma votação. Cada estado decide quais operações são válidas (`alterarRegra`, `abrir`, `registrarVoto`, `encerrar`, `apurar`); padrão **State**. | **delega apuração a** Regras de Apuração (`Votacao.apurar()` chama a `RegraApuracao` configurada). |
-| **Regras de Apuração** | `apuracao`: `RegraApuracao`, `MaioriaSimples`, `MaioriaAbsoluta`, `MaioriaQualificada`, `ContagemVotos` | Família de regras intercambiáveis que transformam uma `ContagemVotos` em `ResultadoApuracao`; padrão **Strategy**. | **decide 1º turno com** Apuração Majoritária (`MaioriaAbsoluta`); **verifica quórum e fração com** Regras de Votação (`MaioriaQualificada`); **produz** `ResultadoApuracao`, definido em Apuração Majoritária. |
+| **Ciclo da Votação** | `processo`: `Votacao`, `EstadoVotacao` (package-private), `Rascunho`, `Aberta`, `Encerrada`, `Apurada` | Agregado com estado de uma votação (pergunta, opções, votos, regra). `Votacao` repassa cada operação (`alterarRegra`, `abrir`, `registrarVoto`, `encerrar`, `apurar`) ao estado atual, que a executa ou a recusa com `IllegalStateException`; padrão **State**. A regra só pode mudar em `Rascunho` (RNF-07). | **delega apuração a** Regras de Apuração (no estado `Encerrada`, chama a `RegraApuracao` configurada com a `ContagemVotos`); **devolve e guarda** o `ResultadoApuracao` de Apuração Majoritária (`Apurada` o mantém). |
+| **Regras de Apuração** | `apuracao`: `RegraApuracao` (`@FunctionalInterface`), `MaioriaSimples`, `MaioriaAbsoluta`, `MaioriaQualificada`, `ContagemVotos` | Família de regras intercambiáveis que transformam uma `ContagemVotos` (votos por opção e total de aptos, validada no construtor) em `ResultadoApuracao`; padrão **Strategy**. | **decide 1º turno com** Apuração Majoritária (`MaioriaAbsoluta`); **verifica quórum e fração com** Regras de Votação (`MaioriaQualificada`); **produz** `ResultadoApuracao`, definido em Apuração Majoritária. |
 | **Apuração Majoritária** | `apuracao2turno`: `ApuracaoMajoritaria`, `ResultadoApuracao` (sealed: `Eleito`, `SegundoTurno`, `SemVencedor`, `QuorumNaoAtingido`) | Decide se o mais votado tem maioria absoluta ou se há 2º turno entre os dois primeiros; define o tipo do resultado. Sem estado. | Não depende de outros pacotes. |
 | **Regras de Votação** | `votacao`: `RegrasVotacao` | Quórum mínimo (`quorumAtingido`) e fração de aprovação sobre votos válidos (`aprovada`). Sem estado. | Não depende de outros pacotes. |
 | **Pontuação Top 3** | `top3`: `PontuacaoTop3`, `VotoCategoria`, `Posicao` | Pontos por posição (1º = 5, 2º = 3, 3º = 1, definidos no enum `Posicao`), multiplicados pelo peso da categoria e somados por candidato. Sem estado. | **Isolado**: ainda não é usado por nenhum outro componente. |
@@ -77,7 +77,8 @@ pacotes e formam um grafo acíclico:
 
 ```
 processo ──► apuracao ──► apuracao2turno
-                     └──► votacao
+   │                 └──► votacao
+   └────────────────────► apuracao2turno   (tipo ResultadoApuracao)
 cadastro, top3: sem dependências entre pacotes
 ```
 
@@ -158,9 +159,9 @@ entram como adaptadores, sem mudar as regras.
 
 | Item | Issue | PR |
 |---|---|---|
-| Strategy: regra de apuração intercambiável (`apuracao`) | #N | #N |
-| State: ciclo de vida da votação (`processo`) | #N | #N |
-| Refatoração: enum `Posicao` no Top 3 | [#33](https://github.com/gabicoppo/var-votacao/issues/33) | #N |
+| Strategy: regra de apuração intercambiável (`apuracao`) | [#36](https://github.com/gabicoppo/var-votacao/issues/36) | [#38](https://github.com/gabicoppo/var-votacao/pull/38) |
+| State: ciclo de vida da votação (`processo`) | [#37](https://github.com/gabicoppo/var-votacao/issues/37) | [#39](https://github.com/gabicoppo/var-votacao/pull/39) |
+| Refatoração: enum `Posicao` no Top 3 | [#33](https://github.com/gabicoppo/var-votacao/issues/33) | [#34](https://github.com/gabicoppo/var-votacao/pull/34) |
 | Esta documentação | [#35](https://github.com/gabicoppo/var-votacao/issues/35) | #N |
 
 Histórias relacionadas: [#21](https://github.com/gabicoppo/var-votacao/issues/21)
