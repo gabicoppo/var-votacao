@@ -24,6 +24,7 @@ System_Boundary(var, "VAR") {
         Component(apuracao, "Regras de Apuração", "Java, pacote apuracao – padrão Strategy", "RegraApuracao (MaioriaSimples, MaioriaAbsoluta, MaioriaQualificada) sobre ContagemVotos.", $tags="padrao")
         Component(apur2, "Apuração Majoritária", "Java, pacote apuracao2turno", "ApuracaoMajoritaria decide eleito ou 2º turno; ResultadoApuracao (sealed) representa o resultado.")
         Component(votacao, "Regras de Votação", "Java, pacote votacao", "RegrasVotacao: quórum mínimo e fração de aprovação.")
+        Component(resultado, "Resultado Detalhado", "Java, pacote resultado", "ResultadoDetalhado e LinhaResultado: votos, percentuais, participação e situação da votação apurada.")
         Component(top3, "Pontuação Top 3", "Java, pacote top3", "PontuacaoTop3, VotoCategoria e Posicao: pontos por posição ponderados pelo peso.")
         Component(cadastro, "Cadastro de Candidatos", "Java, pacote cadastro", "CadastroCandidatos e Candidato: cadastro em memória com código único.")
     }
@@ -41,6 +42,10 @@ Rel_D(processo, apuracao, "delega apuração a")
 Rel_D(processo, apur2, "devolve e guarda ResultadoApuracao de")
 Rel_R(apuracao, apur2, "decide 1º turno com e produz ResultadoApuracao de")
 Rel_D(apuracao, votacao, "verifica quórum e fração com")
+
+Rel_D(processo, resultado, "publica o resultado com (#29)", $tags="planejado")
+Rel_D(resultado, apuracao, "lê ContagemVotos de")
+Rel_D(resultado, apur2, "descreve ResultadoApuracao de")
 
 SHOW_LEGEND()
 @enduml
