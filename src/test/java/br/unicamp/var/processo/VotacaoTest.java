@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import br.unicamp.var.apuracao.ContagemVotos;
 import br.unicamp.var.apuracao.MaioriaAbsoluta;
+import br.unicamp.var.apuracao.MaioriaSimples;
 import br.unicamp.var.apuracao.RegraApuracao;
 import br.unicamp.var.apuracao2turno.ResultadoApuracao;
 import java.util.ArrayList;
@@ -319,6 +320,28 @@ class VotacaoTest {
     @Test
     void naoAlteraRegraParaNula() {
         assertThrows(IllegalArgumentException.class, () -> rascunho().alterarRegra(null));
+    }
+
+    /**
+     * Teste de mutação (Atividade 5, C4): mata o mutante do PIT que troca
+     * {@code opcoes.size() < MINIMO_OPCOES} por {@code <=} em
+     * {@code Votacao.validarOpcoes}. O limite de exatamente 2 opções é o caso
+     * mais comum do domínio (aprovar/rejeitar, 2º turno) e não era exercitado
+     * pela suíte, que só criava votações com 1 ou com 3 opções.
+     */
+    @Test
+    void votacaoComOMinimoDeDuasOpcoesEhAceitaEApuradaDePontaAPonta() {
+        Votacao votacao = new Votacao("Aprovar a prestação de contas?",
+                List.of("Aprovar", "Rejeitar"), new MaioriaSimples(), 10);
+        votacao.abrir();
+        for (String voto : List.of("Aprovar", "Aprovar", "Rejeitar")) {
+            votacao.registrarVoto(voto);
+        }
+        votacao.encerrar();
+
+        assertEquals(List.of("Aprovar", "Rejeitar"), votacao.opcoes());
+        assertEquals(new ResultadoApuracao.Eleito("Aprovar"), votacao.apurar());
+        assertEquals("apurada", votacao.status());
     }
 
     @Test
