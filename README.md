@@ -15,8 +15,10 @@ Diagrama C4 de componentes, estilo arquitetural e decisões: [docs/arquitetura.m
 ./mvnw verify                        # compila, roda testes e gera cobertura
 ./mvnw checkstyle:check              # lint (Checkstyle)
 ./mvnw compile spotbugs:check        # análise estática (SpotBugs)
+./mvnw test-compile org.pitest:pitest-maven:mutationCoverage  # teste de mutação (PIT)
 ```
 O relatório de cobertura (JaCoCo) fica em `target/site/jacoco/index.html`.
+O relatório de mutação (PIT) fica em `target/pit-reports/index.html`.
 
 ## Fluxo de trabalho (Git)
 - `main`: versões entregues (protegida)

@@ -3,6 +3,7 @@ package br.unicamp.var.top3;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * Cálculo de pontos do Top 3 ponderado: cada voto de categoria dá pontos ao
@@ -25,10 +26,13 @@ public final class PontuacaoTop3 {
      * @param votos lista de votos de categoria; cada voto atribui uma posição
      *              a um candidato, ponderada pelo peso da categoria
      * @return mapa com o total de pontos acumulado por candidato
+     * @throws NullPointerException se a lista for nula ou contiver um voto nulo
      */
     public static Map<String, Double> calcularPontos(List<VotoCategoria> votos) {
+        Objects.requireNonNull(votos, "votos");
         Map<String, Double> pontosPorCandidato = new HashMap<>();
         for (VotoCategoria voto : votos) {
+            Objects.requireNonNull(voto, "votos nao pode conter voto nulo");
             double pontos = voto.posicao().pontos() * voto.pesoCategoria();
             pontosPorCandidato.merge(voto.candidato(), pontos, Double::sum);
         }

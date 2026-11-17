@@ -1,7 +1,8 @@
 # Arquitetura do VAR
 
 Documentação de arquitetura do VAR – Votação, Apuração e Resultados (MC656, Atividade 4).
-Descreve o código da tag `a4-v1.0.0`.
+Descreve o código da tag `a4-v1.0.0`, mais o componente Resultado Detalhado, incluído na
+Atividade 5.
 
 ## 1. Visão geral
 
@@ -35,6 +36,7 @@ nível que de fato tem conteúdo é o **nível 3 (componentes)**, documentado a 
 | Componente | Pacote / classes | Responsabilidade | Relações |
 |---|---|---|---|
 | **Ciclo da Votação** | `processo`: `Votacao`, `EstadoVotacao` (package-private), `Rascunho`, `Aberta`, `Encerrada`, `Apurada` | Agregado com estado de uma votação (pergunta, opções, votos, regra). `Votacao` repassa cada operação (`alterarRegra`, `abrir`, `registrarVoto`, `encerrar`, `apurar`) ao estado atual, que a executa ou a recusa com `IllegalStateException`; padrão **State**. A regra só pode mudar em `Rascunho` (RNF-07). | **delega apuração a** Regras de Apuração (no estado `Encerrada`, chama a `RegraApuracao` configurada com a `ContagemVotos`); **devolve e guarda** o `ResultadoApuracao` de Apuração Majoritária (`Apurada` o mantém). |
+| **Resultado Detalhado** | `resultado`: `ResultadoDetalhado`, `LinhaResultado` | Apresenta uma votação apurada (história #29): votos absolutos e percentual sobre os votos válidos por opção, em ordem decrescente de votos; total de votantes, total de aptos e participação; situação em texto (eleito, 2º turno, sem vencedor ou quórum não atingido); e o quadro em texto (`formatar`). Valor imutável; não decide o vencedor, só apresenta o que a regra decidiu. | **lê votos e aptos de** Regras de Apuração (`ContagemVotos`); **descreve o** `ResultadoApuracao` de Apuração Majoritária, com `switch` exaustivo sobre a sealed interface. Ainda não é chamado pelo Ciclo da Votação. |
 | **Regras de Apuração** | `apuracao`: `RegraApuracao` (`@FunctionalInterface`), `MaioriaSimples`, `MaioriaAbsoluta`, `MaioriaQualificada`, `ContagemVotos` | Família de regras intercambiáveis que transformam uma `ContagemVotos` (votos por opção e total de aptos, validada no construtor) em `ResultadoApuracao`; padrão **Strategy**. | **decide 1º turno com** Apuração Majoritária (`MaioriaAbsoluta`); **verifica quórum e fração com** Regras de Votação (`MaioriaQualificada`); **produz** `ResultadoApuracao`, definido em Apuração Majoritária. |
 | **Apuração Majoritária** | `apuracao2turno`: `ApuracaoMajoritaria`, `ResultadoApuracao` (sealed: `Eleito`, `SegundoTurno`, `SemVencedor`, `QuorumNaoAtingido`) | Decide se o mais votado tem maioria absoluta ou se há 2º turno entre os dois primeiros; define o tipo do resultado. Sem estado. | Não depende de outros pacotes. |
 | **Regras de Votação** | `votacao`: `RegrasVotacao` | Quórum mínimo (`quorumAtingido`) e fração de aprovação sobre votos válidos (`aprovada`). Sem estado. | Não depende de outros pacotes. |
@@ -53,12 +55,18 @@ nas histórias:
 
 Essas duas relações aparecem tracejadas no diagrama.
 
+**Resultado Detalhado ainda não é chamado pelo ciclo.** O componente depende de `apuracao`
+e de `apuracao2turno`, mas quem o monta hoje são só os testes: a `Votacao` devolve o
+`ResultadoApuracao` e não guarda a `ContagemVotos` usada na apuração. A ligação fica para o
+restante da [#29](https://github.com/gabicoppo/var-votacao/issues/29) (publicar o
+resultado após o encerramento, com horários) e também aparece tracejada no diagrama.
+
 ## 4. Estilo arquitetural
 
 **Monólito modular organizado por funcionalidade.** Todo o sistema é um único artefato
 (`.jar`), gerado por um único `pom.xml`. Dentro dele, os pacotes são cortados por
 funcionalidade de negócio (package-by-feature: `processo`, `apuracao`, `votacao`,
-`apuracao2turno`, `top3`, `cadastro`), e não por camada técnica (`model`, `service`,
+`apuracao2turno`, `resultado`, `top3`, `cadastro`), e não por camada técnica (`model`, `service`,
 `controller`). Cada pacote corresponde a um componente do diagrama.
 
 **Núcleo de domínio puro.** O código contém só regras de negócio:
@@ -67,8 +75,8 @@ funcionalidade de negócio (package-by-feature: `processo`, `apuracao`, `votacao
   classes `final` com métodos estáticos e funções puras (entrada → saída);
 - **estratégias** pequenas e imutáveis, implementando `RegraApuracao`;
 - **um agregado com estado**: `Votacao`, cujas transições são controladas pelo State;
-- **valores imutáveis**: `record`s como `Candidato`, `VotoCategoria`, `ContagemVotos` e os
-  casos de `ResultadoApuracao`;
+- **valores imutáveis**: `record`s como `Candidato`, `VotoCategoria`, `ContagemVotos`,
+  `LinhaResultado` e os casos de `ResultadoApuracao`, além da classe `ResultadoDetalhado`;
 - **nenhuma dependência de infraestrutura**: o `pom.xml` só declara JUnit, com escopo de
   teste.
 
@@ -79,6 +87,8 @@ pacotes e formam um grafo acíclico:
 processo ──► apuracao ──► apuracao2turno
    │                 └──► votacao
    └────────────────────► apuracao2turno   (tipo ResultadoApuracao)
+resultado ──► apuracao                     (tipo ContagemVotos)
+    └───────► apuracao2turno               (tipo ResultadoApuracao)
 cadastro, top3: sem dependências entre pacotes
 ```
 
@@ -148,7 +158,8 @@ entram como adaptadores, sem mudar as regras.
   opcionais/nulos.
 - **Consequências e trade-offs.**
   - (+) O compilador ajuda a tratar todos os casos: um `switch` sobre
-    `ResultadoApuracao` sem `default` deixa de compilar se faltar um caso.
+    `ResultadoApuracao` sem `default` deixa de compilar se faltar um caso. É assim que
+    `ResultadoDetalhado` monta o texto da situação.
   - (+) O resultado é imutável e se explica sozinho: cada caso carrega só os dados que
     fazem sentido para ele (ex.: `SegundoTurno` tem os dois colocados).
   - (−) Exige Java 17+ (o projeto usa 21).
@@ -162,9 +173,12 @@ entram como adaptadores, sem mudar as regras.
 | Strategy: regra de apuração intercambiável (`apuracao`) | [#36](https://github.com/gabicoppo/var-votacao/issues/36) | [#38](https://github.com/gabicoppo/var-votacao/pull/38) |
 | State: ciclo de vida da votação (`processo`) | [#37](https://github.com/gabicoppo/var-votacao/issues/37) | [#39](https://github.com/gabicoppo/var-votacao/pull/39) |
 | Refatoração: enum `Posicao` no Top 3 | [#33](https://github.com/gabicoppo/var-votacao/issues/33) | [#34](https://github.com/gabicoppo/var-votacao/pull/34) |
+| Resultado detalhado com votos e percentuais (`resultado`) | [#49](https://github.com/gabicoppo/var-votacao/issues/49) | [#50](https://github.com/gabicoppo/var-votacao/pull/50) |
 | Esta documentação | [#35](https://github.com/gabicoppo/var-votacao/issues/35) | [#40](https://github.com/gabicoppo/var-votacao/pull/40) |
 
 Histórias relacionadas: [#21](https://github.com/gabicoppo/var-votacao/issues/21)
-(Escolher a regra de apuração, Strategy), [#19](https://github.com/gabicoppo/var-votacao/issues/19)
+(Escolher a regra de apuração, Strategy), [#29](https://github.com/gabicoppo/var-votacao/issues/29)
+(Ver resultado com votos absolutos e percentuais, implementada em parte pelo Resultado
+Detalhado), [#19](https://github.com/gabicoppo/var-votacao/issues/19)
 (votação em "rascunho" até ser aberta, State) e
 [#23](https://github.com/gabicoppo/var-votacao/issues/23) (Top 3 com pesos).
