@@ -9,6 +9,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.EnumSource;
+import org.junit.jupiter.params.provider.NullAndEmptySource;
 import org.junit.jupiter.params.provider.ValueSource;
 
 /**
@@ -84,6 +85,17 @@ class VotoCategoriaClassesEquivalenciaTest {
 
             assertEquals(candidato, voto.candidato());
         }
+
+        @ParameterizedTest
+        @NullAndEmptySource
+        @ValueSource(strings = {" ", "   ", "\t", "\n"})
+        @DisplayName("CE8 (inválida): candidato nulo, vazio ou só com espaços é rejeitado")
+        void ce8RejeitaCandidatoSemNome(String candidatoInvalido) {
+            IllegalArgumentException erro = assertThrows(IllegalArgumentException.class,
+                    () -> new VotoCategoria(candidatoInvalido, Posicao.PRIMEIRO, 1.0));
+
+            assertEquals("candidato nao pode ser nulo, vazio ou em branco", erro.getMessage());
+        }
     }
 
     @Nested
@@ -97,6 +109,34 @@ class VotoCategoriaClassesEquivalenciaTest {
             VotoCategoria voto = new VotoCategoria("Ana", Posicao.PRIMEIRO, peso);
 
             assertEquals(peso, voto.pesoCategoria());
+        }
+
+        @ParameterizedTest
+        @ValueSource(doubles = {0.0, -0.0})
+        @DisplayName("CE10 (inválida): peso zero é rejeitado")
+        void ce10RejeitaPesoZero(double peso) {
+            assertPesoRejeitado(peso);
+        }
+
+        @ParameterizedTest
+        @ValueSource(doubles = {-1.0, -0.5})
+        @DisplayName("CE11 (inválida): peso negativo é rejeitado")
+        void ce11RejeitaPesoNegativo(double peso) {
+            assertPesoRejeitado(peso);
+        }
+
+        @ParameterizedTest
+        @ValueSource(doubles = {Double.NaN, Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY})
+        @DisplayName("CE12 (inválida): peso NaN ou infinito é rejeitado")
+        void ce12RejeitaPesoNaoFinito(double peso) {
+            assertPesoRejeitado(peso);
+        }
+
+        private void assertPesoRejeitado(double peso) {
+            IllegalArgumentException erro = assertThrows(IllegalArgumentException.class,
+                    () -> new VotoCategoria("Ana", Posicao.PRIMEIRO, peso));
+
+            assertEquals("pesoCategoria deve ser finito e maior que zero, mas foi " + peso, erro.getMessage());
         }
     }
 }

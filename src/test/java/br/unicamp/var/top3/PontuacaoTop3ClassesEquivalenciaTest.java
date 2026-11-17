@@ -1,8 +1,10 @@
 package br.unicamp.var.top3;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.DisplayName;
@@ -83,6 +85,31 @@ class PontuacaoTop3ClassesEquivalenciaTest {
                     new VotoCategoria("Ana", Posicao.SEGUNDO, 1.0));
 
             assertEquals(Map.of("Ana", 8.0), PontuacaoTop3.calcularPontos(votos));
+        }
+    }
+
+    @Nested
+    @DisplayName("Entrada: votos (listas inválidas)")
+    class ListasInvalidas {
+
+        @Test
+        @DisplayName("CE18 (inválida): lista nula é rejeitada")
+        void ce18RejeitaListaNula() {
+            NullPointerException erro = assertThrows(NullPointerException.class,
+                    () -> PontuacaoTop3.calcularPontos(null));
+
+            assertEquals("votos", erro.getMessage());
+        }
+
+        @Test
+        @DisplayName("CE19 (inválida): lista com um voto nulo é rejeitada")
+        void ce19RejeitaListaComVotoNulo() {
+            List<VotoCategoria> votos = Arrays.asList(new VotoCategoria("Ana", Posicao.PRIMEIRO, 1.0), null);
+
+            NullPointerException erro = assertThrows(NullPointerException.class,
+                    () -> PontuacaoTop3.calcularPontos(votos));
+
+            assertEquals("votos nao pode conter voto nulo", erro.getMessage());
         }
     }
 }
