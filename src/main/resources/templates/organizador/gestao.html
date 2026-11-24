@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{fragments/layout :: layout(~{::title}, ~{::main}, ~{::link})}">
+<head>
+  <title>Gestão da votação</title>
+  <link rel="stylesheet" th:href="@{/css/organizador.css}">
+</head>
+<body>
+<main th:with="v=${votacao}">
+  <p class="nao-imprimir migalha"><a th:href="@{/organizador}">← Painel</a></p>
+
+  <div class="pagina-cabecalho">
+    <div>
+      <div class="cartao-selos">
+        <span th:replace="~{fragments/componentes :: badgeVotacao(${v.status()})}"></span>
+        <span class="badge badge-info" th:if="${v.turno() > 1}" th:text="|${v.turno()}º turno|">2º turno</span>
+      </div>
+      <h1 th:text="${v.pergunta()}">Pergunta</h1>
+      <p class="subtitulo" th:if="${!#strings.isEmpty(v.descricao())}" th:text="${v.descricao()}">Descrição</p>
+      <p class="subtitulo" th:if="${v.turnoAnteriorId() != null}">
+        <a th:href="@{/organizador/votacoes/{id}(id=${v.turnoAnteriorId()})}">Ver o 1º turno</a>
+      </p>
+    </div>
+  </div>
+
+  <ol th:replace="~{fragments/componentes :: linhaTempo(${v.status()})}"></ol>
+
+  <!-- Ações conforme o estado -->
+  <section class="card card-destaque acoes-votacao nao-imprimir" aria-labelledby="titulo-acoes">
+    <h2 class="card-titulo" id="titulo-acoes">Próximo passo</h2>
+
+    <form th:if="${v.podeAbrir()}" method="post" th:action="@{/organizador/votacoes/{id}/abrir(id=${v.id()})}"
+          data-confirmar="Abrir a votação? Depois de aberta, a configuração não muda mais.">
+      <p class="ajuda">Confira a configuração abaixo. Ao abrir, os eleitores aptos já podem votar
+        <th:block th:if="${v.configuracao().temPeriodo()}">(ou ela abre sozinha no início do período)</th:block>.</p>
+      <button type="submit" class="btn btn-primario">Abrir votação</button>
+    </form>
+
+    <form th:if="${v.podeEncerrar()}" method="post"
+          th:action="@{/organizador/votacoes/{id}/encerrar(id=${v.id()})}"
+          data-confirmar="Encerrar a votação agora? Ninguém mais poderá votar.">
+      <p class="ajuda">A votação está recebendo votos. O resultado só aparece depois de encerrar e apurar.</p>
+      <button type="submit" class="btn btn-perigo">Encerrar votação</button>
+    </form>
+
+    <form th:if="${v.podeApurar()}" method="post" th:action="@{/organizador/votacoes/{id}/apurar(id=${v.id()})}"
+          data-confirmar="Apurar a votação? O resultado será publicado.">
+      <p class="ajuda">Votação encerrada. Apure para publicar o resultado.</p>
+      <button type="submit" class="btn btn-primario">Apurar</button>
+    </form>
+
+    <div th:if="${v.apurada()}" class="pilha">
+      <p class="situacao" th:text="${v.situacao()}">Eleito: Chapa A</p>
+      <div class="acoes">
+        <a class="btn btn-primario" th:href="@{/votacoes/{id}/resultado(id=${v.id()})}">Ver resultado</a>
+        <a class="btn btn-secundario" th:href="@{/votacoes/{id}/relatorio(id=${v.id()})}">Relatório</a>
+        <form th:if="${v.podeCriarSegundoTurno()}" method="post"
+              th:action="@{/organizador/votacoes/{id}/segundo-turno(id=${v.id()})}"
+              data-confirmar="Criar o 2º turno com os dois mais votados?">
+          <button type="submit" class="btn btn-primario">Criar 2º turno</button>
+        </form>
+        <a th:if="${v.segundoTurnoId() != null}" class="btn btn-secundario"
+           th:href="@{/organizador/votacoes/{id}(id=${v.segundoTurnoId()})}">Ir para o 2º turno →</a>
+      </div>
+    </div>
+  </section>
+
+  <div class="gestao-colunas">
+    <!-- Andamento -->
+    <section class="secao" aria-labelledby="titulo-andamento">
+      <h2 class="secao-titulo" id="titulo-andamento">Andamento</h2>
+      <div class="card">
+        <p class="participacao-grande">
+          <span class="participacao-valor" th:text="${@fmt.percentual(v.participacao())}">0%</span>
+          <span th:text="|${v.votantes()} de ${v.aptos()} aptos votaram|">0 de 0 aptos votaram</span>
+        </p>
+        <div class="barra">
+          <div class="barra-trilho"><div class="barra-preenchimento"
+               th:style="|width: ${#numbers.formatDecimal(v.participacao() * 100, 1, 'POINT', 1, 'POINT')}%|"></div></div>
+        </div>
+        <p class="ajuda" th:unless="${v.apurada()}">Por sigilo, os votos por opção só aparecem depois da apuração.</p>
+      </div>
+    </section>
+
+    <!-- Configuração -->
+    <section class="secao" aria-labelledby="titulo-configuracao">
+      <h2 class="secao-titulo" id="titulo-configuracao">Configuração</h2>
+      <dl class="card lista-config">
+        <dt>Regra</dt><dd th:text="${v.configuracao().regra()}">Maioria absoluta…</dd>
+        <dt>Sigilo</dt><dd th:text="${v.configuracao().sigilo()}">Secreto</dd>
+        <dt>Período</dt>
+        <dd th:if="${v.configuracao().temPeriodo()}"
+            th:text="|${@fmt.dataHora(v.configuracao().inicio())} até ${@fmt.dataHora(v.configuracao().fim())}|">período</dd>
+        <dd th:unless="${v.configuracao().temPeriodo()}">Sem período: abre e encerra manualmente</dd>
+        <dt>Aptos</dt><dd th:text="|${v.aptos()} ${v.aptos() == 1 ? 'eleitor' : 'eleitores'}|">12 eleitores</dd>
+      </dl>
+    </section>
+  </div>
+
+  <!-- Lista de presença -->
+  <section class="secao" aria-labelledby="titulo-presenca">
+    <h2 class="secao-titulo" id="titulo-presenca">Lista de presença</h2>
+    <p class="ajuda" th:if="${v.mostraEscolhas()}">Votação identificada: a escolha de cada eleitor aparece após o
+      encerramento.</p>
+    <div class="tabela-rolagem">
+      <table class="tabela">
+        <caption class="sr-only">Quem já votou</caption>
+        <thead>
+          <tr><th scope="col">Eleitor</th><th scope="col">Nome</th><th scope="col">Situação</th>
+            <th scope="col" th:if="${v.mostraEscolhas()}">Escolha</th></tr>
+        </thead>
+        <tbody>
+          <tr th:each="e : ${v.presenca()}">
+            <td th:text="${e.eleitorId()}">e01</td>
+            <td th:text="${e.nome()}">Nome</td>
+            <td><span class="selo-presenca" th:classappend="${e.votou()} ? 'votou' : 'pendente'"
+                      th:text="${e.votou()} ? 'Votou' : 'Pendente'">Pendente</span></td>
+            <td th:if="${v.mostraEscolhas()}" th:text="${e.escolha() != null ? e.escolha() : '—'}">—</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- Auditoria -->
+  <section class="secao" aria-labelledby="titulo-auditoria">
+    <h2 class="secao-titulo" id="titulo-auditoria">Auditoria</h2>
+    <div class="tabela-rolagem">
+      <table class="tabela">
+        <caption class="sr-only">Trilha de auditoria da votação</caption>
+        <thead>
+          <tr><th scope="col">Data e hora</th><th scope="col">Autor</th><th scope="col">Evento</th>
+            <th scope="col">Detalhe</th></tr>
+        </thead>
+        <tbody>
+          <tr th:each="ev : ${v.auditoria()}">
+            <td th:text="${@fmt.dataHora(ev.quando())}">24/11/2026 18:30</td>
+            <td th:text="${ev.autor()}">organizador</td>
+            <td th:text="${ev.evento()}">Votação criada</td>
+            <td th:text="${#strings.isEmpty(ev.detalhe()) ? '—' : ev.detalhe()}">—</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+  <script th:src="@{/js/organizador.js}" defer></script>
+</main>
+</body>
+</html>

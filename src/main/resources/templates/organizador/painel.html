@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{fragments/layout :: layout(~{::title}, ~{::main}, ~{::link})}">
+<head>
+  <title>Painel do organizador</title>
+  <link rel="stylesheet" th:href="@{/css/organizador.css}">
+</head>
+<body>
+<main th:with="p=${painel}">
+  <div class="pagina-cabecalho">
+    <div>
+      <h1>Painel do organizador</h1>
+      <p class="subtitulo"
+         th:text="|${p.totalVotacoes()} ${p.totalVotacoes() == 1 ? 'votação' : 'votações'} · ${p.premiacoes().size()} ${p.premiacoes().size() == 1 ? 'premiação' : 'premiações'}|">
+        0 votações · 0 premiações</p>
+    </div>
+    <div class="acoes">
+      <a class="btn btn-secundario" th:href="@{/organizador/premiacoes/nova}">Nova premiação</a>
+      <a class="btn btn-primario" th:href="@{/organizador/votacoes/nova}">Nova votação</a>
+    </div>
+  </div>
+
+  <div class="metricas">
+    <div class="metrica"><span class="metrica-valor" th:text="${p.abertas()}">0</span>
+      <span class="metrica-rotulo">Abertas agora</span></div>
+    <div class="metrica"><span class="metrica-valor" th:text="${p.rascunhos()}">0</span>
+      <span class="metrica-rotulo">Em rascunho</span></div>
+    <div class="metrica"><span class="metrica-valor" th:text="${p.apuradas()}">0</span>
+      <span class="metrica-rotulo">Apuradas</span></div>
+    <div class="metrica"><span class="metrica-valor" th:text="${p.totalVotos()}">0</span>
+      <span class="metrica-rotulo">Votos registrados</span></div>
+  </div>
+
+  <section class="secao" aria-labelledby="titulo-votacoes">
+    <h2 class="secao-titulo" id="titulo-votacoes">Votações</h2>
+
+    <div class="vazio" th:if="${p.totalVotacoes() == 0}">
+      <span class="vazio-icone" aria-hidden="true">🗳️</span>
+      <strong>Nenhuma votação ainda</strong>
+      <p>Crie a primeira votação: pergunta, opções, regra de apuração e a lista de quem pode votar.</p>
+      <a class="btn btn-primario" th:href="@{/organizador/votacoes/nova}">Criar a primeira votação</a>
+    </div>
+
+    <th:block th:unless="${p.totalVotacoes() == 0}">
+      <nav class="abas" aria-label="Filtrar votações por status">
+        <a th:each="aba : ${p.abas()}" class="aba"
+           th:href="${aba.status() == 'todas'} ? @{/organizador} : @{/organizador(status=${aba.status()})}"
+           th:attr="aria-current=${aba.ativa()} ? 'page' : null">
+          <span th:text="${aba.rotulo()}">Todas</span>
+          <span class="aba-contador" th:text="${aba.quantidade()}">0</span>
+        </a>
+      </nav>
+
+      <div class="vazio" th:if="${p.votacoes().isEmpty()}">
+        <strong>Nenhuma votação neste status</strong>
+        <a th:href="@{/organizador}">Ver todas as votações</a>
+      </div>
+
+      <div class="grade">
+        <a th:each="v : ${p.votacoes()}" class="card card-link cartao-votacao"
+           th:classappend="${v.status() == 'aberta'} ? 'card-destaque'"
+           th:href="@{/organizador/votacoes/{id}(id=${v.id()})}">
+          <div class="cartao-selos">
+            <span th:replace="~{fragments/componentes :: badgeVotacao(${v.status()})}"></span>
+            <span class="badge badge-info" th:if="${v.turno() > 1}" th:text="|${v.turno()}º turno|">2º turno</span>
+          </div>
+          <h3 class="card-titulo" th:text="${v.pergunta()}">Pergunta</h3>
+          <p class="card-meta">
+            <span th:text="${v.regra()}">Maioria absoluta</span>
+            <span th:if="${v.temPeriodo()}"
+                  th:text="|${@fmt.dataHora(v.inicio())} a ${@fmt.dataHora(v.fim())}|">período</span>
+            <span th:unless="${v.temPeriodo()}">Sem período</span>
+          </p>
+          <div class="barra">
+            <div class="barra-rotulo">
+              <span>Participação</span>
+              <span th:text="|${v.votantes()} de ${v.aptos()} · ${@fmt.percentual(v.participacao())}|">0 de 0</span>
+            </div>
+            <div class="barra-trilho"><div class="barra-preenchimento"
+                 th:style="|width: ${#numbers.formatDecimal(v.participacao() * 100, 1, 'POINT', 1, 'POINT')}%|"></div></div>
+          </div>
+          <div class="card-rodape"><span class="btn-link">Gerenciar →</span></div>
+        </a>
+      </div>
+    </th:block>
+  </section>
+
+  <section class="secao" aria-labelledby="titulo-premiacoes">
+    <h2 class="secao-titulo" id="titulo-premiacoes">Premiações</h2>
+    <div class="vazio" th:if="${p.premiacoes().isEmpty()}">
+      <span class="vazio-icone" aria-hidden="true">🏆</span>
+      <strong>Nenhuma premiação ainda</strong>
+      <p>Monte um "Craque do Campeonato" com Top 3 ponderado por grupo de votantes.</p>
+      <a class="btn btn-secundario" th:href="@{/organizador/premiacoes/nova}">Criar premiação</a>
+    </div>
+    <div class="grade" th:unless="${p.premiacoes().isEmpty()}">
+      <a th:each="pr : ${p.premiacoes()}" class="card card-link"
+         th:href="@{/organizador/premiacoes/{id}(id=${pr.id()})}">
+        <div class="cartao-selos">
+          <span th:replace="~{fragments/componentes :: badgePremiacao(${pr.status()})}"></span>
+          <span class="badge badge-info">Top 3</span>
+        </div>
+        <h3 class="card-titulo" th:text="${pr.titulo()}">Craque do Campeonato</h3>
+        <p class="card-meta"><span th:text="|${pr.cedulas()} ${pr.cedulas() == 1 ? 'cédula recebida' : 'cédulas recebidas'}|">0 cédulas</span></p>
+        <div class="card-rodape"><span class="btn-link">Gerenciar →</span></div>
+      </a>
+    </div>
+  </section>
+</main>
+</body>
+</html>
