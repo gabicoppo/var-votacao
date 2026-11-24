@@ -1,0 +1,70 @@
+/* Área do eleitor (histórias #23, #26, #28). Mobile-first; usa os tokens de var.css. */
+
+.fluxo-voto { max-width: 640px; margin: 0 auto; }
+.fluxo-voto .form { max-width: none; }
+.fluxo-voto .passos { margin-bottom: 1.25rem; grid-auto-flow: column; grid-auto-columns: 1fr; font-size: .9rem; }
+.fluxo-voto .passos li { padding-left: 2.6rem; }
+.voltar { margin-top: .75rem; }
+
+/* Painel */
+.cartao-eleitor { display: flex; flex-direction: column; }
+.cartao-eleitor .card-rodape { margin-top: auto; }
+.cartao-etiquetas { display: flex; flex-wrap: wrap; gap: .35rem; margin-bottom: .6rem; }
+
+/* Cédula */
+.aviso-sigilo { font-weight: 600; }
+.aviso-sigilo::before { content: "🔒"; font-style: normal; font-family: inherit; }
+.opcoes-radio.campo-com-erro .opcao-radio input[type="radio"] + span { border-color: var(--cartao-vermelho); }
+
+/* Revisão */
+.escolha-revisao { text-align: center; padding: 1.5rem 1rem; margin: 1rem 0; }
+.escolha-rotulo { display: block; color: var(--texto-suave); font-weight: 600; }
+.escolha-opcao { display: block; font-size: 1.6rem; font-weight: 800; color: var(--gramado); margin-top: .25rem; }
+
+/* Comprovante e sucesso */
+.comprovante { text-align: center; padding: 2rem 1.25rem; }
+.check-grande {
+  width: 88px; height: 88px; margin: 0 auto 1rem; border-radius: 50%;
+  display: grid; place-items: center; font-size: 3rem; font-weight: 800; color: #fff;
+  background: var(--campo); box-shadow: 0 0 0 8px var(--campo-suave);
+  animation: check-entrada .5s cubic-bezier(.2, .9, .3, 1.4) both;
+}
+@keyframes check-entrada {
+  from { transform: scale(.3); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+.comprovante-rotulo { margin: 1.25rem 0 .35rem; font-weight: 700; color: var(--texto-suave); }
+.comprovante-data { justify-content: center; }
+.acoes-comprovante { justify-content: center; margin-top: 1rem; }
+.copiado { min-height: 1.5em; margin: .5rem 0 0; color: var(--campo-escuro); font-weight: 700; }
+
+/* Avisos (já votou, fechada) */
+.aviso-voto { text-align: center; padding: 2rem 1.25rem; }
+.aviso-icone { font-size: 2.5rem; margin: 0 0 .5rem; line-height: 1; }
+.datas-votacao {
+  display: grid; grid-template-columns: auto auto; justify-content: center; gap: .25rem 1rem; margin: 1rem 0;
+}
+.datas-votacao dt { font-weight: 700; text-align: right; }
+.datas-votacao dd { margin: 0; text-align: left; font-variant-numeric: tabular-nums; }
+
+/* Top 3 */
+.regra-top3 { margin-bottom: 1.25rem; }
+.regra-top3 p { margin: 0; }
+.regra-top3 .ajuda { margin-top: .35rem; }
+.podio { list-style: none; padding: 1rem 1.25rem; margin: 1rem 0; display: grid; gap: .75rem; }
+.podio li { display: flex; align-items: center; gap: .75rem; font-size: 1.1rem; }
+.podio small { margin-left: auto; }
+.podio-lugar {
+  display: grid; place-items: center; width: 2.5rem; height: 2.5rem; border-radius: 50%; flex-shrink: 0;
+  background: var(--cartao-amarelo); color: var(--texto); font-weight: 800;
+}
+.podio li:nth-child(2) .podio-lugar { background: var(--cinza-200); }
+.podio li:nth-child(3) .podio-lugar { background: #E8C9A8; }
+
+/* Verificação */
+.campo-codigo { font-family: var(--fonte-mono); font-size: 1.25rem; letter-spacing: .1em; text-transform: uppercase; }
+.verificacao-ok small { display: block; font-weight: 400; margin-top: .25rem; }
+
+@media (prefers-reduced-motion: reduce) {
+  .check-grande { animation: none; }
+}

@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{fragments/layout :: layout(~{::title}, ~{::main}, ~{::link})}">
+<head>
+  <title>Premiação indisponível</title>
+  <link rel="stylesheet" th:href="@{/css/eleitor.css}">
+</head>
+<body>
+<main class="fluxo-voto">
+  <div class="card card-destaque aviso-voto">
+    <p class="aviso-icone" aria-hidden="true" th:text="${cedula.situacao().name() == 'JA_VOTOU'} ? '✓' : '⏸'">✓</p>
+    <h1 th:text="${cedula.situacao().name() == 'JA_VOTOU'} ? 'Você já votou nesta premiação'
+                 : 'Esta premiação não está recebendo cédulas agora'">Você já votou</h1>
+    <p class="subtitulo" th:text="${cedula.titulo()}">Craque do Campeonato</p>
+    <p th:text="${cedula.situacao().name() == 'JA_VOTOU'} ? 'Cada eleitor entrega uma única cédula.'
+               : 'O organizador ainda não abriu a premiação ou ela já foi encerrada.'">Texto</p>
+  </div>
+  <p><a class="btn btn-secundario" th:href="@{/eleitor}">← Minhas votações</a></p>
+</main>
+</body>
+</html>
