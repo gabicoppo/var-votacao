@@ -22,6 +22,7 @@
     <java.version>21</java.version>
     <maven.compiler.release>21</maven.compiler.release>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <playwright.version>1.65.1</playwright.version>
   </properties>
 
   <dependencies>
@@ -58,6 +59,13 @@
       <artifactId>spring-security-test</artifactId>
       <scope>test</scope>
     </dependency>
+    <!-- Testes de ponta a ponta no navegador (perfil e2e): ./mvnw verify -Pe2e -->
+    <dependency>
+      <groupId>com.microsoft.playwright</groupId>
+      <artifactId>playwright</artifactId>
+      <version>${playwright.version}</version>
+      <scope>test</scope>
+    </dependency>
   </dependencies>
 
   <build>
@@ -77,6 +85,10 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-surefire-plugin</artifactId>
+        <configuration>
+          <!-- E2E (navegador real) so no perfil e2e, pelo failsafe: o verify normal continua rapido -->
+          <excludes><exclude>**/*E2E.java</exclude></excludes>
+        </configuration>
       </plugin>
 
       <!-- Cobertura: relatorio em target/site/jacoco (HTML, XML e CSV) apos `mvn verify` -->
@@ -171,7 +183,10 @@
           <targetClasses><param>br.unicamp.var.processo.*</param></targetClasses>
           <targetTests><param>br.unicamp.var.*</param></targetTests>
           <!-- Testes web sobem o contexto Spring: lentos demais para rodar a cada mutante -->
-          <excludedTestClasses><param>br.unicamp.var.web.*</param></excludedTestClasses>
+          <excludedTestClasses>
+            <param>br.unicamp.var.web.*</param>
+            <param>br.unicamp.var.e2e.*</param>
+          </excludedTestClasses>
           <timestampedReports>false</timestampedReports>
           <outputFormats><param>HTML</param><param>XML</param></outputFormats>
         </configuration>
@@ -179,4 +194,30 @@
 
     </plugins>
   </build>
+
+  <profiles>
+    <!-- E2E com Playwright: ./mvnw verify -Pe2e (veja o javadoc de br.unicamp.var.e2e) -->
+    <profile>
+      <id>e2e</id>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-failsafe-plugin</artifactId>
+            <configuration>
+              <includes><include>**/e2e/**/*E2E.java</include></includes>
+            </configuration>
+            <executions>
+              <execution>
+                <goals>
+                  <goal>integration-test</goal>
+                  <goal>verify</goal>
+                </goals>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+  </profiles>
 </project>
