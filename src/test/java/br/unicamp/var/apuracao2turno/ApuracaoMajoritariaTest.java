@@ -2,6 +2,7 @@ package br.unicamp.var.apuracao2turno;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -132,6 +133,12 @@ class ApuracaoMajoritariaTest {
 
             assertInstanceOf(ResultadoApuracao.SemVencedor.class, resultado);
         }
+    }
+
+    @Test
+    @DisplayName("mapa nulo lança exceção")
+    void mapaNuloLancaExcecao() {
+        assertThrows(IllegalArgumentException.class, () -> ApuracaoMajoritaria.apurar(null));
     }
 
     @Nested
