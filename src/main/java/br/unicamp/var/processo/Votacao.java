@@ -3,11 +3,17 @@ package br.unicamp.var.processo;
 import br.unicamp.var.apuracao.ContagemVotos;
 import br.unicamp.var.apuracao.RegraApuracao;
 import br.unicamp.var.apuracao2turno.ResultadoApuracao;
+import br.unicamp.var.cadastro.CadastroCandidatos;
+import br.unicamp.var.cadastro.Candidato;
+import java.time.Clock;
+import java.time.Instant;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 
 /**
  * Votação com ciclo de vida controlado por estados (padrão State):
@@ -20,46 +26,60 @@ import java.util.Set;
  * estado a votação passa. A apuração em si é delegada à {@link RegraApuracao}
  * configurada (padrão Strategy).</p>
  *
- * <p>Fora do escopo: abertura/encerramento automático por horário, controle de
- * eleitor único, sigilo, persistência e interface.</p>
+ * <p>É criada pelo {@link Builder}, obtido em {@link #nova()} (história #19: pergunta,
+ * opções ou candidatos do cadastro e descrição).</p>
+ *
+ * <p>Fora do escopo: controle de eleitor único, sigilo, persistência e interface.</p>
  */
 public final class Votacao {
 
     private static final int MINIMO_OPCOES = 2;
 
+    private final String id;
     private final String pergunta;
+    private final String descricao;
     private final List<String> opcoes;
     private final int totalAptos;
+    private final Instant criadaEm;
     private final Map<String, Integer> votos = new LinkedHashMap<>();
     private RegraApuracao regra;
     private EstadoVotacao estado = new Rascunho();
 
-    /**
-     * Cria a votação em rascunho, com zero votos para cada opção.
-     *
-     * @param pergunta   pergunta da votação; espaços nas pontas são removidos
-     * @param opcoes     ao menos duas opções não vazias e sem repetição
-     * @param regra      regra usada na apuração
-     * @param totalAptos número de pessoas aptas a votar
-     * @throws IllegalArgumentException se algum parâmetro for inválido
-     */
-    public Votacao(String pergunta, List<String> opcoes, RegraApuracao regra, int totalAptos) {
-        if (pergunta == null || pergunta.isBlank()) {
+    private Votacao(Builder builder) {
+        if (builder.pergunta == null || builder.pergunta.isBlank()) {
             throw new IllegalArgumentException("pergunta nao pode ser vazia");
         }
-        if (regra == null) {
+        if (builder.descricao == null) {
+            throw new IllegalArgumentException("descricao nao pode ser nula");
+        }
+        if (builder.regra == null) {
             throw new IllegalArgumentException("regra de apuracao nao pode ser nula");
         }
-        if (totalAptos <= 0) {
+        if (builder.totalAptos <= 0) {
             throw new IllegalArgumentException("totalAptos deve ser maior que zero");
         }
-        this.pergunta = pergunta.strip();
-        this.opcoes = validarOpcoes(opcoes);
-        this.regra = regra;
-        this.totalAptos = totalAptos;
+        if (builder.relogio == null) {
+            throw new IllegalArgumentException("relogio nao pode ser nulo");
+        }
+        this.id = UUID.randomUUID().toString();
+        this.pergunta = builder.pergunta.strip();
+        this.descricao = builder.descricao.strip();
+        this.opcoes = validarOpcoes(builder.opcoes);
+        this.regra = builder.regra;
+        this.totalAptos = builder.totalAptos;
+        this.criadaEm = builder.relogio.instant();
         for (String opcao : this.opcoes) {
             votos.put(opcao, 0);
         }
+    }
+
+    /**
+     * Começa a configuração de uma nova votação.
+     *
+     * @return builder vazio; pergunta, opções, regra e total de aptos são obrigatórios
+     */
+    public static Builder nova() {
+        return new Builder();
     }
 
     private static List<String> validarOpcoes(List<String> opcoes) {
@@ -157,6 +177,42 @@ public final class Votacao {
         return List.copyOf(opcoes);
     }
 
+    /**
+     * Identificador único da votação, gerado na criação.
+     *
+     * @return UUID em texto
+     */
+    public String id() {
+        return id;
+    }
+
+    /**
+     * Descrição da votação (história #19).
+     *
+     * @return a descrição sem espaços nas pontas; vazia se não foi informada
+     */
+    public String descricao() {
+        return descricao;
+    }
+
+    /**
+     * Instante de criação da votação, lido do relógio configurado.
+     *
+     * @return o instante de criação
+     */
+    public Instant criadaEm() {
+        return criadaEm;
+    }
+
+    /**
+     * Regra de apuração configurada.
+     *
+     * @return a regra atual
+     */
+    public RegraApuracao regra() {
+        return regra;
+    }
+
     void mudarPara(EstadoVotacao novoEstado) {
         this.estado = novoEstado;
     }
@@ -179,11 +235,114 @@ public final class Votacao {
         votos.merge(opcao, 1, Integer::sum);
     }
 
-    RegraApuracao regra() {
-        return regra;
-    }
-
     ContagemVotos contagem() {
         return new ContagemVotos(votos, totalAptos);
+    }
+
+    /**
+     * Monta uma {@link Votacao} em rascunho (história #19). Os campos são validados só em {@link #build()}.
+     */
+    public static final class Builder {
+
+        private String pergunta;
+        private String descricao = "";
+        private List<String> opcoes;
+        private RegraApuracao regra;
+        private int totalAptos;
+        private Clock relogio = Clock.systemUTC();
+
+        private Builder() {
+        }
+
+        /**
+         * Define a pergunta (obrigatória).
+         *
+         * @param pergunta pergunta da votação; espaços nas pontas são removidos
+         * @return este builder
+         */
+        public Builder pergunta(String pergunta) {
+            this.pergunta = pergunta;
+            return this;
+        }
+
+        /**
+         * Define a descrição (opcional; o padrão é vazia).
+         *
+         * @param descricao descrição da votação; espaços nas pontas são removidos
+         * @return este builder
+         */
+        public Builder descricao(String descricao) {
+            this.descricao = descricao;
+            return this;
+        }
+
+        /**
+         * Define as opções (obrigatórias).
+         *
+         * @param opcoes ao menos duas opções não vazias e sem repetição
+         * @return este builder
+         */
+        public Builder opcoes(List<String> opcoes) {
+            this.opcoes = opcoes == null ? null : new ArrayList<>(opcoes);
+            return this;
+        }
+
+        /**
+         * Usa como opções os nomes dos candidatos do cadastro, na ordem de cadastro (história #19).
+         *
+         * @param cadastro cadastro de candidatos
+         * @return este builder
+         * @throws IllegalArgumentException se o cadastro for nulo
+         */
+        public Builder opcoesDoCadastro(CadastroCandidatos cadastro) {
+            if (cadastro == null) {
+                throw new IllegalArgumentException("cadastro de candidatos nao pode ser nulo");
+            }
+            this.opcoes = cadastro.listar().stream().map(Candidato::nome).toList();
+            return this;
+        }
+
+        /**
+         * Define a regra de apuração (obrigatória).
+         *
+         * @param regra regra usada na apuração
+         * @return este builder
+         */
+        public Builder regra(RegraApuracao regra) {
+            this.regra = regra;
+            return this;
+        }
+
+        /**
+         * Define o número de pessoas aptas a votar (obrigatório).
+         *
+         * @param totalAptos número maior que zero
+         * @return este builder
+         */
+        public Builder totalAptos(int totalAptos) {
+            this.totalAptos = totalAptos;
+            return this;
+        }
+
+        /**
+         * Define o relógio usado para datar a votação (opcional; o padrão é {@link Clock#systemUTC()}).
+         *
+         * @param relogio relógio da votação
+         * @return este builder
+         */
+        public Builder relogio(Clock relogio) {
+            this.relogio = relogio;
+            return this;
+        }
+
+        /**
+         * Cria a votação em rascunho, com zero votos para cada opção.
+         *
+         * @return a nova votação
+         * @throws IllegalArgumentException se algum campo obrigatório faltar ou for inválido
+         */
+        public Votacao build() {
+            return new Votacao(this);
+        }
     }
 }
