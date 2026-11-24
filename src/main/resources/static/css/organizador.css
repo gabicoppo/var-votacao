@@ -84,3 +84,159 @@
 
 /* Códigos de acesso */
 .tabela-acessos .codigo-pequeno { font-size: 1.05rem; padding: .25rem .6rem; letter-spacing: .1em; }
+
+/* ---------- Fase 3: polimento ---------- */
+
+/* Abas também como botões (filtro da presença) */
+button.aba { font: inherit; cursor: pointer; }
+.aba[aria-pressed="true"] { background: var(--gramado); border-color: var(--gramado); color: #fff; }
+.aba[aria-pressed="true"] .aba-contador { background: var(--cartao-amarelo); color: var(--texto); }
+.aba:focus-visible { outline: none; box-shadow: var(--foco); }
+.abas-compactas { margin: 0; flex-wrap: wrap; overflow: visible; }
+
+/* Indicador "ao vivo" */
+.ao-vivo {
+  display: inline-flex; align-items: center; gap: .4rem; padding: .15rem .6rem; border-radius: 999px;
+  font-size: .8rem; font-weight: 800; letter-spacing: .02em; text-transform: uppercase;
+  background: var(--vermelho-suave); color: #8E1526;
+}
+.ao-vivo-ponto {
+  width: .55rem; height: .55rem; border-radius: 50%; background: var(--cartao-vermelho);
+  animation: pulsar 1.6s ease-in-out infinite;
+}
+@keyframes pulsar {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(215, 38, 61, .55); }
+  50% { box-shadow: 0 0 0 6px rgba(215, 38, 61, 0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ao-vivo-ponto { animation: none; }
+}
+
+/* Convite */
+.convite { display: flex; flex-direction: column; gap: .75rem; margin-bottom: 1.5rem; }
+.convite .card-titulo, .convite .ajuda { margin: 0; }
+.convite-link {
+  width: 100%; min-height: var(--toque); padding: .6rem .8rem; border: 2px solid var(--cinza-300);
+  border-radius: var(--raio-pequeno); font-family: var(--fonte-mono); font-size: .9rem;
+  background: var(--cinza-100); color: var(--texto);
+}
+.convite-link:focus { outline: none; box-shadow: var(--foco); }
+.copiado { margin: 0; min-height: 1.25rem; font-weight: 700; color: #14593A; }
+
+/* Alterar regra (rascunho) */
+.alterar-regra { margin-bottom: 1.5rem; }
+.alterar-regra summary {
+  display: flex; align-items: center; min-height: var(--toque); cursor: pointer;
+  font-weight: 800; color: var(--campo-escuro);
+}
+.alterar-regra summary:focus-visible { outline: none; box-shadow: var(--foco); border-radius: var(--raio-pequeno); }
+.alterar-regra[open] summary { margin-bottom: 1rem; }
+.alterar-regra .form { max-width: none; }
+
+/* Presença: filtros */
+.presenca-filtros { display: flex; flex-direction: column; gap: .75rem; margin-bottom: 1rem; }
+.presenca-filtros[hidden] { display: none; }
+.presenca-busca input { max-width: 420px; }
+.presenca-filtros .ajuda:empty { display: none; }
+.presenca-vazia { margin-top: 1rem; padding: 1.5rem 1rem; }
+.presenca-vazia[hidden] { display: none; }
+@media (min-width: 760px) {
+  .presenca-filtros { flex-direction: row; flex-wrap: wrap; align-items: flex-end; }
+  .presenca-busca { flex: 1 1 260px; }
+}
+
+/* Tabelas que viram cartões no celular (presença e auditoria) */
+.tabela-cartoes tr[hidden] { display: none; }
+@media (max-width: 640px) {
+  .tabela-rolagem:has(.tabela-cartoes) { overflow: visible; }
+  .tabela-cartoes { display: block; overflow: visible; }
+  .tabela-cartoes thead {
+    position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap;
+  }
+  .tabela-cartoes tbody, .tabela-cartoes tr { display: block; }
+  .tabela-cartoes tr { padding: .75rem 1rem; border-bottom: 1px solid var(--cinza-100); }
+  .tabela-cartoes tr:last-child { border-bottom: 0; }
+  .tabela-cartoes tr[hidden] { display: none; }
+  .tabela-cartoes td {
+    display: flex; justify-content: space-between; align-items: baseline; gap: 1rem;
+    padding: .15rem 0; border: 0; white-space: normal; text-align: right; overflow-wrap: anywhere;
+  }
+  .tabela-cartoes td::before {
+    content: attr(data-rotulo); flex-shrink: 0; text-align: left;
+    font-size: .8rem; font-weight: 700; color: var(--texto-suave);
+  }
+  .tabela-cartoes td.celula-nome, .tabela-cartoes td.celula-destaque {
+    order: -1; font-weight: 800; font-size: 1.02rem; text-align: left;
+  }
+  .tabela-cartoes td.celula-nome::before, .tabela-cartoes td.celula-destaque::before { content: none; }
+  .tabela-cartoes tr { display: flex; flex-direction: column; }
+  .tabela-cartoes tbody tr:hover { background: none; }
+}
+
+/* Presença no celular: nome e selo na mesma linha, id embaixo (cartão compacto) */
+@media (max-width: 640px) {
+  .tabela-presenca tr {
+    display: grid; grid-template-columns: minmax(0, 1fr) auto; column-gap: .75rem; row-gap: .1rem;
+    align-items: center; padding: .6rem 1rem;
+  }
+  .tabela-presenca td { display: block; padding: 0; text-align: left; }
+  .tabela-presenca td::before { content: none; }
+  .tabela-presenca td.celula-nome { grid-column: 1; grid-row: 1; font-size: 1rem; }
+  .tabela-presenca td.celula-id { grid-column: 1; grid-row: 2; font-size: .85rem; color: var(--texto-suave); }
+  .tabela-presenca td.celula-situacao { grid-column: 2; grid-row: 1 / span 2; }
+  .tabela-presenca td.celula-escolha { grid-column: 1 / -1; grid-row: 3; font-size: .9rem; }
+  .tabela-presenca td.celula-escolha::before { content: "Escolha: "; font-weight: 700; color: var(--texto-suave); }
+}
+
+/* Nova votação: formulário + resumo ao vivo */
+.nova-layout { display: grid; gap: 1.5rem; align-items: start; }
+.resumo-votacao .lista-config { grid-template-columns: 1fr; gap: .15rem; }
+.resumo-votacao .lista-config dt { margin-top: .6rem; font-size: .8rem; text-transform: uppercase; letter-spacing: .04em; }
+.resumo-votacao .lista-config dt:first-child { margin-top: 0; }
+.resumo-votacao[hidden] { display: none; }
+@media (min-width: 1100px) {
+  .nova-layout { grid-template-columns: minmax(0, 760px) minmax(260px, 1fr); }
+  .resumo-votacao { position: sticky; top: 1rem; }
+}
+.previa-data:empty { display: none; }
+.previa-data strong { color: var(--texto); }
+
+/* Códigos de acesso */
+.aviso-unico {
+  display: flex; flex-direction: column; gap: .25rem; margin-bottom: 1.25rem; padding: 1rem 1.1rem;
+  border-left: 6px solid var(--cartao-amarelo); border-radius: var(--raio-pequeno);
+  background: var(--amarelo-suave); color: var(--amarelo-texto);
+}
+.aviso-unico strong { font-size: 1.1rem; color: var(--texto); }
+.so-impressao { display: none; }
+
+/* Códigos no celular: cartão com nome e login à esquerda e o código à direita */
+@media screen and (max-width: 640px) {
+  .tabela-rolagem:has(.tabela-acessos) { overflow: visible; }
+  .tabela-acessos { display: block; overflow: visible; }
+  .tabela-acessos thead {
+    position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap;
+  }
+  .tabela-acessos tbody { display: block; }
+  .tabela-acessos tr {
+    display: grid; grid-template-columns: minmax(0, 1fr) auto; column-gap: .75rem; align-items: center;
+    padding: .75rem 1rem; border-bottom: 1px solid var(--cinza-100);
+  }
+  .tabela-acessos tr:last-child { border-bottom: 0; }
+  .tabela-acessos td { display: block; padding: 0; border: 0; white-space: normal; overflow-wrap: anywhere; }
+  .tabela-acessos td.celula-nome { grid-column: 1; grid-row: 1; font-weight: 800; }
+  .tabela-acessos td.celula-id { grid-column: 1; grid-row: 2; font-size: .85rem; }
+  .tabela-acessos td.celula-id strong { font-weight: 600; color: var(--texto-suave); }
+  .tabela-acessos td.celula-codigo { grid-column: 2; grid-row: 1 / span 2; }
+}
+
+@media print {
+  .aviso-unico, .alerta { display: none !important; }
+  .tabela-acessos { display: table; width: 100%; border: 0; box-shadow: none; }
+  .tabela-acessos thead { display: none; }
+  .tabela-acessos tr { break-inside: avoid; }
+  .tabela-acessos td { padding: 1rem .5rem; border-bottom: 2px dashed #777; font-size: 12pt; }
+  .tabela-acessos .codigo-pequeno { font-size: 16pt; border: 1px solid #000; background: none; color: #000; }
+  .tabela-rolagem { box-shadow: none; overflow: visible; }
+  .so-impressao { display: block; margin-top: 1rem; }
+}
