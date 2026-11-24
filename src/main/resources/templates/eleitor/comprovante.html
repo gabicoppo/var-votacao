@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{fragments/layout :: layout(~{::title}, ~{::main}, ~{::link})}">
+<head>
+  <title>Voto registrado</title>
+  <link rel="stylesheet" th:href="@{/css/eleitor.css}">
+</head>
+<body>
+<main class="fluxo-voto">
+  <ol class="passos nao-imprimir" aria-label="Etapas do voto">
+    <li class="feito">Escolher</li>
+    <li class="feito">Revisar</li>
+    <li class="ativo" aria-current="step">Comprovante</li>
+  </ol>
+
+  <div class="card comprovante">
+    <div class="check-grande" aria-hidden="true">✓</div>
+    <h1>Voto registrado</h1>
+    <p class="subtitulo" th:text="${comprovante.pergunta()}">Pergunta</p>
+    <p class="comprovante-rotulo">Código do comprovante</p>
+    <p><span class="codigo" id="codigo-comprovante" th:text="${comprovante.codigo()}">ABCD2345</span></p>
+    <p class="card-meta comprovante-data">Registrado em
+      <span th:text="${@fmt.dataHora(comprovante.registradoEm())}">24/11/2026 18:30</span></p>
+    <p class="ajuda">Guarde este código: ele mostra que seu voto está na contagem, sem revelar sua escolha.
+      Ele só aparece agora.</p>
+    <div class="acoes acoes-comprovante nao-imprimir">
+      <button type="button" class="btn btn-primario" data-copiar="#codigo-comprovante">Copiar código</button>
+      <a class="btn btn-secundario" th:href="@{${comprovante.linkVerificar()}}">Verificar depois</a>
+      <button type="button" class="btn" onclick="window.print()">Imprimir</button>
+    </div>
+    <p class="copiado" role="status" aria-live="polite"></p>
+  </div>
+  <p class="nao-imprimir"><a th:href="@{/eleitor}">← Voltar às minhas votações</a></p>
+  <script th:src="@{/js/eleitor.js}" defer></script>
+</main>
+</body>
+</html>
