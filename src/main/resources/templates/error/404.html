@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{fragments/layout :: layout(~{::title}, ~{::main}, ~{})}">
+<head>
+  <title>Página não encontrada</title>
+</head>
+<body>
+<main class="erro-pagina">
+  <div class="card card-destaque">
+    <p class="erro-codigo" aria-hidden="true"><span>🔍</span> 404</p>
+    <h1>Página não encontrada</h1>
+    <p class="subtitulo">O endereço não existe ou a votação foi removida. Confira o link ou volte ao início.</p>
+    <a class="btn btn-primario btn-grande" th:href="@{/}">Voltar ao início</a>
+  </div>
+</main>
+</body>
+</html>

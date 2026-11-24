@@ -5,13 +5,70 @@
   <title>Início</title>
 </head>
 <body>
-<main class="entrada">
-  <div class="card card-destaque">
-    <img class="entrada-logo" th:src="@{/img/logo-var.svg}" alt="" width="72" height="81">
-    <h1>VAR</h1>
-    <p class="subtitulo">Votação, apuração e resultados com transparência para o futebol.</p>
-    <a class="btn btn-primario btn-grande" th:href="@{/login}">Entrar</a>
-  </div>
+<main>
+  <section class="hero">
+    <img class="hero-logo" th:src="@{/img/logo-var.svg}" alt="" width="96" height="108">
+    <div>
+      <p class="hero-selo">VAR · Votação, Apuração e Resultados</p>
+      <h1>Votação, apuração e resultados com transparência para o futebol</h1>
+      <p class="subtitulo">Eleições de clube, assembleias de conselho e premiações em um só lugar: cada
+        voto conta uma vez, o sigilo é garantido e toda a apuração fica registrada.</p>
+      <div class="acoes">
+        <a class="btn btn-primario btn-hero" th:href="@{/login}">Entrar</a>
+        <a class="btn btn-secundario btn-hero" href="#como-funciona">Como funciona</a>
+      </div>
+    </div>
+  </section>
+
+  <section class="secao" aria-labelledby="contextos">
+    <h2 class="secao-titulo" id="contextos">Para cada decisão do clube</h2>
+    <div class="grade">
+      <article class="card card-destaque">
+        <p class="contexto-icone" aria-hidden="true">🗳️</p>
+        <h3 class="card-titulo">Eleição presidencial</h3>
+        <p class="card-meta"><span>Voto secreto</span><span>Maioria absoluta</span><span>2º turno</span></p>
+        <p>Chapas, eleitores aptos e período definidos pelo organizador. Sem maioria absoluta, o 2º turno é
+          criado com os dois mais votados.</p>
+      </article>
+      <article class="card card-destaque">
+        <p class="contexto-icone" aria-hidden="true">🏆</p>
+        <h3 class="card-titulo">Craque do Campeonato</h3>
+        <p class="card-meta"><span>Top 3</span><span>Pesos por grupo</span></p>
+        <p>Cada eleitor escolhe o 1º, o 2º e o 3º lugar; jornalistas e torcedores podem ter pesos
+          diferentes, e o ranking mostra os critérios.</p>
+      </article>
+      <article class="card card-destaque">
+        <p class="contexto-icone" aria-hidden="true">⚖️</p>
+        <h3 class="card-titulo">Assembleia do conselho</h3>
+        <p class="card-meta"><span>Voto nominal</span><span>Quórum</span><span>Maioria qualificada</span></p>
+        <p>Reformas do estatuto com quórum mínimo e 2/3 dos votos válidos, com o voto de cada conselheiro
+          registrado.</p>
+      </article>
+    </div>
+  </section>
+
+  <section class="secao" id="como-funciona" aria-labelledby="titulo-como">
+    <h2 class="secao-titulo" id="titulo-como">Como funciona</h2>
+    <ol class="passos passos-inicio">
+      <li class="feito"><strong>Configure.</strong> O organizador cria a votação: pergunta, opções, eleitores
+        aptos, regra de apuração e período.</li>
+      <li class="feito"><strong>Vote.</strong> Cada eleitor apto vota uma única vez, pelo celular ou
+        computador, e recebe um comprovante.</li>
+      <li class="feito"><strong>Apure.</strong> Encerrada a votação, o resultado sai com votos, percentuais e
+        o relatório de auditoria.</li>
+    </ol>
+  </section>
+
+  <section class="secao">
+    <div class="card ods">
+      <span class="ods-numero" aria-hidden="true">16</span>
+      <div>
+        <h2 class="card-titulo">ODS 16 — Paz, justiça e instituições eficazes</h2>
+        <p>O VAR apoia a meta de tomadas de decisão responsivas, inclusivas, participativas e representativas:
+          regras claras, sigilo do voto e apuração auditável fortalecem a governança dos clubes.</p>
+      </div>
+    </div>
+  </section>
 </main>
 </body>
 </html>
