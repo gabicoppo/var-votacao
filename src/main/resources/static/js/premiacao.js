@@ -1,18 +1,10 @@
 /*
- * Área de premiações do organizador. As telas funcionam sem JavaScript; aqui só:
- * - confirmação nas ações do ciclo (form[data-confirmar]);
- * - botão de imprimir os códigos de acesso ([data-imprimir]).
+ * Área de premiações do organizador. As telas funcionam sem JavaScript; aqui só o botão de imprimir os
+ * códigos de acesso ([data-imprimir]). A confirmação das ações do ciclo (form[data-confirmar]) é o
+ * diálogo comum do var.js.
  */
 (function () {
   "use strict";
-
-  document.querySelectorAll("form[data-confirmar]").forEach(function (formulario) {
-    formulario.addEventListener("submit", function (evento) {
-      if (!window.confirm(formulario.getAttribute("data-confirmar"))) {
-        evento.preventDefault();
-      }
-    });
-  });
 
   document.querySelectorAll("[data-imprimir]").forEach(function (botao) {
     botao.addEventListener("click", function () {
