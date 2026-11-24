@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<!--/*
+  Componentes reutilizáveis. Exemplos de uso em /estilo.
+    <span th:replace="~{fragments/componentes :: badgeVotacao(${votacao.status()})}"></span>
+    <ol th:replace="~{fragments/componentes :: linhaTempo(${votacao.status()})}"></ol>
+*/-->
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+
+<!--/* Badge do status da votação: "rascunho", "aberta", "encerrada" ou "apurada". */-->
+<span th:fragment="badgeVotacao(status)" class="badge" th:classappend="${'badge-' + status}"
+      th:text="${@fmt.statusVotacao(status)}">Aberta</span>
+
+<!--/* Badge do status da premiação (enum StatusPremiacao). */-->
+<span th:fragment="badgePremiacao(status)" class="badge"
+      th:classappend="${'badge-' + #strings.toLowerCase(status.name())}"
+      th:text="${@fmt.statusPremiacao(status)}">Aberta</span>
+
+<!--/* Linha do tempo do ciclo da votação, marcando as etapas feitas e a atual. */-->
+<ol th:fragment="linhaTempo(status)" class="linha-tempo" aria-label="Etapas da votação"
+    th:with="etapas=${ {'rascunho', 'aberta', 'encerrada', 'apurada'} }, atual=${etapas.indexOf(status)}">
+  <li th:each="etapa, i : ${etapas}"
+      th:classappend="${i.index < atual} ? 'feito' : (${i.index == atual} ? 'ativo' : '')"
+      th:attr="aria-current=${i.index == atual} ? 'step' : null"
+      th:text="${@fmt.statusVotacao(etapa)}">Etapa</li>
+</ol>
+
+</body>
+</html>

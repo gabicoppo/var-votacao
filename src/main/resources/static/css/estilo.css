@@ -1,0 +1,16 @@
+/* Só para a página /estilo (guia de estilo). */
+.guia-indice { display: flex; flex-wrap: wrap; align-items: center; gap: .25rem .9rem; margin-bottom: 1rem; }
+.guia-indice a { display: inline-flex; align-items: center; min-height: 44px; font-weight: 600; }
+.guia-cores { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: .75rem; margin-bottom: .75rem; }
+.guia-cor {
+  display: flex; flex-direction: column; gap: .15rem; padding: 1rem; min-height: 110px;
+  border-radius: var(--raio); box-shadow: var(--sombra); border: 1px solid var(--cinza-200);
+}
+.guia-cor code { font-family: var(--fonte-mono); font-size: .9rem; }
+.guia-cor span { font-size: .8rem; opacity: .85; }
+.guia-codigo {
+  margin: 1rem 0 0; padding: 1rem; overflow-x: auto; border-radius: var(--raio-pequeno);
+  background: var(--gramado); color: #E3F2EA; font-family: var(--fonte-mono); font-size: .85rem; line-height: 1.5;
+}
+code { font-family: var(--fonte-mono); font-size: .9em; }
+:not(pre) > code { background: var(--cinza-100); padding: .1em .35em; border-radius: 6px; }
