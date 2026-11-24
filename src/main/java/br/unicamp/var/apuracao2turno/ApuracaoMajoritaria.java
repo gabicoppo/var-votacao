@@ -1,5 +1,6 @@
 package br.unicamp.var.apuracao2turno;
 
+import br.unicamp.var.comum.Proporcao;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
@@ -56,6 +57,6 @@ public final class ApuracaoMajoritaria {
     }
 
     private static boolean temMaioriaAbsoluta(int votosDoCandidato, int totalDeVotosValidos) {
-        return (double) votosDoCandidato / totalDeVotosValidos > LIMIAR_MAIORIA_ABSOLUTA;
+        return new Proporcao(votosDoCandidato, totalDeVotosValidos).supera(LIMIAR_MAIORIA_ABSOLUTA);
     }
 }
