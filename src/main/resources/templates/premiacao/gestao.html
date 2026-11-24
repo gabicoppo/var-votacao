@@ -23,6 +23,8 @@
          th:href="@{/premiacoes/{id}/ranking(id=${p.id()})}">Ver ranking</a>
       <a class="btn btn-secundario" th:unless="${p.apurada()}"
          th:href="@{/premiacoes/{id}/ranking(id=${p.id()})}">Acompanhar</a>
+      <a class="btn btn-secundario" target="_blank" rel="noopener"
+         th:href="@{/premiacoes/{id}/telao(id=${p.id()})}">Abrir no telão <span class="sr-only">(nova aba)</span></a>
     </div>
   </div>
 

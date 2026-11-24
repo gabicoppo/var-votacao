@@ -26,6 +26,8 @@
       <a class="btn btn-secundario" th:if="${organizador}"
          th:href="@{/organizador/votacoes/{id}(id=${v.id()})}">Voltar à gestão</a>
     </div>
+      <a class="btn btn-secundario" th:if="${organizador}" target="_blank" rel="noopener"
+         th:href="@{/votacoes/{id}/telao(id=${v.id()})}">Abrir no telão <span class="sr-only">(nova aba)</span></a>
   </div>
 
   <!--/* Antes da apuração: só a participação (RNF-01), atualizada a cada 10 s. */-->

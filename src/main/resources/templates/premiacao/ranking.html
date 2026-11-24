@@ -20,6 +20,8 @@
     </div>
     <div class="acoes nao-imprimir">
       <button type="button" class="btn btn-secundario" data-imprimir th:if="${r.apurada()}">Imprimir</button>
+      <a class="btn btn-secundario" th:if="${organizador}" target="_blank" rel="noopener"
+         th:href="@{/premiacoes/{id}/telao(id=${r.id()})}">Abrir no telão <span class="sr-only">(nova aba)</span></a>
       <a class="btn btn-secundario" th:if="${organizador}"
          th:href="@{/organizador/premiacoes/{id}(id=${r.id()})}">Voltar à gestão</a>
     </div>
