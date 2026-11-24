@@ -26,12 +26,13 @@ final class Aberta implements EstadoVotacao {
     }
 
     /**
-     * Encerra a votação se o fim do período já chegou.
+     * Encerra a votação se o fim do período já chegou, registrando o encerramento na auditoria
+     * com o autor {@value Votacao#AUTOR_SISTEMA} (RNF-07).
      */
     @Override
     public void atualizarPeloRelogio(Votacao votacao) {
         if (votacao.periodoTerminou()) {
-            encerrar(votacao);
+            votacao.encerrarPeloRelogio();
         }
     }
 }

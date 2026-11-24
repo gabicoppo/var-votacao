@@ -1,8 +1,12 @@
 package br.unicamp.var.processo;
 
 import br.unicamp.var.apuracao.ContagemVotos;
+import br.unicamp.var.apuracao.MaioriaSimples;
 import br.unicamp.var.apuracao.RegraApuracao;
 import br.unicamp.var.apuracao2turno.ResultadoApuracao;
+import br.unicamp.var.auditoria.EventoAuditoria;
+import br.unicamp.var.auditoria.RegistroAuditoria;
+import br.unicamp.var.auditoria.TipoEvento;
 import br.unicamp.var.cadastro.CadastroCandidatos;
 import br.unicamp.var.cadastro.Candidato;
 import br.unicamp.var.eleitorado.Eleitorado;
@@ -44,11 +48,26 @@ import java.util.UUID;
  * na apuração, porque resultado parcial influencia o voto. Pergunta, opções, eleitorado, sigilo
  * e período são fixados na criação, e a regra só muda em rascunho (RNF-07).</p>
  *
+ * <p>Auditoria (RNF-07): criação, alteração de regra, abertura, encerramento (manuais ou pelo
+ * período), apuração e criação do 2º turno ficam num {@link RegistroAuditoria} com data/hora,
+ * lida do mesmo {@link Clock} da votação, e autor. Cada operação tem uma sobrecarga que recebe o
+ * autor; as versões sem autor, e as transições automáticas pelo período, usam
+ * {@value #AUTOR_SISTEMA}. O evento só é registrado depois que a transição dá certo: operação
+ * proibida não gera evento. Votos nunca entram na auditoria (RNF-01).</p>
+ *
+ * <p>2º turno (história #21, diagrama de estados da A1): quando a apuração indica
+ * {@link ResultadoApuracao.SegundoTurno}, {@link #criarSegundoTurno()} cria uma nova votação em
+ * rascunho só com os dois colocados, ligada a esta por {@link #turnoAnteriorId()}.</p>
+ *
  * <p>Fora do escopo: persistência e interface.</p>
  */
 public final class Votacao {
 
+    /** Autor usado quando a operação não informa quem a executou, e nas transições pelo relógio. */
+    public static final String AUTOR_SISTEMA = "sistema";
+
     private static final int MINIMO_OPCOES = 2;
+    private static final String SUFIXO_SEGUNDO_TURNO = " (2º turno)";
 
     private final String id;
     private final String pergunta;
@@ -59,8 +78,12 @@ public final class Votacao {
     private final PeriodoVotacao periodo;
     private final Clock relogio;
     private final Instant criadaEm;
+    private final int turno;
+    private final String turnoAnteriorId;
+    private final RegistroAuditoria auditoria;
     private RegraApuracao regra;
     private EstadoVotacao estado = new Rascunho();
+    private String segundoTurnoId;
 
     private Votacao(Builder builder) {
         if (builder.pergunta == null || builder.pergunta.isBlank()) {
@@ -91,6 +114,18 @@ public final class Votacao {
         this.relogio = builder.relogio;
         this.criadaEm = relogio.instant();
         this.urna = new Urna(eleitorado, opcoes, builder.sigilo, relogio);
+        this.turno = builder.turno;
+        this.turnoAnteriorId = builder.turnoAnteriorId;
+        this.auditoria = new RegistroAuditoria(relogio);
+        String detalhe = turnoAnteriorId == null ? "" : "2º turno da votacao " + turnoAnteriorId;
+        // O EventoAuditoria recusa autor vazio com IllegalArgumentException, então build() falha.
+        auditoria.registrar(builder.autor, TipoEvento.CRIADA, detalhe);
+    }
+
+    private static void validarAutor(String autor) {
+        if (autor == null || autor.isBlank()) {
+            throw new IllegalArgumentException("autor nao pode ser vazio");
+        }
     }
 
     /**
@@ -126,7 +161,21 @@ public final class Votacao {
      * @throws IllegalStateException    se a votação não estiver em rascunho
      */
     public void alterarRegra(RegraApuracao novaRegra) {
+        alterarRegra(novaRegra, AUTOR_SISTEMA);
+    }
+
+    /**
+     * Troca a regra de apuração, registrando quem trocou (RNF-07). Só é permitido em rascunho.
+     *
+     * @param novaRegra nova regra de apuração
+     * @param autor     quem alterou a regra
+     * @throws IllegalArgumentException se a regra for nula ou o autor for vazio
+     * @throws IllegalStateException    se a votação não estiver em rascunho
+     */
+    public void alterarRegra(RegraApuracao novaRegra, String autor) {
+        validarAutor(autor);
         estado.alterarRegra(this, novaRegra);
+        auditoria.registrar(autor, TipoEvento.REGRA_ALTERADA, regra.descricao());
     }
 
     /**
@@ -135,7 +184,20 @@ public final class Votacao {
      * @throws IllegalStateException se a votação não estiver em rascunho
      */
     public void abrir() {
+        abrir(AUTOR_SISTEMA);
+    }
+
+    /**
+     * Abre a votação para receber votos (rascunho → aberta), registrando quem abriu (RNF-07).
+     *
+     * @param autor quem abriu a votação
+     * @throws IllegalArgumentException se o autor for vazio
+     * @throws IllegalStateException    se a votação não estiver em rascunho
+     */
+    public void abrir(String autor) {
+        validarAutor(autor);
         estado.abrir(this);
+        auditoria.registrar(autor, TipoEvento.ABERTA, "");
     }
 
     /**
@@ -172,7 +234,20 @@ public final class Votacao {
      * @throws IllegalStateException se a votação não estiver aberta
      */
     public void encerrar() {
+        encerrar(AUTOR_SISTEMA);
+    }
+
+    /**
+     * Encerra a votação (aberta → encerrada), registrando quem encerrou (RNF-07).
+     *
+     * @param autor quem encerrou a votação
+     * @throws IllegalArgumentException se o autor for vazio
+     * @throws IllegalStateException    se a votação não estiver aberta
+     */
+    public void encerrar(String autor) {
+        validarAutor(autor);
         estado.encerrar(this);
+        auditoria.registrar(autor, TipoEvento.ENCERRADA, "");
     }
 
     /**
@@ -183,7 +258,81 @@ public final class Votacao {
      * @throws IllegalStateException se a votação ainda não foi encerrada
      */
     public ResultadoApuracao apurar() {
-        return estado.apurar(this);
+        return apurar(AUTOR_SISTEMA);
+    }
+
+    /**
+     * Apura a votação com a regra configurada (encerrada → apurada), registrando quem apurou e
+     * a situação final (RNF-07). Chamado de novo após a apuração, devolve o mesmo resultado sem
+     * registrar outro evento.
+     *
+     * @param autor quem apurou a votação
+     * @return o resultado da apuração
+     * @throws IllegalArgumentException se o autor for vazio
+     * @throws IllegalStateException    se a votação ainda não foi encerrada
+     */
+    public ResultadoApuracao apurar(String autor) {
+        validarAutor(autor);
+        EstadoVotacao anterior = estado;
+        ResultadoApuracao resultado = estado.apurar(this);
+        if (estado != anterior) {
+            auditoria.registrar(autor, TipoEvento.APURADA, resultadoDetalhado().situacao());
+        }
+        return resultado;
+    }
+
+    /**
+     * Cria o 2º turno desta votação, com {@value #AUTOR_SISTEMA} como autor.
+     *
+     * @return a nova votação, em rascunho
+     * @throws IllegalStateException se a apuração não indicar 2º turno ou se ele já foi criado
+     * @see #criarSegundoTurno(String)
+     */
+    public Votacao criarSegundoTurno() {
+        return criarSegundoTurno(AUTOR_SISTEMA);
+    }
+
+    /**
+     * Cria o 2º turno (história #21; "Aguardando 2º turno → novo turno" no diagrama de estados).
+     * Só existe quando esta votação está apurada e o resultado é
+     * {@link ResultadoApuracao.SegundoTurno}, e só pode ser criado uma vez.
+     *
+     * <p>A nova votação tem a pergunta com o sufixo " (2º turno)", a mesma descrição, o mesmo
+     * eleitorado, o mesmo sigilo e o mesmo relógio; as opções são os dois colocados, na ordem do
+     * resultado; a regra é {@link MaioriaSimples}; não tem período (o organizador define, se
+     * quiser, abrindo e encerrando manualmente) e começa em rascunho, com urna nova. O evento
+     * {@link TipoEvento#SEGUNDO_TURNO_CRIADO}, com o id da nova votação, fica na auditoria desta.</p>
+     *
+     * @param autor quem criou o 2º turno
+     * @return a nova votação, com {@link #turno()} igual ao desta mais um
+     * @throws IllegalArgumentException se o autor for vazio
+     * @throws IllegalStateException    se a apuração não indicar 2º turno ou se ele já foi criado
+     */
+    public Votacao criarSegundoTurno(String autor) {
+        validarAutor(autor);
+        ResultadoApuracao.SegundoTurno colocados = estado.resultado()
+                .filter(ResultadoApuracao.SegundoTurno.class::isInstance)
+                .map(ResultadoApuracao.SegundoTurno.class::cast)
+                .orElseThrow(() -> new IllegalStateException(
+                        "segundo turno so existe quando a apuracao indica segundo turno"));
+        if (segundoTurnoId != null) {
+            throw new IllegalStateException("segundo turno ja foi criado");
+        }
+        Builder builder = nova()
+                .pergunta(pergunta + SUFIXO_SEGUNDO_TURNO)
+                .descricao(descricao)
+                .opcoes(List.of(colocados.primeiroColocado(), colocados.segundoColocado()))
+                .regra(new MaioriaSimples())
+                .eleitorado(eleitorado)
+                .sigilo(urna.sigilo())
+                .relogio(relogio)
+                .criadaPor(autor);
+        builder.turno = turno + 1;
+        builder.turnoAnteriorId = id;
+        Votacao segundoTurno = builder.build();
+        segundoTurnoId = segundoTurno.id();
+        auditoria.registrar(autor, TipoEvento.SEGUNDO_TURNO_CRIADO, segundoTurno.id());
+        return segundoTurno;
     }
 
     /**
@@ -327,6 +476,49 @@ public final class Votacao {
         return urna.votoDe(eleitorId);
     }
 
+    /**
+     * Turno desta votação.
+     *
+     * @return 1 na votação original, 2 no 2º turno criado por {@link #criarSegundoTurno()}
+     */
+    public int turno() {
+        return turno;
+    }
+
+    /**
+     * Votação de que este turno saiu (rastreabilidade do 2º turno).
+     *
+     * @return o id da votação anterior, ou vazio no 1º turno
+     */
+    public Optional<String> turnoAnteriorId() {
+        return Optional.ofNullable(turnoAnteriorId);
+    }
+
+    /**
+     * Trilha de auditoria da votação (RNF-07), sem o conteúdo de nenhum voto (RNF-01).
+     *
+     * @return cópia imutável dos eventos, em ordem cronológica
+     */
+    public List<EventoAuditoria> auditoria() {
+        return auditoria.eventos();
+    }
+
+    /**
+     * Abre a votação porque o início do período chegou; chamado pelo estado rascunho.
+     */
+    void abrirPeloRelogio() {
+        estado.abrir(this);
+        auditoria.registrar(AUTOR_SISTEMA, TipoEvento.ABERTA, "inicio do periodo");
+    }
+
+    /**
+     * Encerra a votação porque o fim do período chegou; chamado pelo estado aberta.
+     */
+    void encerrarPeloRelogio() {
+        estado.encerrar(this);
+        auditoria.registrar(AUTOR_SISTEMA, TipoEvento.ENCERRADA, "fim do periodo");
+    }
+
     boolean periodoComecou() {
         return periodo != null && !periodo.naoComecou(relogio.instant());
     }
@@ -367,6 +559,9 @@ public final class Votacao {
         private Sigilo sigilo = Sigilo.SECRETO;
         private PeriodoVotacao periodo;
         private Clock relogio = Clock.systemUTC();
+        private String autor = AUTOR_SISTEMA;
+        private int turno = 1;
+        private String turnoAnteriorId;
 
         private Builder() {
         }
@@ -476,6 +671,18 @@ public final class Votacao {
          */
         public Builder relogio(Clock relogio) {
             this.relogio = relogio;
+            return this;
+        }
+
+        /**
+         * Define quem criou a votação, registrado na auditoria (opcional; o padrão é
+         * {@value Votacao#AUTOR_SISTEMA}, RNF-07).
+         *
+         * @param autor quem criou a votação; não vazio
+         * @return este builder
+         */
+        public Builder criadaPor(String autor) {
+            this.autor = autor;
             return this;
         }
 

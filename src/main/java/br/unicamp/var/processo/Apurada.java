@@ -3,6 +3,7 @@ package br.unicamp.var.processo;
 import br.unicamp.var.apuracao.ContagemVotos;
 import br.unicamp.var.apuracao2turno.ResultadoApuracao;
 import br.unicamp.var.resultado.ResultadoDetalhado;
+import java.util.Optional;
 
 /**
  * Votação já apurada: guarda o resultado e a contagem usada na apuração, que
@@ -31,5 +32,10 @@ final class Apurada implements EstadoVotacao {
     @Override
     public ResultadoDetalhado resultadoDetalhado(Votacao votacao) {
         return detalhado;
+    }
+
+    @Override
+    public Optional<ResultadoApuracao> resultado() {
+        return Optional.of(resultado);
     }
 }
