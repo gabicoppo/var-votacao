@@ -84,3 +84,29 @@ jobs:
           name: jacoco-report
           path: target/site/jacoco
           if-no-files-found: warn
+
+  # Testes de ponta a ponta no navegador (Playwright + Chromium). Nao e check obrigatorio por enquanto.
+  e2e:
+    name: e2e
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+          cache: maven
+      - name: Instalar o Chromium do Playwright
+        run: >
+          mvn -B -ntp -Pe2e test-compile exec:java -Dexec.classpathScope=test
+          -Dexec.mainClass=com.microsoft.playwright.CLI -Dexec.args="install --with-deps chromium"
+      - name: Testes E2E
+        run: mvn -B -ntp verify -Pe2e
+      - name: Publicar screenshots dos cenarios
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-screenshots
+          path: target/e2e-screenshots
+          if-no-files-found: warn
