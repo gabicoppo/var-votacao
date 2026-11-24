@@ -45,4 +45,15 @@ public final class MaioriaAbsoluta implements RegraApuracao {
         }
         return resultado;
     }
+
+    /**
+     * Descrição da regra em pt-BR, dizendo se há segundo turno.
+     *
+     * @return texto legível da maioria absoluta
+     */
+    @Override
+    public String descricao() {
+        String complemento = segundoTurnoHabilitado ? "com 2º turno entre os dois mais votados" : "sem 2º turno";
+        return "Maioria absoluta: mais da metade dos votos válidos, " + complemento + ".";
+    }
 }

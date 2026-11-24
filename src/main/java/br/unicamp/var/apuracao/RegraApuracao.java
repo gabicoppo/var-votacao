@@ -23,4 +23,18 @@ public interface RegraApuracao {
      * @return o resultado da apuração
      */
     ResultadoApuracao apurar(ContagemVotos contagem);
+
+    /**
+     * Descrição da regra em pt-BR, para o organizador e o eleitor entenderem
+     * como a votação será apurada (história #21; usada na tela de configuração
+     * e no relatório de apuração, história #31).
+     *
+     * <p>O padrão serve para regras criadas por lambda; as regras do VAR
+     * sobrescrevem este método.</p>
+     *
+     * @return texto legível da regra
+     */
+    default String descricao() {
+        return "Regra personalizada";
+    }
 }
