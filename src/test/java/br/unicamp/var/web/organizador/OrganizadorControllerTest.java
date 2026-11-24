@@ -301,7 +301,7 @@ class OrganizadorControllerTest {
             String html = pagina("/organizador/votacoes/" + votacaoEm("apurada", Sigilo.SECRETO, "Verde"));
 
             assertEquals(false, html.contains(">Escolha<"));
-            assertEquals(false, html.contains("<td>Verde</td>"));
+            assertEquals(false, html.contains(">Verde</td>"));
         }
 
         @Test
@@ -309,7 +309,7 @@ class OrganizadorControllerTest {
         void identificadaComEscolha() throws Exception {
             String html = pagina("/organizador/votacoes/" + votacaoEm("encerrada", Sigilo.IDENTIFICADO, "Verde"));
 
-            assertEquals(true, html.contains(">Escolha<") && html.contains("<td>Verde</td>"));
+            assertEquals(true, html.contains(">Escolha<") && html.contains(">Verde</td>"));
         }
 
         @Test

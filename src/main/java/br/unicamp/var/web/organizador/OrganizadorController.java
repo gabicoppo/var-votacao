@@ -18,8 +18,10 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 /**
  * Telas do organizador: painel, nova votação, códigos de acesso e gestão da votação
@@ -141,8 +143,77 @@ public class OrganizadorController {
      */
     @GetMapping("/votacoes/{id}")
     public String gestao(@PathVariable("id") String id, Model model) {
-        model.addAttribute("votacao", gestao.detalhe(id));
-        return "organizador/gestao";
+        return telaGestao(id, gestao.formularioRegra(id), Map.of(), model);
+    }
+
+    /**
+     * Ids de quem já votou, para a lista de presença ao vivo. Nunca inclui a escolha (RNF-01).
+     *
+     * @param id id da votação
+     * @return {@code {votaram: [...]}}
+     */
+    @GetMapping("/votacoes/{id}/presenca.json")
+    @ResponseBody
+    public PresencaJson presenca(@PathVariable("id") String id) {
+        return new PresencaJson(gestao.quemVotou(id));
+    }
+
+    /**
+     * Descrição da regra montada com os campos do formulário, para o resumo ao vivo.
+     *
+     * @param formulario campos da regra ({@code tipoRegra}, {@code segundoTurno}, {@code quorum}...)
+     * @return {@code {descricao}}
+     */
+    @GetMapping("/votacoes/descricao-regra")
+    @ResponseBody
+    public DescricaoRegraJson descricaoRegra(@ModelAttribute FormularioVotacao formulario) {
+        return new DescricaoRegraJson(ConversorFormularioVotacao.descricaoRegra(formulario));
+    }
+
+    /**
+     * Troca a regra de uma votação em rascunho (RNF-07).
+     *
+     * @param id         id da votação
+     * @param formulario campos da regra
+     * @param usuario    organizador logado
+     * @param model      modelo da view, se houver erro nos campos
+     * @param redirect   atributos flash
+     * @return redirecionamento para a gestão, ou a gestão com os erros da regra
+     */
+    @PostMapping("/votacoes/{id}/regra")
+    public String alterarRegra(@PathVariable("id") String id, @ModelAttribute FormularioVotacao formulario,
+                               @AuthenticationPrincipal UserDetails usuario, Model model,
+                               RedirectAttributes redirect) {
+        List<ErroCampo> erros;
+        try {
+            erros = gestao.alterarRegra(id, formulario, usuario.getUsername());
+        } catch (OperacaoRecusadaException e) {
+            redirect.addFlashAttribute(ALERTA, Alerta.erro(e.getMessage()));
+            return REDIRECT_GESTAO + id;
+        }
+        if (!erros.isEmpty()) {
+            Map<String, String> porCampo = new LinkedHashMap<>();
+            erros.forEach(erro -> porCampo.putIfAbsent(erro.campo(), erro.mensagem()));
+            model.addAttribute(ALERTA, Alerta.erro("Corrija a regra para salvar a alteração."));
+            return telaGestao(id, formulario, porCampo, model);
+        }
+        redirect.addFlashAttribute(ALERTA, Alerta.sucesso("Regra alterada: "
+                + ConversorFormularioVotacao.descricaoRegra(formulario)));
+        return REDIRECT_GESTAO + id;
+    }
+
+    /**
+     * Formulário de nova votação preenchido com a configuração desta, sem período.
+     *
+     * @param id    id da votação copiada
+     * @param model modelo da view
+     * @return a view do formulário
+     */
+    @GetMapping("/votacoes/{id}/duplicar")
+    public String duplicar(@PathVariable("id") String id, Model model) {
+        FormularioVotacao copia = gestao.duplicar(id);
+        model.addAttribute(ALERTA, Alerta.info("Cópia pronta. Revise os dados, defina o período se quiser e crie."));
+        return formulario(copia, Map.of(), model);
     }
 
     /**
@@ -224,6 +295,19 @@ public class OrganizadorController {
     @ResponseStatus(HttpStatus.NOT_FOUND)
     public String naoEncontrada() {
         return "organizador/nao-encontrada";
+    }
+
+    private String telaGestao(String id, FormularioVotacao formularioRegra, Map<String, String> errosRegra,
+                              Model model) {
+        DetalheVotacao detalhe = gestao.detalhe(id);
+        model.addAttribute("votacao", detalhe);
+        model.addAttribute("formularioRegra", formularioRegra);
+        model.addAttribute("erros", errosRegra);
+        model.addAttribute("descricaoRegra", ConversorFormularioVotacao.descricaoRegra(formularioRegra));
+        String link = ServletUriComponentsBuilder.fromCurrentContextPath()
+                .path("/eleitor/votacoes/{id}").buildAndExpand(id).toUriString();
+        model.addAttribute("convite", ConviteVotacao.de(detalhe.pergunta(), detalhe.configuracao().fim(), link));
+        return "organizador/gestao";
     }
 
     private String formulario(FormularioVotacao formulario, Map<String, String> erros, Model model) {
