@@ -58,7 +58,7 @@
 
 /* ---------- Ficha da votação ---------- */
 .ficha { display: grid; gap: .75rem; margin: 0; }
-.ficha > div { display: grid; gap: .15rem; }
+.ficha > div { display: grid; gap: .15rem; align-content: start; }
 .ficha dt { font-size: .8rem; font-weight: 800; text-transform: uppercase; letter-spacing: .05em; color: var(--texto-suave); }
 .ficha dd { margin: 0; }
 @media (min-width: 760px) {
@@ -87,7 +87,7 @@
   background: radial-gradient(circle at 50% 40%, rgba(18, 81, 61, .97), rgba(6, 30, 22, .98));
   animation: var-some .35s ease 1.35s forwards;
 }
-.var-revisao-pulada { animation: var-some .2s ease forwards; }
+.var-revisao.var-revisao-pulada { animation: var-some .2s ease 0s forwards; }
 .var-monitor { width: min(340px, 86vw); text-align: center; color: #fff; }
 .var-tela {
   position: relative; aspect-ratio: 16 / 10; overflow: hidden; border-radius: 12px;
@@ -136,6 +136,122 @@
   .var-revisao { display: none; }
 }
 
+/* ---------- Selo do eleitor, 2º turno e 1º turno ---------- */
+.selo-eleitor {
+  display: inline-flex; align-items: center; gap: .4rem; margin: .75rem 0 0; padding: .35rem .85rem;
+  border-radius: 999px; font-weight: 800; font-size: .95rem;
+}
+.selo-contado { background: var(--campo-suave); color: #14593A; }
+.selo-pendente { background: var(--cinza-100); color: var(--cinza-600); }
+.chamada-segundo-turno {
+  display: flex; flex-direction: column; gap: .75rem; align-items: flex-start; margin: -.5rem 0 1.5rem;
+  border-left: 6px solid var(--cartao-amarelo);
+}
+.chamada-segundo-turno p { margin: 0; }
+@media (min-width: 640px) {
+  .chamada-segundo-turno { flex-direction: row; align-items: center; justify-content: space-between; }
+  .chamada-segundo-turno .btn { flex-shrink: 0; }
+}
+.primeiro-turno .selo-situacao {
+  display: inline-block; margin: 0 0 1rem; padding: .35rem .85rem; border-radius: var(--raio-pequeno); color: #fff;
+  font-weight: 800;
+}
+.primeiro-turno .selo-situacao.situacao-segundo-turno { color: var(--texto); }
+.barras-compactas .barra { margin-bottom: .6rem; }
+.barras-compactas .barra-rotulo { font-size: .9rem; margin-bottom: .2rem; }
+.barras-compactas .barra-trilho { height: 8px; }
+
+/* ---------- Telão (projeção na apresentação) ---------- */
+body.telao {
+  min-height: 100vh; color: #fff; font-size: clamp(1rem, 1.5vw, 1.6rem);
+  background-color: var(--gramado);
+  background-image:
+    radial-gradient(ellipse at 50% -10%, rgba(255, 255, 255, .12), transparent 60%),
+    repeating-linear-gradient(90deg, rgba(255, 255, 255, .03) 0 8vw, transparent 8vw 16vw);
+}
+.telao-topo { display: flex; flex-wrap: wrap; align-items: center; gap: .75rem 1.25rem; padding: 1rem clamp(1rem, 3vw, 3rem); }
+.telao-marca { display: inline-flex; align-items: center; gap: .6rem; font-weight: 800; font-size: 1.4rem; letter-spacing: .06em; }
+.telao-ao-vivo {
+  display: inline-flex; align-items: center; gap: .5rem; padding: .3rem .9rem; border-radius: 999px;
+  background: var(--cartao-vermelho); font-weight: 800; font-size: .85rem; letter-spacing: .1em; text-transform: uppercase;
+}
+.telao-ao-vivo::before {
+  content: ""; width: .6rem; height: .6rem; border-radius: 50%; background: #fff; animation: telao-pisca 1.2s ease-in-out infinite;
+}
+.telao-ao-vivo[hidden], .telao-dica[hidden] { display: none; }
+.telao-dica { margin-left: auto; color: rgba(255, 255, 255, .6); font-size: .9rem; }
+.telao-sair {
+  margin-left: auto; display: inline-flex; align-items: center; min-height: var(--toque); padding: .3rem 1rem;
+  border: 1px solid rgba(255, 255, 255, .35); border-radius: var(--raio-pequeno); color: rgba(255, 255, 255, .85);
+  text-decoration: none; font-weight: 700; font-size: .95rem;
+}
+.telao-sair:hover, .telao-sair:focus-visible { color: #fff; background: rgba(255, 255, 255, .1); }
+.telao-dica:not([hidden]) + .telao-sair { margin-left: 0; }
+.telao-conteudo {
+  max-width: 1500px; margin: 0 auto; padding: 1vh clamp(1rem, 4vw, 4rem) 6vh;
+  display: flex; flex-direction: column; gap: 2.5vh;
+}
+.telao-rotulo {
+  margin: 0; color: var(--cartao-amarelo); font-weight: 800; letter-spacing: .14em; text-transform: uppercase;
+  font-size: clamp(.9rem, 1.4vw, 1.5rem);
+}
+.telao-pergunta { margin: 0; font-size: clamp(2rem, 4.6vw, 5rem); line-height: 1.05; max-width: 26ch; }
+.telao-andamento { display: flex; flex-direction: column; gap: 2.5vh; margin-top: 2vh; }
+.telao-numeros { display: flex; flex-wrap: wrap; align-items: baseline; gap: .1em .4em; margin: 0; }
+.telao-votantes {
+  display: inline-block; font-size: clamp(5rem, 17vw, 17rem); font-weight: 800; line-height: .9;
+  color: var(--cartao-amarelo); font-variant-numeric: tabular-nums; transform-origin: left bottom;
+}
+.telao-de { font-size: clamp(1.6rem, 3.8vw, 4rem); font-weight: 800; }
+.telao-barra { margin: 0; }
+.telao-barra .barra-trilho, .telao-barras .barra-trilho { height: clamp(18px, 3vh, 40px); background: rgba(255, 255, 255, .15); }
+.telao-barra .barra-preenchimento { background: linear-gradient(90deg, var(--campo), var(--cartao-amarelo)); transition: width .8s ease; }
+.telao-percentual { margin: 0; font-size: clamp(1.2rem, 2.4vw, 2.6rem); color: rgba(255, 255, 255, .85); }
+.telao-percentual span { font-weight: 800; color: #fff; }
+.telao-contagem { margin: 0; font-size: clamp(1.3rem, 3vw, 3.2rem); font-weight: 700; }
+.telao-contagem time { color: var(--cartao-amarelo); font-variant-numeric: tabular-nums; font-weight: 800; }
+.telao-aviso { margin: 0; font-size: clamp(1.6rem, 3.4vw, 3.6rem); font-weight: 800; color: var(--cartao-amarelo); }
+.pulou { animation: telao-pula .7s cubic-bezier(.2, 1.6, .4, 1); }
+@keyframes telao-pula {
+  0% { transform: scale(1); }
+  35% { transform: scale(1.18); color: #fff; text-shadow: 0 0 40px rgba(245, 197, 24, .9); }
+  100% { transform: scale(1); }
+}
+@keyframes telao-pisca { 50% { opacity: .25; } }
+
+/* Resultado revelado no telão: faixa primeiro, depois as barras, da última para a primeira */
+.telao .faixa-situacao {
+  margin: 0; padding: 3vh 3vw; font-size: clamp(1rem, 1.8vw, 1.9rem);
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, .22), 0 18px 40px rgba(0, 0, 0, .35);
+}
+.telao .faixa-titulo { font-size: clamp(2.2rem, 5.6vw, 6rem); max-width: none; }
+.telao .faixa-explicacao { font-size: clamp(1.05rem, 1.9vw, 2rem); max-width: none; }
+.telao .faixa-situacao::after { width: 30vh; height: 30vh; margin-top: -15vh; right: -8vh; }
+.revelacao-telao { --atraso: 2.9s; display: flex; flex-direction: column; gap: 3vh; }
+.revelacao-telao.revelacao-imediata { --atraso: 0s; }
+.telao-barras .barra { margin: 0 0 2.2vh; }
+.telao-barras .barra-rotulo { font-size: clamp(1.2rem, 2.5vw, 2.6rem); }
+.telao .barra-colocacao, .telao .barra-numeros small { color: rgba(255, 255, 255, .7); }
+.telao .barra-vencedor .barra-rotulo > :first-child::after { color: var(--cartao-amarelo); }
+.revelacao-telao .barra-preenchimento { animation-delay: calc(var(--atraso) + .9s + var(--ordem, 0) * .7s); }
+.revelacao-telao .barra-rotulo { animation: telao-aparece .4s ease both; animation-delay: calc(var(--atraso) + .9s + var(--ordem, 0) * .7s); }
+.telao-rodape-resultado { margin: 0; color: rgba(255, 255, 255, .75); font-size: clamp(1rem, 1.6vw, 1.7rem); }
+@keyframes telao-aparece { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+
+/* Momento VAR no telão: maior, mais longo e com a decisão no fim */
+.var-revisao-telao { animation-delay: 2.6s; }
+.var-revisao-telao .var-monitor { width: min(820px, 82vw); }
+.var-revisao-telao .var-texto { position: relative; font-size: clamp(2rem, 4.4vw, 4.6rem); }
+.var-revisao-telao .var-pular { font-size: clamp(.9rem, 1.3vw, 1.3rem); }
+.var-texto-final { display: none; }
+.var-revisao-telao .var-texto-revisao { animation: telao-some-texto .2s ease 1.9s forwards; }
+.var-revisao-telao .var-texto-final {
+  display: block; position: absolute; inset: 0; opacity: 0; color: var(--cartao-amarelo);
+  animation: telao-aparece .35s ease 2s forwards;
+}
+.var-revisao-telao .var-texto-final::before { content: "✓ "; }
+@keyframes telao-some-texto { to { opacity: 0; } }
+
 /* ---------- Relatório (ata) ---------- */
 .relatorio-acoes { justify-content: flex-end; margin-bottom: 1rem; }
 .ata { max-width: 860px; margin: 0 auto; padding: 1.5rem 1.25rem; }
@@ -164,8 +280,24 @@
   .ata { padding: 2.25rem 2.5rem; }
 }
 
+.ata-codigo { margin: 1.25rem 0 0; font-size: .95rem; }
+.ata-codigo .ajuda { display: block; margin-top: .25rem; }
+.ata-codigo code {
+  font-family: var(--fonte-mono); font-weight: 800; letter-spacing: .08em; padding: .15rem .45rem;
+  border-radius: 6px; background: var(--cinza-100);
+}
+.assinaturas { display: none; }
+
 @media print {
   @page { margin: 2cm; }
+  .ata-cabecalho { break-after: avoid; }
+  .ata-texto { orphans: 3; widows: 3; }
+  .ata-codigo { break-inside: avoid; }
+  .ata-codigo code { background: none; padding: 0; }
+  .assinaturas {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 2.5cm 1.5cm; margin-top: 2.5cm; break-inside: avoid;
+  }
+  .assinatura { border-top: 1px solid #000; padding-top: .2cm; text-align: center; font-size: 10pt; }
   .relatorio .ata { max-width: none; padding: 0; border: 0; }
   .ata-cabecalho { border-bottom-color: #000; }
   .ata-sobretitulo, .ata-rodape, .ata-cabecalho .subtitulo { color: #000; }

@@ -183,6 +183,8 @@ class PremiacaoOrganizadorControllerTest {
                             containsString("0</strong> de <strong>2</strong>"),
                             containsString("Abrir premiação"), containsString("data-confirmar"),
                             containsString("Candidatos (3)"),
+                            containsString("href=\"/premiacoes/" + cadastro.id() + "/telao\""),
+                            containsString("tabela tabela-pesos"),
                             not(containsString("Apurar e publicar ranking")))));
         }
 

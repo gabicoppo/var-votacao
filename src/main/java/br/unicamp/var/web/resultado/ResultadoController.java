@@ -18,7 +18,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 /**
- * Telas de resultado, andamento e relatório de uma votação (histórias #29 e #31). Controller fino:
+ * Telas de resultado, telão, andamento e relatório de uma votação (histórias #29 e #31). Controller fino:
  * a lógica fica em {@link ConsultaResultados}.
  */
 @Controller
@@ -52,6 +52,27 @@ public class ResultadoController {
         model.addAttribute("pagina", consulta.pagina(id, usuario.getUsername(), organizador));
         model.addAttribute("organizador", organizador);
         return "resultado/resultado";
+    }
+
+    /**
+     * Modo telão, para projetar na apresentação (só organizador): participação ao vivo enquanto a
+     * votação está aberta e o Momento VAR com a revelação do resultado quando ela é apurada.
+     *
+     * @param id         id da votação
+     * @param usuario    usuário logado
+     * @param requisicao requisição, para saber o papel
+     * @param model      modelo da view
+     * @return a view do telão, que não usa o layout do site
+     * @throws AcessoNegadoException se quem pede não for organizador
+     */
+    @GetMapping("/telao")
+    public String telao(@PathVariable("id") String id, @AuthenticationPrincipal UserDetails usuario,
+                        HttpServletRequest requisicao, Model model) {
+        if (!organizador(requisicao)) {
+            throw new AcessoNegadoException();
+        }
+        model.addAttribute("pagina", consulta.pagina(id, usuario.getUsername(), true));
+        return "resultado/telao";
     }
 
     /**
