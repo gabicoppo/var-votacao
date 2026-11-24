@@ -393,7 +393,8 @@ a.card-link:hover .card-titulo { color: var(--campo-escuro); }
 /* Celular: só o passo ativo mostra o rótulo; os outros ficam só com o número (o texto continua
    acessível a leitores de tela). */
 @media (max-width: 559px) {
-  .passos li:not(.ativo) { flex: 0 0 auto; width: 2.25rem; padding-left: 2.25rem; font-size: 0; }
+  /* min-width, e não largura fixa: se uma área mostrar o rótulo (ex.: embaixo do círculo), o item cresce */
+  .passos li:not(.ativo) { flex: 0 1 auto; min-width: 2.25rem; padding-left: 2.25rem; font-size: 0; }
   .passos li::before { font-size: 1rem; }
   .passos li.ativo { flex: 1 1 auto; }
 }
