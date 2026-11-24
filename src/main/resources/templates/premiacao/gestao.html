@@ -23,6 +23,8 @@
          th:href="@{/premiacoes/{id}/ranking(id=${p.id()})}">Ver ranking</a>
       <a class="btn btn-secundario" th:unless="${p.apurada()}"
          th:href="@{/premiacoes/{id}/ranking(id=${p.id()})}">Acompanhar</a>
+      <a class="btn btn-secundario" target="_blank" rel="noopener"
+         th:href="@{/premiacoes/{id}/telao(id=${p.id()})}">Abrir no telão <span class="sr-only">(nova aba)</span></a>
     </div>
   </div>
 
@@ -32,19 +34,22 @@
     <h2 class="card-titulo" id="titulo-acoes" th:text="${p.apurada()} ? 'Ranking publicado' : 'Próximo passo'">
       Próximo passo</h2>
     <form th:if="${p.podeAbrir()}" method="post" th:action="@{/organizador/premiacoes/{id}/abrir(id=${p.id()})}"
-          data-confirmar="Abrir a premiação? Depois disso candidatos, grupos e pesos não mudam mais.">
+          data-confirmar="Depois de abrir, candidatos, grupos e pesos não mudam mais."
+          data-confirmar-titulo="Abrir a premiação?" data-confirmar-botao="Abrir premiação">
       <p class="ajuda">A premiação está em rascunho. Confira candidatos, grupos e pesos: depois de abrir, eles ficam
         fixos (RNF-07).</p>
       <button type="submit" class="btn btn-primario">Abrir premiação</button>
     </form>
     <form th:if="${p.podeEncerrar()}" method="post"
           th:action="@{/organizador/premiacoes/{id}/encerrar(id=${p.id()})}"
-          data-confirmar="Encerrar a premiação? Nenhuma cédula será aceita depois disso.">
+          data-confirmar="Nenhuma cédula será aceita depois disso." data-confirmar-titulo="Encerrar a premiação?"
+          data-confirmar-botao="Encerrar premiação" data-confirmar-perigo>
       <p class="ajuda">A premiação está recebendo cédulas. O ranking só aparece depois de encerrar e apurar.</p>
       <button type="submit" class="btn btn-perigo">Encerrar premiação</button>
     </form>
     <form th:if="${p.podeApurar()}" method="post" th:action="@{/organizador/premiacoes/{id}/apurar(id=${p.id()})}"
-          data-confirmar="Apurar a premiação? O ranking será publicado para os eleitores.">
+          data-confirmar="O ranking será publicado para os eleitores aptos." data-confirmar-titulo="Apurar a premiação?"
+          data-confirmar-botao="Apurar e publicar">
       <p class="ajuda">Premiação encerrada. Apure para publicar o ranking com o pódio e os critérios.</p>
       <button type="submit" class="btn btn-primario">Apurar e publicar ranking</button>
     </form>
@@ -77,7 +82,7 @@
     <section class="secao" aria-labelledby="titulo-grupos">
       <h2 class="secao-titulo" id="titulo-grupos">Grupos e pesos</h2>
       <div class="tabela-rolagem">
-        <table class="tabela">
+        <table class="tabela tabela-pesos">
           <caption class="sr-only">Grupos de votantes e pesos</caption>
           <thead><tr><th scope="col">Grupo</th><th scope="col" class="numero">Peso</th></tr></thead>
           <tbody>

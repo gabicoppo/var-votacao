@@ -20,6 +20,8 @@
     </div>
     <div class="acoes nao-imprimir">
       <button type="button" class="btn btn-secundario" data-imprimir th:if="${r.apurada()}">Imprimir</button>
+      <a class="btn btn-secundario" th:if="${organizador}" target="_blank" rel="noopener"
+         th:href="@{/premiacoes/{id}/telao(id=${r.id()})}">Abrir no telão <span class="sr-only">(nova aba)</span></a>
       <a class="btn btn-secundario" th:if="${organizador}"
          th:href="@{/organizador/premiacoes/{id}(id=${r.id()})}">Voltar à gestão</a>
     </div>
@@ -94,7 +96,25 @@
 
     <section class="secao" aria-labelledby="titulo-ranking">
       <h2 class="secao-titulo" id="titulo-ranking">Ranking completo</h2>
-      <div class="tabela-rolagem">
+      <!--/* Celular: um cartão por candidato. A partir de 640 px: a tabela. */-->
+      <ol class="ranking-cartoes" aria-label="Ranking completo">
+        <li th:each="l : ${r.linhas()}" class="card cartao-ranking"
+            th:classappend="${l.colocacao() <= 3} ? 'cartao-ranking-podio'">
+          <span class="cartao-ranking-colocacao" th:text="|${l.colocacao()}º|">1º</span>
+          <p class="cartao-ranking-nome" th:text="${l.candidato()}">Rafa Lima</p>
+          <span class="cartao-ranking-pontos"><span th:text="${l.pontos()}">23</span><small>pontos</small></span>
+          <p class="cartao-ranking-detalhes">
+            <span>1º: <strong th:text="${l.primeiros()}">3</strong></span>
+            <span>2º: <strong th:text="${l.segundos()}">1</strong></span>
+            <span>3º: <strong th:text="${l.terceiros()}">0</strong></span>
+          </p>
+          <p class="cartao-ranking-detalhes">
+            <span th:each="g, i : ${r.grupos()}"><th:block th:text="|${g}:|">Jornalistas:</th:block>
+              <strong th:text="${l.pontosPorGrupo()[i.index]}">10</strong></span>
+          </p>
+        </li>
+      </ol>
+      <div class="tabela-rolagem ranking-tabela">
         <table class="tabela tabela-ranking">
           <caption class="sr-only">Ranking completo, com os pontos dados por cada grupo de votantes</caption>
           <thead>
@@ -121,8 +141,8 @@
           </tbody>
         </table>
       </div>
-      <p class="ajuda">As colunas de cada grupo mostram quantos pontos o grupo deu ao candidato; a soma delas é o
-        total. Assim dá para conferir o resultado.</p>
+      <p class="ajuda">Os pontos de cada grupo mostram quanto ele deu ao candidato; a soma deles é o total. Assim
+        dá para conferir o resultado.</p>
     </section>
 
     <section class="secao" aria-labelledby="titulo-criterios">

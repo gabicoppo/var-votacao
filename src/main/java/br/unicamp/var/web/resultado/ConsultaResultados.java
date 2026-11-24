@@ -11,7 +11,7 @@ import java.util.Optional;
 import org.springframework.stereotype.Service;
 
 /**
- * Consultas das telas de resultado, andamento e relatório de uma votação (histórias #29 e #31).
+ * Consultas das telas de resultado, telão, andamento e relatório de uma votação (histórias #29, #21 e #31).
  *
  * <p>Regras de acesso: o organizador vê sempre; o eleitor só se estiver na lista de aptos da votação
  * ({@link AcessoNegadoException}); id inexistente dá {@link RecursoNaoEncontradoException}.</p>
@@ -53,20 +53,25 @@ public class ConsultaResultados {
      */
     public PaginaResultado pagina(String id, String usuario, boolean organizador) {
         Votacao votacao = buscar(id, usuario, organizador);
-        PaginaResultado pagina;
+        CabecalhoVotacao cabecalho;
+        Andamento andamento = null;
+        GraficoResultado grafico = null;
+        VotoDoEleitor voto = VotoDoEleitor.NAO_SE_APLICA;
         synchronized (votacao) {
-            CabecalhoVotacao cabecalho = cabecalho(votacao);
+            cabecalho = cabecalho(votacao);
             if (APURADA.equals(votacao.status())) {
-                ResultadoApuracao apuracao = votacao.apurar();
-                pagina = new PaginaResultado(cabecalho, null,
-                        GraficoResultado.de(votacao.resultadoDetalhado(), apuracao, votacao.regra()), null);
+                grafico = grafico(votacao);
             } else {
-                pagina = new PaginaResultado(cabecalho, andamento(votacao), null, null);
+                andamento = andamento(votacao);
+            }
+            if (!organizador) {
+                voto = votacao.jaVotou(usuario) ? VotoDoEleitor.CONTADO : VotoDoEleitor.NAO_VOTOU;
             }
         }
-        return segundoTurnoDe(id)
-                .map(segundo -> new PaginaResultado(pagina.votacao(), pagina.andamento(), pagina.grafico(), segundo))
-                .orElse(pagina);
+        PrimeiroTurno primeiroTurno = cabecalho.turnoAnteriorId() == null ? null
+                : primeiroTurno(cabecalho.turnoAnteriorId());
+        return new PaginaResultado(cabecalho, andamento, grafico, segundoTurnoDe(id).orElse(null), primeiroTurno,
+                voto);
     }
 
     /**
@@ -102,8 +107,9 @@ public class ConsultaResultados {
             if (!APURADA.equals(votacao.status())) {
                 return Optional.empty();
             }
-            return Optional.of(new PaginaRelatorio(votacao.id(), votacao.pergunta(),
-                    RelatorioApuracao.de(votacao).formatar(), relogio.instant()));
+            String texto = RelatorioApuracao.de(votacao).formatar();
+            return Optional.of(new PaginaRelatorio(votacao.id(), votacao.pergunta(), texto,
+                    CodigoVerificacao.de(texto), relogio.instant()));
         }
     }
 
@@ -130,6 +136,27 @@ public class ConsultaResultados {
     private Andamento andamento(Votacao votacao) {
         String tempo = TempoRestante.texto(votacao.status(), votacao.periodo().orElse(null), relogio.instant());
         return Andamento.de(votacao.status(), votacao.totalVotantes(), votacao.eleitorado().total(), tempo);
+    }
+
+    /** Só é chamado com a votação apurada: aí {@code apurar()} devolve o resultado guardado. */
+    private static GraficoResultado grafico(Votacao votacao) {
+        ResultadoApuracao apuracao = votacao.apurar();
+        return GraficoResultado.de(votacao.resultadoDetalhado(), apuracao, votacao.regra());
+    }
+
+    /** Resumo do 1º turno, se ele existir e estiver apurado; trava só a votação anterior. */
+    private PrimeiroTurno primeiroTurno(String anteriorId) {
+        Optional<Votacao> anterior = votacoes.buscar(anteriorId);
+        if (anterior.isEmpty()) {
+            return null;
+        }
+        Votacao votacao = anterior.get();
+        synchronized (votacao) {
+            if (!APURADA.equals(votacao.status())) {
+                return null;
+            }
+            return new PrimeiroTurno(votacao.id(), votacao.pergunta(), grafico(votacao));
+        }
     }
 
     /** Procura o 2º turno criado a partir desta votação; trava uma votação por vez. */
