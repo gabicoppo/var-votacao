@@ -3,6 +3,7 @@ package br.unicamp.var.web.comum;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestBuilders.formLogin;
 import static org.springframework.security.test.web.servlet.response.SecurityMockMvcResultMatchers.authenticated;
 import static org.springframework.security.test.web.servlet.response.SecurityMockMvcResultMatchers.unauthenticated;
+import static org.hamcrest.Matchers.allOf;
 import static org.hamcrest.Matchers.containsString;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
@@ -44,7 +45,8 @@ class LoginDemonstracaoTest {
     @Test
     @DisplayName("o login mostra o quadro de contas de demonstração")
     void quadroDeContas() throws Exception {
-        mvc.perform(get("/login")).andExpect(content().string(containsString("Contas de demonstração")));
+        mvc.perform(get("/login")).andExpect(content().string(allOf(
+                containsString("Contas de demonstração"), containsString("<code>var2026</code>"))));
     }
 
     @Test
