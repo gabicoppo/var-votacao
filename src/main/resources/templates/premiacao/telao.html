@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<!--/*
+  Modo telão da premiação (só organizador). Mesmo estilo do telão da votação. Aberta: cédulas ao vivo.
+  Apurada: pódio revelado do 3º ao 1º lugar; cada degrau só aparece quando quem apresenta aperta
+  espaço ou clica em "Próximo" (resultado.js). Sem JavaScript, o pódio aparece inteiro.
+*/-->
+<html lang="pt-BR" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0B3D2E">
+  <title th:text="|Telão: ${pagina.titulo()} · VAR|">Telão · VAR</title>
+  <link rel="icon" type="image/svg+xml" th:href="@{/favicon.svg}">
+  <link rel="stylesheet" th:href="@{/css/var.css}">
+  <link rel="stylesheet" th:href="@{/css/resultado.css}">
+  <link rel="stylesheet" th:href="@{/css/premiacao.css}">
+  <noscript th:unless="${pagina.apurada()}"><meta http-equiv="refresh" content="15"></noscript>
+</head>
+<body class="telao" th:with="r=${pagina}">
+  <header class="telao-topo">
+    <span class="telao-marca"><img th:src="@{/img/logo-var.svg}" alt="" width="40" height="45"> VAR</span>
+    <span class="telao-ao-vivo" data-ao-vivo th:unless="${r.apurada()}">Ao vivo</span>
+    <span class="telao-dica" data-dica-tela-cheia hidden>F: tela cheia</span>
+    <a class="telao-sair" th:href="@{/premiacoes/{id}/ranking(id=${r.id()})}">Sair do telão</a>
+  </header>
+
+  <main class="telao-conteudo" data-telao="premiacao"
+        th:attr="data-andamento-url=@{/premiacoes/{id}/andamento.json(id=${r.id()})},data-status=${r.andamento().status()}">
+    <p class="telao-rotulo">Premiação Top 3</p>
+    <h1 class="telao-pergunta" th:text="${r.titulo()}">Craque do Campeonato</h1>
+
+    <section th:unless="${r.apurada()}" class="telao-andamento" th:with="a=${r.andamento()}"
+             aria-label="Cédulas recebidas">
+      <p class="telao-numeros" aria-live="polite" aria-atomic="true">
+        <span class="telao-votantes" data-votantes th:text="${a.votantes()}">5</span>
+        <span class="telao-de">de <span data-aptos th:text="${a.aptos()}">12</span> cédulas recebidas</span>
+      </p>
+      <div class="barra telao-barra">
+        <div class="barra-trilho" role="progressbar" aria-label="Participação" aria-valuemin="0"
+             aria-valuemax="100" th:attr="aria-valuenow=${a.largura()}">
+          <div class="barra-preenchimento" data-barra th:style="|width: ${a.largura()}%|"></div>
+        </div>
+      </div>
+      <p class="telao-percentual"><span data-participacao th:text="${a.participacaoTexto()}">42%</span> de
+        participação</p>
+      <p class="telao-aviso" th:if="${a.status() == 'encerrada'}">Premiação encerrada. Aguardando apuração…</p>
+      <p class="telao-aviso" th:if="${a.status() == 'rascunho'}">A premiação ainda não foi aberta.</p>
+    </section>
+
+    <section th:if="${r.apurada()}" class="telao-podio" data-podio-telao aria-label="Pódio">
+      <div class="vazio telao-vazio" th:if="${r.podio().vazio()}">
+        <strong>Nenhuma cédula registrada</strong>
+        <p>Sem votos, não há pódio.</p>
+      </div>
+      <ol class="podio" th:unless="${r.podio().vazio()}" aria-live="polite">
+        <li th:each="l, i : ${r.podio().lugares()}" class="degrau" th:classappend="|degrau-${l.medalha()}|" th:attr="data-passo=${i.size - i.index - 1}">
+          <div class="degrau-nomes">
+            <p class="degrau-candidato" th:each="c : ${l.candidatos()}">
+              <strong th:text="${c.nome()}">Rafa Lima</strong>
+              <span th:text="${c.pontosTexto()}">23 pts</span>
+            </p>
+          </div>
+          <div class="degrau-bloco">
+            <span class="degrau-numero" th:text="|${l.colocacao()}º|">1º</span>
+          </div>
+        </li>
+      </ol>
+      <div class="telao-podio-controles">
+        <button type="button" class="btn btn-grande telao-proximo" data-proximo hidden>Revelar o próximo lugar</button>
+        <a class="btn btn-primario btn-grande telao-ranking" data-ranking-completo
+           th:href="@{/premiacoes/{id}/ranking(id=${r.id()})}">Ver ranking completo</a>
+      </div>
+    </section>
+  </main>
+
+  <script th:src="@{/js/resultado.js}" defer></script>
+</body>
+</html>

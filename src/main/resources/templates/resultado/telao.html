@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<!--/*
+  Modo telão da votação (só organizador), para projetar na apresentação. Não usa o layout do site:
+  tela cheia, fundo verde-gramado, tipografia para ler a 5 m. Sem JavaScript, a página se recarrega
+  a cada 15 s (noscript). Com JavaScript (resultado.js): polling a cada 5 s, contagem regressiva,
+  tecla F para tela cheia e, quando a votação vira "apurada", o Momento VAR e a revelação do
+  resultado sem recarregar a página (a tela cheia continua).
+*/-->
+<html lang="pt-BR" xmlns:th="http://www.thymeleaf.org">
+<head th:with="v=${pagina.votacao()}">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0B3D2E">
+  <title th:text="|Telão: ${v.pergunta()} · VAR|">Telão · VAR</title>
+  <link rel="icon" type="image/svg+xml" th:href="@{/favicon.svg}">
+  <link rel="stylesheet" th:href="@{/css/var.css}">
+  <link rel="stylesheet" th:href="@{/css/resultado.css}">
+  <noscript th:unless="${pagina.apurada()}"><meta http-equiv="refresh" content="15"></noscript>
+</head>
+<body class="telao" th:with="p=${pagina}, v=${pagina.votacao()}">
+  <header class="telao-topo">
+    <span class="telao-marca"><img th:src="@{/img/logo-var.svg}" alt="" width="40" height="45"> VAR</span>
+    <span class="telao-ao-vivo" data-ao-vivo th:unless="${p.apurada()}">Ao vivo</span>
+    <span class="telao-dica" data-dica-tela-cheia hidden>F: tela cheia</span>
+    <a class="telao-sair" th:href="@{/votacoes/{id}/resultado(id=${v.id()})}">Sair do telão</a>
+  </header>
+
+  <main class="telao-conteudo" data-telao="votacao"
+        th:attr="data-andamento-url=@{/votacoes/{id}/andamento.json(id=${v.id()})},data-status=${v.status()}">
+    <p class="telao-rotulo" th:text="${v.turno() > 1} ? |${v.turno()}º turno| : 'Votação'">Votação</p>
+    <h1 class="telao-pergunta" th:text="${v.pergunta()}">Pergunta da votação</h1>
+
+    <!--/* Antes da apuração: só a participação (RNF-01). */-->
+    <section th:unless="${p.apurada()}" class="telao-andamento" th:with="a=${p.andamento()}"
+             aria-label="Participação">
+      <p class="telao-numeros" aria-live="polite" aria-atomic="true">
+        <span class="telao-votantes" data-votantes th:text="${a.votantes()}">7</span>
+        <span class="telao-de">de <span data-aptos th:text="${a.aptos()}">12</span> votaram</span>
+      </p>
+      <div class="barra telao-barra">
+        <div class="barra-trilho" role="progressbar" aria-label="Participação" aria-valuemin="0"
+             aria-valuemax="100" th:attr="aria-valuenow=${a.largura()}">
+          <div class="barra-preenchimento" data-barra th:style="|width: ${a.largura()}%|"></div>
+        </div>
+      </div>
+      <p class="telao-percentual"><span data-participacao th:text="${a.participacaoTexto()}">58,3%</span> de
+        participação</p>
+      <p class="telao-contagem" th:if="${v.status() == 'aberta' and v.fim() != null}">
+        Encerra em <time data-contagem th:attr="data-fim=${v.fim().toEpochMilli()},datetime=${v.fim()}"
+                         th:text="${#strings.substringAfter(a.tempoTexto(), 'Encerra em ')}">2 dias e 3 h</time>
+      </p>
+      <p class="telao-aviso" th:if="${v.status() == 'encerrada'}">Votação encerrada. Aguardando apuração…</p>
+      <p class="telao-aviso" th:if="${v.status() == 'rascunho'}">A votação ainda não foi aberta.</p>
+    </section>
+
+    <!--/* Apurada: Momento VAR em tela cheia e revelação em sequência. */-->
+    <th:block th:if="${p.apurada()}" th:with="g=${p.grafico()}">
+      <div class="var-revisao var-revisao-telao" data-var-revisao data-sempre aria-hidden="true">
+        <div class="var-monitor">
+          <div class="var-tela">
+            <span class="var-gramado"></span>
+            <span class="var-linha-impedimento"></span>
+            <span class="var-bola"></span>
+            <span class="var-varredura"></span>
+            <span class="var-rec">REC</span>
+          </div>
+          <p class="var-texto"><span class="var-texto-revisao">Revisão do VAR<span class="var-reticencias">…</span></span>
+            <span class="var-texto-final">Decisão confirmada</span></p>
+          <p class="var-pular">Clique ou Esc para pular</p>
+        </div>
+      </div>
+
+      <div class="revelacao revelacao-telao" data-revelacao>
+        <section class="faixa-situacao" th:classappend="${g.tipoSituacao().classeCss()}" role="status">
+          <p class="faixa-rotulo">Resultado oficial</p>
+          <h2 class="faixa-titulo" th:text="${g.titulo()}">Chapa A venceu</h2>
+          <p class="faixa-explicacao" th:text="${g.explicacao()}">Explicação</p>
+        </section>
+        <div class="telao-barras">
+          <div th:each="b, i : ${g.barras()}" class="barra" th:classappend="${b.destaque().classeCss()}"
+               th:style="|--ordem: ${i.size - i.index - 1}|">
+            <div class="barra-rotulo">
+              <span><span class="barra-colocacao" th:text="|${b.colocacao()}º|">1º</span>
+                <span th:text="${b.opcao()}">Opção</span></span>
+              <span class="barra-numeros"><strong th:text="${b.percentualTexto()}">66,7%</strong>
+                <small th:text="${b.votosTexto()}">6 votos</small></span>
+            </div>
+            <div class="barra-trilho">
+              <div class="barra-preenchimento" th:style="|width: ${b.largura()}%|"></div>
+            </div>
+          </div>
+        </div>
+        <p class="telao-rodape-resultado"
+           th:text="|${g.votantes()} votos válidos · ${g.aptos()} aptos · participação de ${g.participacaoTexto()}|">
+          9 votos válidos · 12 aptos · participação de 75%</p>
+      </div>
+    </th:block>
+  </main>
+
+  <script th:src="@{/js/resultado.js}" defer></script>
+</body>
+</html>

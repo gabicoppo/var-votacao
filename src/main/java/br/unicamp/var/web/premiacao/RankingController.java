@@ -55,6 +55,27 @@ public class RankingController {
     }
 
     /**
+     * Modo telão da premiação (só organizador): cédulas ao vivo enquanto aberta e, depois de apurada,
+     * a revelação do pódio do 3º ao 1º lugar, no ritmo de quem apresenta.
+     *
+     * @param id         id da premiação
+     * @param usuario    usuário logado
+     * @param requisicao requisição, para saber o papel
+     * @param model      modelo da view
+     * @return a view do telão, que não usa o layout do site
+     * @throws AcessoNegadoException se quem pede não for organizador
+     */
+    @GetMapping("/telao")
+    public String telao(@PathVariable("id") String id, @AuthenticationPrincipal UserDetails usuario,
+                        HttpServletRequest requisicao, Model model) {
+        if (!organizador(requisicao)) {
+            throw new AcessoNegadoException();
+        }
+        model.addAttribute("pagina", consulta.pagina(id, usuario.getUsername(), true));
+        return "premiacao/telao";
+    }
+
+    /**
      * Participação atual em JSON, para a página de andamento se atualizar sozinha.
      *
      * @param id         id da premiação
