@@ -1,5 +1,7 @@
 package br.unicamp.var.processo;
 
+import br.unicamp.var.urna.Comprovante;
+
 /**
  * Votação recebendo votos: a configuração está congelada e a votação pode ser encerrada.
  */
@@ -10,9 +12,12 @@ final class Aberta implements EstadoVotacao {
         return "aberta";
     }
 
+    /**
+     * Deposita o voto na urna, que confere se o eleitor é apto e se ainda não votou.
+     */
     @Override
-    public void registrarVoto(Votacao votacao, String opcao) {
-        votacao.contabilizarVoto(opcao);
+    public Comprovante registrarVoto(Votacao votacao, String eleitorId, String opcao) {
+        return votacao.depositarNaUrna(eleitorId, opcao);
     }
 
     @Override

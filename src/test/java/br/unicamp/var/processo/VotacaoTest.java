@@ -1,9 +1,11 @@
 package br.unicamp.var.processo;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import br.unicamp.var.apuracao.ContagemVotos;
 import br.unicamp.var.apuracao.MaioriaAbsoluta;
@@ -11,8 +13,12 @@ import br.unicamp.var.apuracao.MaioriaSimples;
 import br.unicamp.var.apuracao.RegraApuracao;
 import br.unicamp.var.apuracao2turno.ResultadoApuracao;
 import br.unicamp.var.cadastro.CadastroCandidatos;
+import br.unicamp.var.eleitorado.Eleitor;
+import br.unicamp.var.eleitorado.Eleitorado;
 import br.unicamp.var.resultado.LinhaResultado;
 import br.unicamp.var.resultado.ResultadoDetalhado;
+import br.unicamp.var.urna.Comprovante;
+import br.unicamp.var.urna.Sigilo;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
@@ -24,6 +30,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.IntStream;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -45,12 +52,26 @@ class VotacaoTest {
                 .pergunta("Quem deve ser o presidente?")
                 .opcoes(OPCOES)
                 .regra(SEM_VENCEDOR)
-                .totalAptos(10)
+                .eleitorado(eleitorado(10))
                 .relogio(RELOGIO_FIXO);
     }
 
+    /** Eleitorado com os eleitores "e1" a "eN". */
+    private static Eleitorado eleitorado(int total) {
+        return Eleitorado.de(IntStream.rangeClosed(1, total)
+                .mapToObj(i -> new Eleitor("e" + i, "Eleitor " + i))
+                .toList());
+    }
+
+    /** Registra um voto por eleitor, na ordem: o 1º voto é de "e1", o 2º de "e2" e assim por diante. */
+    private static void votar(Votacao votacao, String... opcoes) {
+        for (int i = 0; i < opcoes.length; i++) {
+            votacao.registrarVoto("e" + (i + 1), opcoes[i]);
+        }
+    }
+
     private static Votacao novaVotacao(RegraApuracao regra, int totalAptos) {
-        return configuracaoValida().regra(regra).totalAptos(totalAptos).build();
+        return configuracaoValida().regra(regra).eleitorado(eleitorado(totalAptos)).build();
     }
 
     private static Votacao rascunho() {
@@ -118,7 +139,7 @@ class VotacaoTest {
         void registrarVotoEmVotacaoAbertaMantemAberta() {
             Votacao votacao = aberta();
 
-            votacao.registrarVoto("Gabriela");
+            votacao.registrarVoto("e1", "Gabriela");
 
             assertEquals("aberta", votacao.status());
         }
@@ -132,7 +153,7 @@ class VotacaoTest {
         @DisplayName("não registra voto")
         void naoRegistraVotoEmVotacaoRascunho() {
             IllegalStateException erro = assertThrows(IllegalStateException.class,
-                    () -> rascunho().registrarVoto("Gabriela"));
+                    () -> rascunho().registrarVoto("e1", "Gabriela"));
 
             assertEquals("não é possível registrar voto em votação rascunho", erro.getMessage());
         }
@@ -192,7 +213,7 @@ class VotacaoTest {
         @Test
         @DisplayName("não registra voto")
         void naoRegistraVotoDepoisDeEncerrada() {
-            assertThrows(IllegalStateException.class, () -> encerrada().registrarVoto("Gabriela"));
+            assertThrows(IllegalStateException.class, () -> encerrada().registrarVoto("e1", "Gabriela"));
         }
 
         @Test
@@ -221,7 +242,7 @@ class VotacaoTest {
         @Test
         @DisplayName("não registra voto")
         void naoRegistraVotoDepoisDeApurada() {
-            assertThrows(IllegalStateException.class, () -> apurada().registrarVoto("Gabriela"));
+            assertThrows(IllegalStateException.class, () -> apurada().registrarVoto("e1", "Gabriela"));
         }
 
         @Test
@@ -320,16 +341,22 @@ class VotacaoTest {
             assertThrows(IllegalArgumentException.class, () -> configuracaoValida().regra(null).build());
         }
 
+        /** Com a lista de aptos, zero aptos é um eleitorado vazio, que nem chega a ser criado. */
         @Test
-        @DisplayName("rejeita total de aptos zero")
+        @DisplayName("rejeita total de aptos zero (eleitorado vazio)")
         void rejeitaTotalAptosZero() {
-            assertThrows(IllegalArgumentException.class, () -> configuracaoValida().totalAptos(0).build());
+            assertThrows(IllegalArgumentException.class,
+                    () -> configuracaoValida().eleitorado(Eleitorado.de(List.of())).build());
         }
 
+        /** Não existe total negativo com lista de aptos; o caso inválido que resta é não ter eleitorado. */
         @Test
-        @DisplayName("rejeita total de aptos negativo")
+        @DisplayName("rejeita total de aptos inválido (eleitorado nulo)")
         void rejeitaTotalAptosNegativo() {
-            assertThrows(IllegalArgumentException.class, () -> configuracaoValida().totalAptos(-1).build());
+            IllegalArgumentException erro = assertThrows(IllegalArgumentException.class,
+                    () -> configuracaoValida().eleitorado(null).build());
+
+            assertEquals("eleitorado nao pode ser nulo", erro.getMessage());
         }
     }
 
@@ -340,7 +367,8 @@ class VotacaoTest {
         @Test
         @DisplayName("rejeita votação sem pergunta informada")
         void rejeitaSemPergunta() {
-            Votacao.Builder builder = Votacao.nova().opcoes(OPCOES).regra(SEM_VENCEDOR).totalAptos(10);
+            Votacao.Builder builder = Votacao.nova().opcoes(OPCOES).regra(SEM_VENCEDOR)
+                    .eleitorado(eleitorado(10));
 
             IllegalArgumentException erro = assertThrows(IllegalArgumentException.class, builder::build);
 
@@ -350,7 +378,8 @@ class VotacaoTest {
         @Test
         @DisplayName("rejeita votação sem opções informadas")
         void rejeitaSemOpcoes() {
-            Votacao.Builder builder = Votacao.nova().pergunta("Pergunta").regra(SEM_VENCEDOR).totalAptos(10);
+            Votacao.Builder builder = Votacao.nova().pergunta("Pergunta").regra(SEM_VENCEDOR)
+                    .eleitorado(eleitorado(10));
 
             assertThrows(IllegalArgumentException.class, builder::build);
         }
@@ -358,7 +387,8 @@ class VotacaoTest {
         @Test
         @DisplayName("rejeita votação sem regra informada")
         void rejeitaSemRegra() {
-            Votacao.Builder builder = Votacao.nova().pergunta("Pergunta").opcoes(OPCOES).totalAptos(10);
+            Votacao.Builder builder = Votacao.nova().pergunta("Pergunta").opcoes(OPCOES)
+                    .eleitorado(eleitorado(10));
 
             IllegalArgumentException erro = assertThrows(IllegalArgumentException.class, builder::build);
 
@@ -366,13 +396,13 @@ class VotacaoTest {
         }
 
         @Test
-        @DisplayName("rejeita votação sem total de aptos informado")
-        void rejeitaSemTotalAptos() {
+        @DisplayName("rejeita votação sem eleitorado informado")
+        void rejeitaSemEleitorado() {
             Votacao.Builder builder = Votacao.nova().pergunta("Pergunta").opcoes(OPCOES).regra(SEM_VENCEDOR);
 
             IllegalArgumentException erro = assertThrows(IllegalArgumentException.class, builder::build);
 
-            assertEquals("totalAptos deve ser maior que zero", erro.getMessage());
+            assertEquals("eleitorado nao pode ser nulo", erro.getMessage());
         }
 
         @Test
@@ -625,7 +655,7 @@ class VotacaoTest {
         void votoDentroDoPeriodoAbreEAceita() {
             Votacao votacao = comPeriodo(fixoEm(inicio));
 
-            votacao.registrarVoto("Gabriela");
+            votacao.registrarVoto("e1", "Gabriela");
 
             assertEquals("aberta", votacao.status());
         }
@@ -637,7 +667,7 @@ class VotacaoTest {
             votacao.abrir();
 
             IllegalStateException erro = assertThrows(IllegalStateException.class,
-                    () -> votacao.registrarVoto("Gabriela"));
+                    () -> votacao.registrarVoto("e1", "Gabriela"));
 
             assertEquals("voto fora do periodo de votacao", erro.getMessage());
         }
@@ -648,7 +678,7 @@ class VotacaoTest {
             Votacao votacao = comPeriodo(fixoEm(inicio.minusNanos(1)));
 
             IllegalStateException erro = assertThrows(IllegalStateException.class,
-                    () -> votacao.registrarVoto("Gabriela"));
+                    () -> votacao.registrarVoto("e1", "Gabriela"));
 
             assertEquals("voto fora do periodo de votacao", erro.getMessage());
             assertEquals("rascunho", votacao.status());
@@ -659,11 +689,11 @@ class VotacaoTest {
         void rejeitaVotoNoFimEEncerra() {
             RelogioAjustavel relogio = new RelogioAjustavel(inicio);
             Votacao votacao = comPeriodo(relogio);
-            votacao.registrarVoto("Gabriela");
+            votacao.registrarVoto("e1", "Gabriela");
 
             relogio.ajustarPara(fim);
             IllegalStateException erro = assertThrows(IllegalStateException.class,
-                    () -> votacao.registrarVoto("Fabricio"));
+                    () -> votacao.registrarVoto("e2", "Fabricio"));
 
             assertEquals("voto fora do periodo de votacao", erro.getMessage());
             assertEquals("encerrada", votacao.status());
@@ -677,18 +707,22 @@ class VotacaoTest {
         @Test
         @DisplayName("não registra voto em opção inexistente")
         void naoRegistraVotoEmOpcaoInexistente() {
-            assertThrows(IllegalArgumentException.class, () -> aberta().registrarVoto("Joao"));
+            assertThrows(IllegalArgumentException.class, () -> aberta().registrarVoto("e1", "Joao"));
         }
 
+        /**
+         * Com a lista de aptos, o limite de votos deixou de ser um contador: com 2 aptos, quem
+         * passaria do total é um terceiro eleitor, que não está na lista (RNF-05).
+         */
         @Test
         @DisplayName("não registra voto além do total de aptos")
         void naoRegistraVotoAlemDoTotalDeAptos() {
             Votacao votacao = novaVotacao(SEM_VENCEDOR, 2);
             votacao.abrir();
-            votacao.registrarVoto("Gabriela");
-            votacao.registrarVoto("Fabricio");
+            votar(votacao, "Gabriela", "Fabricio");
 
-            assertThrows(IllegalStateException.class, () -> votacao.registrarVoto("Juliana"));
+            assertThrows(IllegalArgumentException.class, () -> votacao.registrarVoto("e3", "Juliana"));
+            assertEquals(2, votacao.totalVotantes());
         }
     }
 
@@ -706,9 +740,7 @@ class VotacaoTest {
                 return esperado;
             }, 10);
             votacao.abrir();
-            votacao.registrarVoto("Gabriela");
-            votacao.registrarVoto("Gabriela");
-            votacao.registrarVoto("Juliana");
+            votar(votacao, "Gabriela", "Gabriela", "Juliana");
             votacao.encerrar();
 
             ResultadoApuracao resultado = votacao.apurar();
@@ -770,9 +802,7 @@ class VotacaoTest {
                     .regra(new MaioriaSimples())
                     .build();
             votacao.abrir();
-            for (String voto : List.of("Aprovar", "Aprovar", "Rejeitar")) {
-                votacao.registrarVoto(voto);
-            }
+            votar(votacao, "Aprovar", "Aprovar", "Rejeitar");
             votacao.encerrar();
 
             assertEquals(List.of("Aprovar", "Rejeitar"), votacao.opcoes());
@@ -785,9 +815,7 @@ class VotacaoTest {
         void votacaoDePontaAPontaComMaioriaAbsoluta() {
             Votacao votacao = novaVotacao(new MaioriaAbsoluta(true), 10);
             votacao.abrir();
-            for (String voto : List.of("Gabriela", "Gabriela", "Gabriela", "Fabricio", "Fabricio", "Juliana")) {
-                votacao.registrarVoto(voto);
-            }
+            votar(votacao, "Gabriela", "Gabriela", "Gabriela", "Fabricio", "Fabricio", "Juliana");
             votacao.encerrar();
 
             // Gabriela tem exatamente 50% dos votos válidos: não é maioria absoluta
@@ -829,9 +857,7 @@ class VotacaoTest {
         void mostraResultadoDaApuracao() {
             Votacao votacao = novaVotacao(new MaioriaAbsoluta(true), 10);
             votacao.abrir();
-            for (String voto : List.of("Juliana", "Gabriela", "Gabriela", "Gabriela")) {
-                votacao.registrarVoto(voto);
-            }
+            votar(votacao, "Juliana", "Gabriela", "Gabriela", "Gabriela");
             votacao.encerrar();
             votacao.apurar();
 
@@ -853,6 +879,143 @@ class VotacaoTest {
             Votacao votacao = apurada();
 
             assertSame(votacao.resultadoDetalhado(), votacao.resultadoDetalhado());
+        }
+    }
+
+    @Nested
+    @DisplayName("Eleitores, sigilo e comprovante (#22, #24, #26, #28)")
+    class EleitoresSigiloEComprovante {
+
+        @Test
+        @DisplayName("expõe a lista de aptos configurada")
+        void expoeEleitorado() {
+            Eleitorado eleitorado = rascunho().eleitorado();
+
+            assertEquals(10, eleitorado.total());
+            assertEquals(eleitorado(10).listar(), eleitorado.listar());
+        }
+
+        @Test
+        @DisplayName("rejeita voto de eleitor fora da lista de aptos (RNF-05)")
+        void rejeitaEleitorNaoApto() {
+            Votacao votacao = aberta();
+
+            IllegalArgumentException erro = assertThrows(IllegalArgumentException.class,
+                    () -> votacao.registrarVoto("intruso", "Gabriela"));
+
+            assertEquals("eleitor nao apto: intruso", erro.getMessage());
+            assertEquals(0, votacao.totalVotantes());
+        }
+
+        @Test
+        @DisplayName("rejeita o segundo voto do mesmo eleitor (RNF-02)")
+        void rejeitaVotoDuplicado() {
+            Votacao votacao = aberta();
+            votacao.registrarVoto("e1", "Gabriela");
+
+            IllegalStateException erro = assertThrows(IllegalStateException.class,
+                    () -> votacao.registrarVoto("e1", "Fabricio"));
+
+            assertEquals("eleitor ja votou: e1", erro.getMessage());
+            assertEquals(1, votacao.totalVotantes());
+        }
+
+        @Test
+        @DisplayName("sabe quem já votou e quantos votaram")
+        void sabeQuemJaVotou() {
+            Votacao votacao = aberta();
+            votar(votacao, "Gabriela", "Juliana");
+
+            assertTrue(votacao.jaVotou("e1"));
+            assertTrue(votacao.jaVotou("e2"));
+            assertFalse(votacao.jaVotou("e3"));
+            assertEquals(2, votacao.totalVotantes());
+        }
+
+        @Test
+        @DisplayName("o comprovante emitido é válido nesta votação e datado pelo relógio")
+        void comprovanteEmitidoEhValido() {
+            Votacao votacao = aberta();
+
+            Comprovante comprovante = votacao.registrarVoto("e1", "Gabriela");
+
+            assertTrue(votacao.comprovanteValido(comprovante.codigo()));
+            assertEquals(CRIACAO, comprovante.registradoEm());
+        }
+
+        @Test
+        @DisplayName("comprovante que não foi emitido por esta votação é inválido")
+        void comprovanteDeOutraVotacaoEhInvalido() {
+            Comprovante deOutra = aberta().registrarVoto("e1", "Gabriela");
+
+            assertFalse(aberta().comprovanteValido(deOutra.codigo()));
+            assertFalse(aberta().comprovanteValido(null));
+        }
+
+        @Test
+        @DisplayName("sem sigilo informado, a votação é secreta")
+        void sigiloPadraoEhSecreto() {
+            assertEquals(Sigilo.SECRETO, rascunho().sigilo());
+        }
+
+        @Test
+        @DisplayName("rejeita sigilo nulo")
+        void rejeitaSigiloNulo() {
+            IllegalArgumentException erro = assertThrows(IllegalArgumentException.class,
+                    () -> configuracaoValida().sigilo(null).build());
+
+            assertEquals("sigilo nao pode ser nulo", erro.getMessage());
+        }
+
+        @Test
+        @DisplayName("em votação secreta, não revela o voto de ninguém")
+        void votoDeEmVotacaoSecretaLancaExcecao() {
+            Votacao votacao = aberta();
+            votacao.registrarVoto("e1", "Gabriela");
+
+            assertThrows(IllegalStateException.class, () -> votacao.votoDe("e1"));
+        }
+
+        @Test
+        @DisplayName("em votação identificada (voto nominal), mostra o voto de cada eleitor")
+        void votoDeEmVotacaoIdentificada() {
+            Votacao votacao = configuracaoValida().sigilo(Sigilo.IDENTIFICADO).build();
+            votacao.abrir();
+            votar(votacao, "Gabriela", "Juliana");
+
+            assertEquals(Sigilo.IDENTIFICADO, votacao.sigilo());
+            assertEquals(Optional.of("Gabriela"), votacao.votoDe("e1"));
+            assertEquals(Optional.of("Juliana"), votacao.votoDe("e2"));
+            assertEquals(Optional.empty(), votacao.votoDe("e3"));
+        }
+
+        @Test
+        @DisplayName("fluxo completo: criar, abrir, 3 eleitores votam, encerrar, apurar e ver o resultado")
+        void fluxoCompleto() {
+            Votacao votacao = Votacao.nova()
+                    .pergunta("Quem deve ser o presidente?")
+                    .descricao("Eleição 2027–2029")
+                    .opcoes(List.of("Chapa A", "Chapa B"))
+                    .regra(new MaioriaAbsoluta(true))
+                    .eleitorado(Eleitorado.importar("e1;Ana\ne2;Bruno\ne3;Carla\ne4;Davi"))
+                    .relogio(RELOGIO_FIXO)
+                    .build();
+
+            votacao.abrir();
+            Comprovante comprovante = votacao.registrarVoto("e1", "Chapa A");
+            votacao.registrarVoto("e2", "Chapa A");
+            votacao.registrarVoto("e3", "Chapa B");
+            votacao.encerrar();
+            ResultadoApuracao apuracao = votacao.apurar();
+            ResultadoDetalhado resultado = votacao.resultadoDetalhado();
+
+            assertEquals(new ResultadoApuracao.Eleito("Chapa A"), apuracao);
+            assertTrue(votacao.comprovanteValido(comprovante.codigo()));
+            assertEquals(List.of(2, 1), resultado.linhas().stream().map(LinhaResultado::votos).toList());
+            assertEquals(3, resultado.totalVotantes());
+            assertEquals(4, resultado.totalAptos());
+            assertEquals(75.0, resultado.participacao(), 0.001);
+            assertEquals("Eleito: Chapa A", resultado.situacao());
         }
     }
 }

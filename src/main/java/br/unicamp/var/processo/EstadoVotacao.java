@@ -3,6 +3,7 @@ package br.unicamp.var.processo;
 import br.unicamp.var.apuracao.RegraApuracao;
 import br.unicamp.var.apuracao2turno.ResultadoApuracao;
 import br.unicamp.var.resultado.ResultadoDetalhado;
+import br.unicamp.var.urna.Comprovante;
 
 /**
  * Estado do ciclo de vida de uma {@link Votacao} (padrão State).
@@ -39,7 +40,7 @@ interface EstadoVotacao {
         throw operacaoProibida("abrir");
     }
 
-    default void registrarVoto(Votacao votacao, String opcao) {
+    default Comprovante registrarVoto(Votacao votacao, String eleitorId, String opcao) {
         throw operacaoProibida("registrar voto");
     }
 

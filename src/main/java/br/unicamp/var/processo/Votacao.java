@@ -5,14 +5,16 @@ import br.unicamp.var.apuracao.RegraApuracao;
 import br.unicamp.var.apuracao2turno.ResultadoApuracao;
 import br.unicamp.var.cadastro.CadastroCandidatos;
 import br.unicamp.var.cadastro.Candidato;
+import br.unicamp.var.eleitorado.Eleitorado;
 import br.unicamp.var.resultado.ResultadoDetalhado;
+import br.unicamp.var.urna.Comprovante;
+import br.unicamp.var.urna.Sigilo;
+import br.unicamp.var.urna.Urna;
 import java.time.Clock;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -36,7 +38,13 @@ import java.util.UUID;
  * {@link #atualizarPeloRelogio()}, chamado também antes de cada voto. Abrir e encerrar
  * manualmente continuam permitidos (o organizador pode encerrar antes do fim).</p>
  *
- * <p>Fora do escopo: controle de eleitor único, sigilo, persistência e interface.</p>
+ * <p>Os votos ficam numa {@link Urna} criada com o {@link Eleitorado} e o {@link Sigilo} da
+ * votação (histórias #22, #24, #26 e #28): só eleitores aptos votam (RNF-05), cada um uma única
+ * vez (RNF-02), e cada voto gera um {@link Comprovante}. A contagem por opção só sai da votação
+ * na apuração, porque resultado parcial influencia o voto. Pergunta, opções, eleitorado, sigilo
+ * e período são fixados na criação, e a regra só muda em rascunho (RNF-07).</p>
+ *
+ * <p>Fora do escopo: persistência e interface.</p>
  */
 public final class Votacao {
 
@@ -46,11 +54,11 @@ public final class Votacao {
     private final String pergunta;
     private final String descricao;
     private final List<String> opcoes;
-    private final int totalAptos;
+    private final Eleitorado eleitorado;
+    private final Urna urna;
     private final PeriodoVotacao periodo;
     private final Clock relogio;
     private final Instant criadaEm;
-    private final Map<String, Integer> votos = new LinkedHashMap<>();
     private RegraApuracao regra;
     private EstadoVotacao estado = new Rascunho();
 
@@ -64,8 +72,11 @@ public final class Votacao {
         if (builder.regra == null) {
             throw new IllegalArgumentException("regra de apuracao nao pode ser nula");
         }
-        if (builder.totalAptos <= 0) {
-            throw new IllegalArgumentException("totalAptos deve ser maior que zero");
+        if (builder.eleitorado == null) {
+            throw new IllegalArgumentException("eleitorado nao pode ser nulo");
+        }
+        if (builder.sigilo == null) {
+            throw new IllegalArgumentException("sigilo nao pode ser nulo");
         }
         if (builder.relogio == null) {
             throw new IllegalArgumentException("relogio nao pode ser nulo");
@@ -75,19 +86,17 @@ public final class Votacao {
         this.descricao = builder.descricao.strip();
         this.opcoes = validarOpcoes(builder.opcoes);
         this.regra = builder.regra;
-        this.totalAptos = builder.totalAptos;
+        this.eleitorado = builder.eleitorado;
         this.periodo = builder.periodo;
         this.relogio = builder.relogio;
         this.criadaEm = relogio.instant();
-        for (String opcao : this.opcoes) {
-            votos.put(opcao, 0);
-        }
+        this.urna = new Urna(eleitorado, opcoes, builder.sigilo, relogio);
     }
 
     /**
      * Começa a configuração de uma nova votação.
      *
-     * @return builder vazio; pergunta, opções, regra e total de aptos são obrigatórios
+     * @return builder vazio; pergunta, opções, regra e eleitorado são obrigatórios
      */
     public static Builder nova() {
         return new Builder();
@@ -138,20 +147,23 @@ public final class Votacao {
     }
 
     /**
-     * Registra um voto. Só é permitido com a votação aberta e, se houver período, dentro dele
-     * (história #20). Antes de registrar, aplica o relógio ({@link #atualizarPeloRelogio()}).
+     * Registra o voto de um eleitor na urna (história #26). Só é permitido com a votação aberta
+     * e, se houver período, dentro dele (história #20). Antes de registrar, aplica o relógio
+     * ({@link #atualizarPeloRelogio()}).
      *
-     * @param opcao opção escolhida
-     * @throws IllegalArgumentException se a opção não existir
+     * @param eleitorId identificador do eleitor na lista de aptos
+     * @param opcao     opção escolhida
+     * @return o comprovante do voto (história #28)
+     * @throws IllegalArgumentException se o eleitor não for apto (RNF-05) ou a opção não existir
      * @throws IllegalStateException    se o horário estiver fora do período, se a votação não
-     *                                  estiver aberta ou se o número de votos já for igual ao de aptos
+     *                                  estiver aberta ou se o eleitor já votou (RNF-02)
      */
-    public void registrarVoto(String opcao) {
+    public Comprovante registrarVoto(String eleitorId, String opcao) {
         atualizarPeloRelogio();
         if (periodo != null && !periodo.contem(relogio.instant())) {
             throw new IllegalStateException("voto fora do periodo de votacao");
         }
-        estado.registrarVoto(this, opcao);
+        return estado.registrarVoto(this, eleitorId, opcao);
     }
 
     /**
@@ -257,6 +269,64 @@ public final class Votacao {
         return regra;
     }
 
+    /**
+     * Lista de eleitores aptos (história #24).
+     *
+     * @return o eleitorado, que é imutável
+     */
+    public Eleitorado eleitorado() {
+        return Eleitorado.de(eleitorado.listar());
+    }
+
+    /**
+     * Sigilo da votação (história #22).
+     *
+     * @return {@link Sigilo#SECRETO}, a menos que outro tenha sido configurado
+     */
+    public Sigilo sigilo() {
+        return urna.sigilo();
+    }
+
+    /**
+     * Quantos eleitores já votaram. Não revela em quem.
+     *
+     * @return o número de votos registrados
+     */
+    public int totalVotantes() {
+        return urna.totalVotos();
+    }
+
+    /**
+     * Diz se o eleitor já votou (RNF-02).
+     *
+     * @param eleitorId identificador do eleitor
+     * @return {@code true} se há voto registrado desse eleitor
+     */
+    public boolean jaVotou(String eleitorId) {
+        return urna.jaVotou(eleitorId);
+    }
+
+    /**
+     * Confere um comprovante emitido por esta votação (história #28).
+     *
+     * @param codigo código impresso no comprovante
+     * @return {@code true} se o código foi emitido por esta votação
+     */
+    public boolean comprovanteValido(String codigo) {
+        return urna.comprovanteValido(codigo);
+    }
+
+    /**
+     * Voto de um eleitor, só em votação identificada (voto nominal, história #22).
+     *
+     * @param eleitorId identificador do eleitor
+     * @return a opção votada, ou vazio se o eleitor não votou
+     * @throws IllegalStateException se a votação for secreta
+     */
+    public Optional<String> votoDe(String eleitorId) {
+        return urna.votoDe(eleitorId);
+    }
+
     boolean periodoComecou() {
         return periodo != null && !periodo.naoComecou(relogio.instant());
     }
@@ -276,19 +346,12 @@ public final class Votacao {
         this.regra = novaRegra;
     }
 
-    void contabilizarVoto(String opcao) {
-        if (!votos.containsKey(opcao)) {
-            throw new IllegalArgumentException("opcao inexistente: " + opcao);
-        }
-        int totalVotos = votos.values().stream().mapToInt(Integer::intValue).sum();
-        if (totalVotos >= totalAptos) {
-            throw new IllegalStateException("numero de votos ja atingiu o total de aptos");
-        }
-        votos.merge(opcao, 1, Integer::sum);
+    Comprovante depositarNaUrna(String eleitorId, String opcao) {
+        return urna.depositar(eleitorId, opcao);
     }
 
     ContagemVotos contagem() {
-        return new ContagemVotos(votos, totalAptos);
+        return new ContagemVotos(urna.votosPorOpcao(), eleitorado.total());
     }
 
     /**
@@ -300,7 +363,8 @@ public final class Votacao {
         private String descricao = "";
         private List<String> opcoes;
         private RegraApuracao regra;
-        private int totalAptos;
+        private Eleitorado eleitorado;
+        private Sigilo sigilo = Sigilo.SECRETO;
         private PeriodoVotacao periodo;
         private Clock relogio = Clock.systemUTC();
 
@@ -367,13 +431,24 @@ public final class Votacao {
         }
 
         /**
-         * Define o número de pessoas aptas a votar (obrigatório).
+         * Define a lista de eleitores aptos (obrigatória; história #24, RNF-05).
          *
-         * @param totalAptos número maior que zero
+         * @param eleitorado eleitores que podem votar
          * @return este builder
          */
-        public Builder totalAptos(int totalAptos) {
-            this.totalAptos = totalAptos;
+        public Builder eleitorado(Eleitorado eleitorado) {
+            this.eleitorado = eleitorado;
+            return this;
+        }
+
+        /**
+         * Define o sigilo (opcional; o padrão é {@link Sigilo#SECRETO}, história #22).
+         *
+         * @param sigilo secreto ou identificado (voto nominal)
+         * @return este builder
+         */
+        public Builder sigilo(Sigilo sigilo) {
+            this.sigilo = sigilo;
             return this;
         }
 
