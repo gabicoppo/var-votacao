@@ -1,11 +1,13 @@
 package br.unicamp.var.processo;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import br.unicamp.var.apuracao.MaioriaAbsoluta;
 import br.unicamp.var.apuracao.MaioriaSimples;
+import br.unicamp.var.apuracao.RegraApuracao;
 import br.unicamp.var.auditoria.EventoAuditoria;
 import br.unicamp.var.auditoria.TipoEvento;
 import br.unicamp.var.eleitorado.Eleitor;
@@ -218,7 +220,9 @@ final class VotacaoAuditoriaTest {
             Votacao votacao = configuracao().build();
 
             assertThrows(IllegalArgumentException.class, () -> votacao.abrir(" "));
+            RegraApuracao regraOriginal = votacao.regra();
             assertThrows(IllegalArgumentException.class, () -> votacao.alterarRegra(new MaioriaSimples(), null));
+            assertSame(regraOriginal, votacao.regra());
             assertEquals("rascunho", votacao.status());
 
             votacao.abrir();

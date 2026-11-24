@@ -104,7 +104,6 @@ public final class Votacao {
         if (builder.relogio == null) {
             throw new IllegalArgumentException("relogio nao pode ser nulo");
         }
-        validarAutor(builder.autor);
         this.id = UUID.randomUUID().toString();
         this.pergunta = builder.pergunta.strip();
         this.descricao = builder.descricao.strip();
@@ -119,6 +118,7 @@ public final class Votacao {
         this.turnoAnteriorId = builder.turnoAnteriorId;
         this.auditoria = new RegistroAuditoria(relogio);
         String detalhe = turnoAnteriorId == null ? "" : "2º turno da votacao " + turnoAnteriorId;
+        // O EventoAuditoria recusa autor vazio com IllegalArgumentException, então build() falha.
         auditoria.registrar(builder.autor, TipoEvento.CRIADA, detalhe);
     }
 

@@ -134,6 +134,14 @@ final class VotacaoSegundoTurnoTest {
         }
 
         @Test
+        @DisplayName("autor vazio é entrada inválida mesmo antes da apuração (IllegalArgumentException)")
+        void autorVazioAntesDaApuracaoLancaIllegalArgument() {
+            Votacao votacao = eleicao().build();
+
+            assertThrows(IllegalArgumentException.class, () -> votacao.criarSegundoTurno(null));
+        }
+
+        @Test
         @DisplayName("autor vazio é recusado sem criar o 2º turno")
         void autorVazioLancaExcecao() {
             Votacao primeiroTurno = apuradaComSegundoTurno(eleicao());
