@@ -107,8 +107,9 @@ public class ConsultaResultados {
             if (!APURADA.equals(votacao.status())) {
                 return Optional.empty();
             }
-            return Optional.of(new PaginaRelatorio(votacao.id(), votacao.pergunta(),
-                    RelatorioApuracao.de(votacao).formatar(), relogio.instant()));
+            String texto = RelatorioApuracao.de(votacao).formatar();
+            return Optional.of(new PaginaRelatorio(votacao.id(), votacao.pergunta(), texto,
+                    CodigoVerificacao.de(texto), relogio.instant()));
         }
     }
 

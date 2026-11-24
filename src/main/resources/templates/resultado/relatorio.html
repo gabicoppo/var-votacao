@@ -22,6 +22,13 @@
       </div>
     </header>
     <pre class="ata-texto" th:text="${r.texto()}">Relatório de apuração</pre>
+    <p class="ata-codigo">Código de verificação do relatório: <code th:text="${r.codigo()}">3F9A-1C2B-7D8E</code>
+      <span class="ajuda">Para conferir uma cópia impressa, abra este relatório no sistema e compare os códigos.</span>
+    </p>
+    <div class="assinaturas" aria-hidden="true">
+      <p class="assinatura">Presidente da comissão eleitoral</p>
+      <p class="assinatura">Secretário(a)</p>
+    </div>
     <footer class="ata-rodape">
       <span>Emitido em <time th:text="${@fmt.dataHora(r.emitidoEm())}">24/11/2026 18:30</time> (horário de Brasília)</span>
       <span>Votação <code th:text="${r.id()}">id</code></span>
