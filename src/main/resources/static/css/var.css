@@ -116,8 +116,11 @@ hr { border: 0; border-top: 1px solid var(--cinza-200); margin: 1.5rem 0; }
 .navegacao a[aria-current="page"] { box-shadow: inset 0 -3px 0 var(--cartao-amarelo); }
 .usuario { margin-left: auto; display: flex; align-items: center; gap: .5rem; }
 .usuario-nome {
-  max-width: 9.5rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  display: none; max-width: 9.5rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
   font-size: .9rem; color: rgba(255, 255, 255, .9);
+}
+@media (min-width: 480px) {
+  .usuario-nome { display: inline; }
 }
 .usuario form { margin: 0; }
 .topo .btn-sair, .topo .btn-entrar {
@@ -324,6 +327,17 @@ a.card-link:hover .card-titulo { color: var(--campo-escuro); }
 }
 .metrica-rotulo { display: block; font-size: .85rem; color: var(--texto-suave); margin-top: .25rem; }
 
+/* Com 3 métricas, 3 colunas compactas já no celular (nada de item órfão); com 4, fica 2 × 2. */
+@media (min-width: 340px) {
+  .metricas:has(> .metrica:nth-child(3):last-child), .metricas-3 {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+@media (min-width: 340px) and (max-width: 559px) {
+  .metricas:has(> .metrica:nth-child(3):last-child) .metrica, .metricas-3 .metrica { padding: .75rem .6rem; }
+  .metricas:has(> .metrica:nth-child(3):last-child) .metrica-valor, .metricas-3 .metrica-valor { font-size: 1.35rem; }
+  .metricas:has(> .metrica:nth-child(3):last-child) .metrica-rotulo, .metricas-3 .metrica-rotulo { font-size: .78rem; }
+}
 @media (min-width: 760px) {
   .metricas { grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); }
 }
@@ -354,10 +368,15 @@ a.card-link:hover .card-titulo { color: var(--campo-escuro); }
 }
 .vazio strong { display: block; color: var(--texto); font-size: 1.1rem; margin-bottom: .25rem; }
 
-.passos { list-style: none; counter-reset: passo; padding: 0; margin: 0 0 1.5rem; display: grid; gap: .75rem; }
+.passos {
+  list-style: none; counter-reset: passo; padding: 0; margin: 0 0 1.5rem;
+  display: flex; gap: .5rem; align-items: flex-start;
+}
 .passos li {
-  counter-increment: passo; position: relative; padding: .35rem 0 .35rem 3rem; min-height: 2.25rem;
-  color: var(--texto-suave);
+  counter-increment: passo; position: relative; padding: .35rem 0 .35rem 2.75rem; min-height: 2.25rem;
+  flex: 1 1 0; min-width: 0; color: var(--texto-suave);
+  /* nunca quebrar dentro da palavra ("Escolhe / r") */
+  overflow-wrap: normal; word-break: normal; hyphens: none;
 }
 .passos li::before {
   content: counter(passo); position: absolute; left: 0; top: 0;
@@ -367,10 +386,16 @@ a.card-link:hover .card-titulo { color: var(--campo-escuro); }
 .passos li.feito { color: var(--texto); }
 .passos li.feito::before { content: "✓"; background: var(--campo); color: #fff; }
 .passos li.ativo { color: var(--texto); font-weight: 700; }
-.passos li.ativo::before { background: var(--cartao-amarelo); color: var(--texto); box-shadow: 0 0 0 4px var(--amarelo-suave); }
+.passos li.ativo::before {
+  background: var(--cartao-amarelo); color: var(--texto); box-shadow: 0 0 0 4px var(--amarelo-suave);
+}
 
-@media (min-width: 760px) {
-  .passos { grid-auto-flow: column; grid-auto-columns: 1fr; }
+/* Celular: só o passo ativo mostra o rótulo; os outros ficam só com o número (o texto continua
+   acessível a leitores de tela). */
+@media (max-width: 559px) {
+  .passos li:not(.ativo) { flex: 0 0 auto; width: 2.25rem; padding-left: 2.25rem; font-size: 0; }
+  .passos li::before { font-size: 1rem; }
+  .passos li.ativo { flex: 1 1 auto; }
 }
 
 /* Linha do tempo: rascunho → aberta → encerrada → apurada */
@@ -473,3 +498,65 @@ a.card-link:hover .card-titulo { color: var(--campo-escuro); }
   font-variant-numeric: tabular-nums;
 }
 .erro-codigo span { font-size: 2.25rem; vertical-align: middle; }
+
+/* ---------- Utilitários de largura ---------- */
+.so-celular { display: inline; }
+.so-desktop { display: none; }
+@media (min-width: 480px) {
+  .so-celular { display: none; }
+  .so-desktop { display: inline; }
+}
+
+/* ---------- Faixas com rolagem horizontal (abas, navegação, tabelas) ---------- */
+/* var.js marca data-mais-esquerda / data-mais-direita quando há conteúdo escondido; o fade avisa. */
+.abas {
+  display: flex; gap: .5rem; overflow-x: auto; margin: 0 0 1.25rem; padding-bottom: .25rem;
+  scroll-snap-type: x proximity; scrollbar-width: thin; -webkit-overflow-scrolling: touch;
+}
+.abas > * { flex-shrink: 0; scroll-snap-align: start; }
+.aba {
+  display: inline-flex; align-items: center; gap: .45rem; min-height: var(--toque); padding: .4rem .9rem;
+  border-radius: 999px; border: 2px solid var(--cinza-300); background: var(--superficie); color: var(--texto);
+  font-weight: 700; text-decoration: none; white-space: nowrap;
+}
+.aba:hover { border-color: var(--campo); color: var(--gramado); }
+.aba[aria-current="page"] { background: var(--gramado); border-color: var(--gramado); color: #fff; }
+.aba-contador {
+  min-width: 1.5rem; padding: 0 .4rem; border-radius: 999px; text-align: center; font-size: .8rem;
+  background: var(--cinza-100); color: var(--cinza-600);
+}
+.aba[aria-current="page"] .aba-contador { background: var(--cartao-amarelo); color: var(--texto); }
+[data-mais-direita] { -webkit-mask-image: linear-gradient(90deg, #000 calc(100% - 40px), transparent);
+  mask-image: linear-gradient(90deg, #000 calc(100% - 40px), transparent); }
+[data-mais-esquerda] { -webkit-mask-image: linear-gradient(270deg, #000 calc(100% - 40px), transparent);
+  mask-image: linear-gradient(270deg, #000 calc(100% - 40px), transparent); }
+[data-mais-esquerda][data-mais-direita] {
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 40px, #000 calc(100% - 40px), transparent);
+  mask-image: linear-gradient(90deg, transparent, #000 40px, #000 calc(100% - 40px), transparent);
+}
+
+/* ---------- Diálogo de confirmação (var.js, form[data-confirmar]) ---------- */
+.dialogo {
+  width: min(440px, calc(100vw - 2rem)); padding: 0; border: 0; border-radius: var(--raio);
+  box-shadow: var(--sombra-forte); color: var(--texto); background: var(--superficie);
+}
+.dialogo::backdrop { background: rgba(11, 61, 46, .55); }
+.dialogo[open] { animation: dialogo-entrada .18s ease-out; }
+@keyframes dialogo-entrada { from { transform: translateY(12px) scale(.98); opacity: 0; } }
+.dialogo-conteudo {
+  padding: 1.5rem 1.25rem 1.25rem; border-top: 5px solid var(--cartao-amarelo); border-radius: var(--raio);
+}
+.dialogo-perigo .dialogo-conteudo { border-top-color: var(--cartao-vermelho); }
+.dialogo-titulo { font-size: 1.25rem; font-weight: 800; margin: 0 0 .5rem; }
+.dialogo-texto { margin: 0 0 1.25rem; color: var(--texto-suave); }
+.dialogo-acoes { display: flex; flex-wrap: wrap-reverse; gap: .5rem; justify-content: flex-end; }
+@media (max-width: 479px) {
+  .dialogo-acoes .btn { flex: 1 1 100%; }
+}
+
+/* ---------- Ajustes da página inicial no celular ---------- */
+.passos-inicio { flex-direction: column; }
+.passos-inicio li, .passos-inicio li:not(.ativo) { flex: 1 1 auto; width: auto; padding-left: 3rem; font-size: 1rem; }
+@media (max-width: 479px) {
+  .ods { flex-direction: column; }
+}

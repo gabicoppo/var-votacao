@@ -33,16 +33,22 @@
         <a sec:authorize="hasRole('ORGANIZADOR')" th:href="@{/organizador}"
            th:attr="aria-current=${caminhoAtual != null and #strings.startsWith(caminhoAtual, '/organizador')} ? 'page' : null">Painel</a>
         <a sec:authorize="hasRole('ELEITOR')" th:href="@{/eleitor}"
-           th:attr="aria-current=${caminhoAtual != null and #strings.startsWith(caminhoAtual, '/eleitor')} ? 'page' : null">Minhas votações</a>
+           th:attr="aria-current=${caminhoAtual != null and #strings.startsWith(caminhoAtual, '/eleitor')} ? 'page' : null"
+           aria-label="Minhas votações"><span class="so-desktop">Minhas votações</span><span class="so-celular"
+           aria-hidden="true">Votações</span></a>
         <a sec:authorize="hasRole('ELEITOR')" th:href="@{/verificar}"
-           th:attr="aria-current=${caminhoAtual != null and #strings.startsWith(caminhoAtual, '/verificar')} ? 'page' : null">Verificar comprovante</a>
+           th:attr="aria-current=${caminhoAtual != null and #strings.startsWith(caminhoAtual, '/verificar')} ? 'page' : null"
+           aria-label="Verificar comprovante"><span class="so-desktop">Verificar comprovante</span><span
+           class="so-celular" aria-hidden="true">Verificar</span></a>
       </nav>
 
-      <div class="usuario" sec:authorize="isAuthenticated()">
-        <span class="usuario-nome"
-              th:text="${nomeUsuario != null ? nomeUsuario : #authentication.name}">Usuário</span>
+      <div class="usuario" sec:authorize="isAuthenticated()"
+           th:with="nome=${nomeUsuario != null ? nomeUsuario : #authentication.name}">
+        <!--/* No celular o nome some (var.css); continua no title e no aria-label do botão Sair. */-->
+        <span class="usuario-nome" th:text="${nome}">Usuário</span>
         <form th:action="@{/logout}" method="post">
-          <button type="submit" class="btn btn-sair">Sair</button>
+          <button type="submit" class="btn btn-sair" th:title="|Sair (${nome})|"
+                  th:attr="aria-label=|Sair (${nome})|">Sair</button>
         </form>
       </div>
       <a sec:authorize="!isAuthenticated()" class="btn btn-entrar" th:href="@{/login}">Entrar</a>
@@ -59,5 +65,6 @@
   <footer class="rodape">
     VAR — Votação, Apuração e Resultados · MC656 Unicamp
   </footer>
+  <script th:src="@{/js/var.js}" defer></script>
 </body>
 </html>
