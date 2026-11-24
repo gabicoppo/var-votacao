@@ -1,5 +1,6 @@
 package br.unicamp.var.processo;
 
+import br.unicamp.var.apuracao.ContagemVotos;
 import br.unicamp.var.apuracao2turno.ResultadoApuracao;
 
 /**
@@ -14,12 +15,14 @@ final class Encerrada implements EstadoVotacao {
 
     /**
      * Apura a contagem com a regra configurada na votação (ponto de integração
-     * entre State e Strategy) e passa a votação para apurada.
+     * entre State e Strategy) e passa a votação para apurada, que guarda a
+     * contagem usada para montar o resultado detalhado (história #29).
      */
     @Override
     public ResultadoApuracao apurar(Votacao votacao) {
-        ResultadoApuracao resultado = votacao.regra().apurar(votacao.contagem());
-        votacao.mudarPara(new Apurada(resultado));
+        ContagemVotos contagem = votacao.contagem();
+        ResultadoApuracao resultado = votacao.regra().apurar(contagem);
+        votacao.mudarPara(new Apurada(contagem, resultado));
         return resultado;
     }
 }

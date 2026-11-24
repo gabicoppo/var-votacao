@@ -5,6 +5,7 @@ import br.unicamp.var.apuracao.RegraApuracao;
 import br.unicamp.var.apuracao2turno.ResultadoApuracao;
 import br.unicamp.var.cadastro.CadastroCandidatos;
 import br.unicamp.var.cadastro.Candidato;
+import br.unicamp.var.resultado.ResultadoDetalhado;
 import java.time.Clock;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -171,6 +172,17 @@ public final class Votacao {
      */
     public ResultadoApuracao apurar() {
         return estado.apurar(this);
+    }
+
+    /**
+     * Resultado com votos absolutos, percentuais, participação e situação (história #29).
+     * Só existe depois da apuração.
+     *
+     * @return o resultado detalhado da apuração
+     * @throws IllegalStateException se a votação ainda não foi apurada
+     */
+    public ResultadoDetalhado resultadoDetalhado() {
+        return estado.resultadoDetalhado(this);
     }
 
     /**

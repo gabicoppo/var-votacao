@@ -11,6 +11,8 @@ import br.unicamp.var.apuracao.MaioriaSimples;
 import br.unicamp.var.apuracao.RegraApuracao;
 import br.unicamp.var.apuracao2turno.ResultadoApuracao;
 import br.unicamp.var.cadastro.CadastroCandidatos;
+import br.unicamp.var.resultado.LinhaResultado;
+import br.unicamp.var.resultado.ResultadoDetalhado;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
@@ -792,6 +794,65 @@ class VotacaoTest {
 
             assertEquals(new ResultadoApuracao.SegundoTurno("Gabriela", "Fabricio"), votacao.apurar());
             assertEquals("apurada", votacao.status());
+        }
+    }
+
+    @Nested
+    @DisplayName("Resultado detalhado (#29)")
+    class ResultadoDetalhadoDaVotacao {
+
+        private static final double TOLERANCIA = 0.001;
+
+        @Test
+        @DisplayName("não existe em rascunho")
+        void naoExisteEmRascunho() {
+            IllegalStateException erro = assertThrows(IllegalStateException.class,
+                    () -> rascunho().resultadoDetalhado());
+
+            assertEquals("não é possível ver o resultado detalhado em votação rascunho", erro.getMessage());
+        }
+
+        @Test
+        @DisplayName("não existe com a votação aberta")
+        void naoExisteComVotacaoAberta() {
+            assertThrows(IllegalStateException.class, () -> aberta().resultadoDetalhado());
+        }
+
+        @Test
+        @DisplayName("não existe com a votação encerrada e ainda não apurada")
+        void naoExisteComVotacaoEncerrada() {
+            assertThrows(IllegalStateException.class, () -> encerrada().resultadoDetalhado());
+        }
+
+        @Test
+        @DisplayName("depois da apuração, mostra votos, percentuais, participação e situação")
+        void mostraResultadoDaApuracao() {
+            Votacao votacao = novaVotacao(new MaioriaAbsoluta(true), 10);
+            votacao.abrir();
+            for (String voto : List.of("Juliana", "Gabriela", "Gabriela", "Gabriela")) {
+                votacao.registrarVoto(voto);
+            }
+            votacao.encerrar();
+            votacao.apurar();
+
+            ResultadoDetalhado resultado = votacao.resultadoDetalhado();
+
+            assertEquals(List.of("Gabriela", "Juliana", "Fabricio"),
+                    resultado.linhas().stream().map(LinhaResultado::opcao).toList());
+            assertEquals(List.of(3, 1, 0), resultado.linhas().stream().map(LinhaResultado::votos).toList());
+            assertEquals(75.0, resultado.linhas().get(0).percentual(), TOLERANCIA);
+            assertEquals(4, resultado.totalVotantes());
+            assertEquals(10, resultado.totalAptos());
+            assertEquals(40.0, resultado.participacao(), TOLERANCIA);
+            assertEquals("Eleito: Gabriela", resultado.situacao());
+        }
+
+        @Test
+        @DisplayName("consultado de novo, devolve o mesmo resultado")
+        void consultadoDeNovoDevolveOMesmo() {
+            Votacao votacao = apurada();
+
+            assertSame(votacao.resultadoDetalhado(), votacao.resultadoDetalhado());
         }
     }
 }

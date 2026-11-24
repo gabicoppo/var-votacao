@@ -2,6 +2,7 @@ package br.unicamp.var.processo;
 
 import br.unicamp.var.apuracao.RegraApuracao;
 import br.unicamp.var.apuracao2turno.ResultadoApuracao;
+import br.unicamp.var.resultado.ResultadoDetalhado;
 
 /**
  * Estado do ciclo de vida de uma {@link Votacao} (padrão State).
@@ -48,6 +49,10 @@ interface EstadoVotacao {
 
     default ResultadoApuracao apurar(Votacao votacao) {
         throw operacaoProibida("apurar");
+    }
+
+    default ResultadoDetalhado resultadoDetalhado(Votacao votacao) {
+        throw operacaoProibida("ver o resultado detalhado");
     }
 
     private IllegalStateException operacaoProibida(String operacao) {
