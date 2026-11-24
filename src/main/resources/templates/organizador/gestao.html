@@ -27,7 +27,7 @@
 
   <!-- Ações conforme o estado -->
   <section class="card card-destaque acoes-votacao nao-imprimir" aria-labelledby="titulo-acoes">
-    <h2 class="card-titulo" id="titulo-acoes">Próximo passo</h2>
+    <h2 class="card-titulo" id="titulo-acoes" th:text="${v.apurada()} ? 'Resultado' : 'Próximo passo'">Próximo passo</h2>
 
     <form th:if="${v.podeAbrir()}" method="post" th:action="@{/organizador/votacoes/{id}/abrir(id=${v.id()})}"
           data-confirmar="Abrir a votação? Depois de aberta, a configuração não muda mais.">
@@ -103,7 +103,7 @@
     <p class="ajuda" th:if="${v.mostraEscolhas()}">Votação identificada: a escolha de cada eleitor aparece após o
       encerramento.</p>
     <div class="tabela-rolagem">
-      <table class="tabela">
+      <table class="tabela tabela-compacta">
         <caption class="sr-only">Quem já votou</caption>
         <thead>
           <tr><th scope="col">Eleitor</th><th scope="col">Nome</th><th scope="col">Situação</th>
@@ -114,7 +114,7 @@
             <td th:text="${e.eleitorId()}">e01</td>
             <td th:text="${e.nome()}">Nome</td>
             <td><span class="selo-presenca" th:classappend="${e.votou()} ? 'votou' : 'pendente'"
-                      th:text="${e.votou()} ? 'Votou' : 'Pendente'">Pendente</span></td>
+                      th:text="${e.votou()} ? 'Votou' : (${v.podeAbrir() or v.podeEncerrar()} ? 'Pendente' : 'Não votou')">Pendente</span></td>
             <td th:if="${v.mostraEscolhas()}" th:text="${e.escolha() != null ? e.escolha() : '—'}">—</td>
           </tr>
         </tbody>
@@ -126,7 +126,7 @@
   <section class="secao" aria-labelledby="titulo-auditoria">
     <h2 class="secao-titulo" id="titulo-auditoria">Auditoria</h2>
     <div class="tabela-rolagem">
-      <table class="tabela">
+      <table class="tabela tabela-compacta">
         <caption class="sr-only">Trilha de auditoria da votação</caption>
         <thead>
           <tr><th scope="col">Data e hora</th><th scope="col">Autor</th><th scope="col">Evento</th>

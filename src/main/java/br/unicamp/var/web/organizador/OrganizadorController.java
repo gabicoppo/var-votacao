@@ -123,7 +123,7 @@ public class OrganizadorController {
      * @return a view dos acessos
      */
     @GetMapping("/votacoes/{id}/acessos")
-    public String acessos(@PathVariable String id, Model model) {
+    public String acessos(@PathVariable("id") String id, Model model) {
         model.addAttribute("votacaoId", id);
         model.addAttribute("pergunta", gestao.pergunta(id));
         if (!model.containsAttribute("acessos")) {
@@ -140,7 +140,7 @@ public class OrganizadorController {
      * @return a view de gestão
      */
     @GetMapping("/votacoes/{id}")
-    public String gestao(@PathVariable String id, Model model) {
+    public String gestao(@PathVariable("id") String id, Model model) {
         model.addAttribute("votacao", gestao.detalhe(id));
         return "organizador/gestao";
     }
@@ -154,7 +154,7 @@ public class OrganizadorController {
      * @return redirecionamento para a gestão
      */
     @PostMapping("/votacoes/{id}/abrir")
-    public String abrir(@PathVariable String id, @AuthenticationPrincipal UserDetails usuario,
+    public String abrir(@PathVariable("id") String id, @AuthenticationPrincipal UserDetails usuario,
                         RedirectAttributes redirect) {
         return acao(id, redirect, () -> {
             gestao.abrir(id, usuario.getUsername());
@@ -171,7 +171,7 @@ public class OrganizadorController {
      * @return redirecionamento para a gestão
      */
     @PostMapping("/votacoes/{id}/encerrar")
-    public String encerrar(@PathVariable String id, @AuthenticationPrincipal UserDetails usuario,
+    public String encerrar(@PathVariable("id") String id, @AuthenticationPrincipal UserDetails usuario,
                            RedirectAttributes redirect) {
         return acao(id, redirect, () -> {
             gestao.encerrar(id, usuario.getUsername());
@@ -188,7 +188,7 @@ public class OrganizadorController {
      * @return redirecionamento para a gestão
      */
     @PostMapping("/votacoes/{id}/apurar")
-    public String apurar(@PathVariable String id, @AuthenticationPrincipal UserDetails usuario,
+    public String apurar(@PathVariable("id") String id, @AuthenticationPrincipal UserDetails usuario,
                          RedirectAttributes redirect) {
         return acao(id, redirect, () -> "Votação apurada. " + gestao.apurar(id, usuario.getUsername()) + ".");
     }
@@ -202,7 +202,7 @@ public class OrganizadorController {
      * @return redirecionamento para a gestão do 2º turno, ou desta votação se houver erro
      */
     @PostMapping("/votacoes/{id}/segundo-turno")
-    public String segundoTurno(@PathVariable String id, @AuthenticationPrincipal UserDetails usuario,
+    public String segundoTurno(@PathVariable("id") String id, @AuthenticationPrincipal UserDetails usuario,
                                RedirectAttributes redirect) {
         try {
             Votacao segundoTurno = gestao.criarSegundoTurno(id, usuario.getUsername());
