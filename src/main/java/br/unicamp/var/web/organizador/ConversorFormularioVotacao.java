@@ -48,17 +48,29 @@ public final class ConversorFormularioVotacao {
             erros.add(new ErroCampo("pergunta", "Informe a pergunta da votação."));
         }
         validarOpcoes(f, erros);
+        erros.addAll(validarRegra(f));
+        if (f.getSigilo() == null) {
+            erros.add(new ErroCampo("sigilo", "Escolha se o voto é secreto ou identificado."));
+        }
+        validarPeriodo(f, erros);
+        validarEleitores(f, erros);
+        return erros;
+    }
+
+    /**
+     * Confere só os campos da regra (tipo, quórum e fração), para "Alterar regra" no rascunho.
+     *
+     * @param f formulário preenchido
+     * @return os erros desses campos; vazia se a regra é válida
+     */
+    public static List<ErroCampo> validarRegra(FormularioVotacao f) {
+        List<ErroCampo> erros = new ArrayList<>();
         if (f.getTipoRegra() == null) {
             erros.add(new ErroCampo("tipoRegra", "Escolha a regra de apuração."));
         } else if (f.getTipoRegra() == TipoRegra.QUALIFICADA) {
             validarFracao("quorum", "o quórum mínimo", f.getQuorum(), erros);
             validarFracao("fracaoExigida", "a fração exigida", f.getFracaoExigida(), erros);
         }
-        if (f.getSigilo() == null) {
-            erros.add(new ErroCampo("sigilo", "Escolha se o voto é secreto ou identificado."));
-        }
-        validarPeriodo(f, erros);
-        validarEleitores(f, erros);
         return erros;
     }
 
@@ -213,7 +225,14 @@ public final class ConversorFormularioVotacao {
         }
     }
 
-    private static RegraApuracao regra(FormularioVotacao f) {
+    /**
+     * Monta a regra escolhida no formulário.
+     *
+     * @param f formulário com a regra válida
+     * @return a regra de apuração
+     * @throws IllegalArgumentException se quórum ou fração forem inválidos
+     */
+    static RegraApuracao regra(FormularioVotacao f) {
         TipoRegra tipo = f.getTipoRegra() == null ? TipoRegra.ABSOLUTA : f.getTipoRegra();
         return switch (tipo) {
             case SIMPLES -> new MaioriaSimples();

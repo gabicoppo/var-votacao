@@ -15,6 +15,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import org.springframework.stereotype.Service;
@@ -45,6 +46,8 @@ public class GestaoVotacoes {
     private final RepositorioPremiacoes premiacoes;
     private final ContasUsuarios contas;
     private final Clock relogio;
+    /** Regra como foi digitada, por id de votação (o domínio não expõe os parâmetros da regra). */
+    private final Map<String, ConfiguracaoRegra> regras = new ConcurrentHashMap<>();
 
     /**
      * @param votacoes   repositório de votações
@@ -75,6 +78,7 @@ public class GestaoVotacoes {
         }
         Votacao votacao = ConversorFormularioVotacao.paraVotacao(formulario, relogio, autor);
         votacoes.salvar(votacao);
+        regras.put(votacao.id(), ConfiguracaoRegra.de(formulario));
         List<AcessoEleitor> acessos = new ArrayList<>();
         for (Eleitor eleitor : votacao.eleitorado().listar()) {
             contas.garantirContaEleitor(eleitor.id(), eleitor.nome())
@@ -148,6 +152,85 @@ public class GestaoVotacoes {
             }
         }
         return votacoes.salvar(segundoTurno);
+    }
+
+    /**
+     * Troca a regra de apuração de uma votação em rascunho (história #21, RNF-07). A troca fica na
+     * auditoria, com o autor.
+     *
+     * @param id         id da votação
+     * @param formulario formulário com os campos da regra
+     * @param autor      organizador logado
+     * @return os erros dos campos da regra; vazia se a regra foi trocada
+     * @throws VotacaoNaoEncontradaException se a votação não existir
+     * @throws OperacaoRecusadaException     se a votação não estiver em rascunho
+     */
+    public List<ErroCampo> alterarRegra(String id, FormularioVotacao formulario, String autor) {
+        List<ErroCampo> erros = ConversorFormularioVotacao.validarRegra(formulario);
+        if (!erros.isEmpty()) {
+            return erros;
+        }
+        executar(id, votacao -> votacao.alterarRegra(ConversorFormularioVotacao.regra(formulario), autor));
+        regras.put(id, ConfiguracaoRegra.de(formulario));
+        return List.of();
+    }
+
+    /**
+     * Formulário com a regra atual da votação, para "Alterar regra".
+     *
+     * @param id id da votação
+     * @return formulário só com os campos da regra preenchidos
+     * @throws VotacaoNaoEncontradaException se a votação não existir
+     */
+    public FormularioVotacao formularioRegra(String id) {
+        Votacao votacao = buscar(id);
+        FormularioVotacao formulario = new FormularioVotacao();
+        synchronized (votacao) {
+            configuracao(votacao).aplicarEm(formulario);
+        }
+        return formulario;
+    }
+
+    /**
+     * Formulário de nova votação preenchido com a configuração de outra: pergunta com "(cópia)",
+     * descrição, opções, regra, sigilo e eleitores, sem período.
+     *
+     * @param id id da votação copiada
+     * @return o formulário pré-preenchido
+     * @throws VotacaoNaoEncontradaException se a votação não existir
+     */
+    public FormularioVotacao duplicar(String id) {
+        Votacao votacao = buscar(id);
+        FormularioVotacao formulario = new FormularioVotacao();
+        synchronized (votacao) {
+            formulario.setPergunta(votacao.pergunta() + " (cópia)");
+            formulario.setDescricao(votacao.descricao());
+            formulario.setOpcoes(String.join("\n", votacao.opcoes()));
+            configuracao(votacao).aplicarEm(formulario);
+            formulario.setSigilo(votacao.sigilo());
+            formulario.setEleitores(votacao.eleitorado().listar().stream()
+                    .map(eleitor -> eleitor.id() + ";" + eleitor.nome())
+                    .collect(Collectors.joining("\n")));
+        }
+        return formulario;
+    }
+
+    /**
+     * Ids dos eleitores que já votaram, na ordem da lista de aptos. Presença não é segredo; a
+     * escolha de cada um nunca sai daqui (RNF-01).
+     *
+     * @param id id da votação
+     * @return os ids de quem já votou
+     * @throws VotacaoNaoEncontradaException se a votação não existir
+     */
+    public List<String> quemVotou(String id) {
+        Votacao votacao = buscar(id);
+        synchronized (votacao) {
+            return votacao.eleitorado().listar().stream()
+                    .map(Eleitor::id)
+                    .filter(votacao::jaVotou)
+                    .toList();
+        }
     }
 
     /**
@@ -254,6 +337,11 @@ public class GestaoVotacoes {
                 .map(evento -> new DetalheVotacao.LinhaAuditoria(evento.quando(), evento.autor(),
                         RotulosVotacao.evento(evento.tipo()), RotulosVotacao.detalhe(evento.tipo(), evento.detalhe())))
                 .toList();
+    }
+
+    private ConfiguracaoRegra configuracao(Votacao votacao) {
+        ConfiguracaoRegra guardada = regras.get(votacao.id());
+        return guardada != null ? guardada : ConfiguracaoRegra.deduzir(votacao.regra());
     }
 
     private String segundoTurnoDe(String id) {
