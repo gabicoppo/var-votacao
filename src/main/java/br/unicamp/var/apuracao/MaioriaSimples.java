@@ -26,4 +26,14 @@ public final class MaioriaSimples implements RegraApuracao {
                 .<ResultadoApuracao>map(ResultadoApuracao.Eleito::new)
                 .orElseGet(ResultadoApuracao.SemVencedor::new);
     }
+
+    /**
+     * Descrição da regra em pt-BR.
+     *
+     * @return texto legível da maioria simples
+     */
+    @Override
+    public String descricao() {
+        return "Maioria simples: vence a opção mais votada; empate fica sem vencedor.";
+    }
 }

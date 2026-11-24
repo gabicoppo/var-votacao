@@ -1,10 +1,14 @@
 package br.unicamp.var.votacao;
 
+import br.unicamp.var.comum.Proporcao;
+
 /**
  * Regras de quorum e maioria qualificada para votacoes do VAR.
  *
  * <p>Abstencao nao conta nos votos validos: o calculo de aprovacao considera
  * apenas os votos a favor e contra. Classe sem estado, so com metodos estaticos.
+ *
+ * <p>O calculo da proporcao e a comparacao com o limiar ficam em {@link Proporcao}.
  */
 public final class RegrasVotacao {
 
@@ -19,15 +23,14 @@ public final class RegrasVotacao {
      * @param total     numero total de membros
      * @param minimo    fracao minima exigida (entre 0 e 1)
      * @return true se a proporcao de presentes for maior ou igual ao minimo
-     * @throws IllegalArgumentException se total for menor ou igual a zero
+     * @throws IllegalArgumentException se total for menor ou igual a zero, ou se
+     *                                  presentes for negativo ou maior que total
      */
     public static boolean quorumAtingido(int presentes, int total, double minimo) {
         if (total <= 0) {
             throw new IllegalArgumentException("total deve ser maior que zero");
         }
-        // Usa divisao com double pra nao truncar a proporcao (ex: 1/3 nao pode virar 0).
-        double proporcao = (double) presentes / total;
-        return proporcao >= minimo;
+        return new Proporcao(presentes, total).atinge(minimo);
     }
 
     /**
@@ -41,13 +44,16 @@ public final class RegrasVotacao {
      * @param fracao fracao minima exigida de aprovacao (entre 0 e 1)
      * @return true se a fracao de votos a favor for maior ou igual a exigida
      * @throws IllegalArgumentException se nao houver votos validos (aFavor + contra == 0)
+     *                                  ou se algum dos votos for negativo
      */
     public static boolean aprovada(int aFavor, int contra, double fracao) {
+        if (aFavor < 0 || contra < 0) {
+            throw new IllegalArgumentException("votos nao podem ser negativos");
+        }
         int validos = aFavor + contra;
         if (validos <= 0) {
             throw new IllegalArgumentException("nao ha votos validos para calcular a aprovacao");
         }
-        double proporcao = (double) aFavor / validos;
-        return proporcao >= fracao;
+        return new Proporcao(aFavor, validos).atinge(fracao);
     }
 }
