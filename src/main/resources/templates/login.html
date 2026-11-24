@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{fragments/layout :: layout(~{::title}, ~{::main}, ~{})}">
+<head>
+  <title>Entrar</title>
+</head>
+<body>
+<main class="entrada">
+  <div class="card card-destaque">
+    <img class="entrada-logo" th:src="@{/img/logo-var.svg}" alt="" width="72" height="81">
+    <h1>Entrar no VAR</h1>
+    <p class="subtitulo">Votação, apuração e resultados com transparência.</p>
+
+    <div th:if="${param.error}" class="alerta alerta-erro" role="alert">
+      Usuário ou senha incorretos. Confira e tente de novo.
+    </div>
+    <div th:if="${param.saiu}" class="alerta alerta-info" role="status">Você saiu da sua conta.</div>
+
+    <form class="form" th:action="@{/login}" method="post">
+      <div class="campo" th:classappend="${param.error} ? 'campo-com-erro'">
+        <label for="username">Usuário</label>
+        <input id="username" name="username" type="text" autocomplete="username" autocapitalize="none"
+               spellcheck="false" required autofocus>
+        <p class="ajuda">Eleitor: use o identificador da lista de aptos (ex.: e01).</p>
+      </div>
+      <div class="campo" th:classappend="${param.error} ? 'campo-com-erro'">
+        <label for="password">Senha ou código de acesso</label>
+        <input id="password" name="password" type="password" autocomplete="current-password" required>
+      </div>
+      <button type="submit" class="btn btn-primario btn-grande">Entrar</button>
+    </form>
+  </div>
+</main>
+</body>
+</html>

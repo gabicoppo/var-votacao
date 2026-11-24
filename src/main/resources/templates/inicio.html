@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{fragments/layout :: layout(~{::title}, ~{::main}, ~{})}">
+<head>
+  <title>Início</title>
+</head>
+<body>
+<main class="entrada">
+  <div class="card card-destaque">
+    <img class="entrada-logo" th:src="@{/img/logo-var.svg}" alt="" width="72" height="81">
+    <h1>VAR</h1>
+    <p class="subtitulo">Votação, apuração e resultados com transparência para o futebol.</p>
+    <a class="btn btn-primario btn-grande" th:href="@{/login}">Entrar</a>
+  </div>
+</main>
+</body>
+</html>
