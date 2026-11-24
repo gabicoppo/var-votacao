@@ -4,6 +4,7 @@ import br.unicamp.var.apuracao.RegraApuracao;
 import br.unicamp.var.apuracao2turno.ResultadoApuracao;
 import br.unicamp.var.resultado.ResultadoDetalhado;
 import br.unicamp.var.urna.Comprovante;
+import java.util.Optional;
 
 /**
  * Estado do ciclo de vida de uma {@link Votacao} (padrão State).
@@ -54,6 +55,15 @@ interface EstadoVotacao {
 
     default ResultadoDetalhado resultadoDetalhado(Votacao votacao) {
         throw operacaoProibida("ver o resultado detalhado");
+    }
+
+    /**
+     * Resultado da apuração, se já houver (usado para decidir se existe 2º turno).
+     *
+     * @return o resultado, ou vazio antes da apuração
+     */
+    default Optional<ResultadoApuracao> resultado() {
+        return Optional.empty();
     }
 
     private IllegalStateException operacaoProibida(String operacao) {
