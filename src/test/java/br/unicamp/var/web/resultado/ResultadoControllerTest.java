@@ -21,6 +21,7 @@ import br.unicamp.var.eleitorado.Eleitor;
 import br.unicamp.var.eleitorado.Eleitorado;
 import br.unicamp.var.processo.PeriodoVotacao;
 import br.unicamp.var.processo.Votacao;
+import br.unicamp.var.relatorio.RelatorioApuracao;
 import br.unicamp.var.urna.Sigilo;
 import br.unicamp.var.web.comum.Alerta;
 import br.unicamp.var.web.comum.RepositorioVotacoes;
@@ -325,6 +326,198 @@ class ResultadoControllerTest {
         @DisplayName("Sem login, vai para a página de login")
         void anonimo() throws Exception {
             mvc.perform(get("/votacoes/qualquer/resultado")).andExpect(redirectedUrlPattern("**/login"));
+        }
+    }
+
+    @Nested
+    @DisplayName("Telão da votação")
+    class Telao {
+
+        @Test
+        @WithMockUser(username = "organizador", roles = ORGANIZADOR)
+        @DisplayName("Aberta: tela própria, participação ao vivo, sem votos por opção (RNF-01)")
+        void aberta() throws Exception {
+            Votacao votacao = nova(new MaioriaSimples(), 4);
+            votacao.abrir();
+            votacao.registrarVoto("e01", "Opção Azul");
+
+            mvc.perform(get(url(votacao, "/telao")))
+                    .andExpect(status().isOk())
+                    .andExpect(view().name("resultado/telao"))
+                    .andExpect(content().string(allOf(
+                            containsString("<body class=\"telao\">"),
+                            containsString("data-telao=\"votacao\""),
+                            containsString("Ao vivo"),
+                            containsString("data-andamento-url=\"/votacoes/" + votacao.id() + "/andamento.json\""),
+                            containsString("de <span data-aptos>4</span> votaram"),
+                            containsString("Sair do telão"),
+                            containsString("http-equiv=\"refresh\""),
+                            not(containsString("class=\"topo\"")),
+                            not(containsString("Opção Azul")),
+                            not(containsString("Revisão do VAR")))));
+            assertEquals("aberta", votacao.status());
+        }
+
+        @Test
+        @WithMockUser(username = "organizador", roles = ORGANIZADOR)
+        @DisplayName("Aberta com período: contagem regressiva até o fim")
+        void contagem() throws Exception {
+            Instant agora = Instant.now();
+            Votacao votacao = votacoes.salvar(Votacao.nova().pergunta("Com prazo").opcoes(List.of("Sim", "Não"))
+                    .regra(new MaioriaSimples()).eleitorado(Eleitorado.importar("e01;Ana"))
+                    .periodo(new PeriodoVotacao(agora.minus(Duration.ofHours(1)), agora.plus(Duration.ofHours(3))))
+                    .build());
+            votacao.atualizarPeloRelogio();
+
+            mvc.perform(get(url(votacao, "/telao")))
+                    .andExpect(content().string(allOf(containsString("data-contagem"),
+                            containsString("data-fim=\"" + votacao.periodo().orElseThrow().fim().toEpochMilli() + "\""),
+                            containsString("Encerra em"))));
+        }
+
+        @Test
+        @WithMockUser(username = "organizador", roles = ORGANIZADOR)
+        @DisplayName("Encerrada aguarda a apuração sem apurar; apurada mostra o Momento VAR e a situação")
+        void encerradaEApurada() throws Exception {
+            Votacao encerrada = nova(new MaioriaSimples(), 3);
+            encerrada.abrir();
+            encerrada.registrarVoto("e01", "Opção Verde");
+            encerrada.encerrar();
+            mvc.perform(get(url(encerrada, "/telao")))
+                    .andExpect(content().string(allOf(containsString("Votação encerrada. Aguardando apuração…"),
+                            not(containsString("Opção Verde")))));
+            assertEquals("encerrada", encerrada.status());
+
+            Votacao apurada = apurada(new MaioriaSimples(), 3, "Opção Verde", "Opção Verde");
+            mvc.perform(get(url(apurada, "/telao")))
+                    .andExpect(content().string(allOf(containsString("var-revisao var-revisao-telao"),
+                            containsString("data-sempre"), containsString("Decisão confirmada"),
+                            containsString("situacao-eleito"), containsString("Opção Verde venceu"),
+                            containsString("--ordem: 0"), containsString("--ordem: 2"),
+                            not(containsString("http-equiv=\"refresh\"")))));
+        }
+
+        @Test
+        @WithMockUser(username = "e01", roles = ELEITOR)
+        @DisplayName("Eleitor, mesmo apto, recebe 403")
+        void eleitor() throws Exception {
+            Votacao votacao = nova(new MaioriaSimples(), 3);
+
+            mvc.perform(get(url(votacao, "/telao"))).andExpect(status().isForbidden());
+        }
+
+        @Test
+        @WithMockUser(username = "organizador", roles = ORGANIZADOR)
+        @DisplayName("Votação inexistente dá 404")
+        void inexistente() throws Exception {
+            mvc.perform(get("/votacoes/nao-existe/telao")).andExpect(status().isNotFound());
+        }
+
+        @Test
+        @WithMockUser(username = "organizador", roles = ORGANIZADOR)
+        @DisplayName("A página de resultado tem o botão Abrir no telão, em nova aba")
+        void botao() throws Exception {
+            Votacao votacao = nova(new MaioriaSimples(), 3);
+
+            mvc.perform(get(url(votacao, "/resultado")))
+                    .andExpect(content().string(allOf(containsString("Abrir no telão"),
+                            containsString("href=\"/votacoes/" + votacao.id() + "/telao\""),
+                            containsString("target=\"_blank\""))));
+        }
+    }
+
+    @Nested
+    @DisplayName("Contexto do 2º turno e selo do eleitor")
+    class Contexto {
+
+        @Test
+        @WithMockUser(username = "organizador", roles = ORGANIZADOR)
+        @DisplayName("O card do 1º turno aparece só no 2º turno; no 1º, o link para o 2º fica em destaque")
+        void primeiroTurno() throws Exception {
+            Votacao primeiro = apurada(new MaioriaAbsoluta(true), 9, "Opção Azul", "Opção Azul", "Opção Verde",
+                    "Opção Branca");
+            Votacao segundo = votacoes.salvar(primeiro.criarSegundoTurno());
+
+            mvc.perform(get(url(segundo, "/resultado")))
+                    .andExpect(content().string(allOf(containsString("id=\"titulo-primeiro-turno\""),
+                            containsString("2º turno entre Opção Azul e Opção Verde"),
+                            containsString("barras-compactas"),
+                            containsString("Ver o resultado completo do 1º turno"))));
+            mvc.perform(get(url(primeiro, "/resultado")))
+                    .andExpect(content().string(allOf(not(containsString("id=\"titulo-primeiro-turno\"")),
+                            containsString("O 2º turno já foi criado."),
+                            containsString("btn btn-primario\" href=\"/votacoes/" + segundo.id() + "/resultado\""))));
+        }
+
+        @Test
+        @WithMockUser(username = "organizador", roles = ORGANIZADOR)
+        @DisplayName("2º turno cujo 1º turno não está no repositório não mostra o card")
+        void primeiroTurnoAusente() throws Exception {
+            Votacao primeiro = Votacao.nova().pergunta("Fora do repositório").opcoes(List.of("A", "B", "C"))
+                    .regra(new MaioriaAbsoluta(true)).eleitorado(Eleitorado.importar("e01;Ana\ne02;Bia\ne03;Caio"))
+                    .build();
+            primeiro.abrir();
+            primeiro.registrarVoto("e01", "A");
+            primeiro.registrarVoto("e02", "B");
+            primeiro.registrarVoto("e03", "C");
+            primeiro.encerrar();
+            primeiro.apurar();
+            Votacao segundo = votacoes.salvar(primeiro.criarSegundoTurno());
+
+            mvc.perform(get(url(segundo, "/resultado")))
+                    .andExpect(status().isOk())
+                    .andExpect(content().string(not(containsString("id=\"titulo-primeiro-turno\""))));
+        }
+
+        @Test
+        @WithMockUser(username = "e01", roles = ELEITOR)
+        @DisplayName("Eleitor que votou vê \"Seu voto foi contado\", sem dizer em quem")
+        void votou() throws Exception {
+            Votacao votacao = apurada(new MaioriaSimples(), 3, "Opção Branca", "Opção Azul");
+
+            mvc.perform(get(url(votacao, "/resultado")))
+                    .andExpect(content().string(allOf(containsString("✓ Seu voto foi contado"),
+                            not(containsString("Você não votou")))));
+        }
+
+        @Test
+        @WithMockUser(username = "e03", roles = ELEITOR)
+        @DisplayName("Eleitor que não votou vê o aviso, e não o selo")
+        void naoVotou() throws Exception {
+            Votacao apurada = apurada(new MaioriaSimples(), 3, "Opção Azul");
+            mvc.perform(get(url(apurada, "/resultado")))
+                    .andExpect(content().string(allOf(containsString("Você não votou nesta votação."),
+                            not(containsString("Seu voto foi contado")))));
+
+            Votacao aberta = nova(new MaioriaSimples(), 3);
+            aberta.abrir();
+            mvc.perform(get(url(aberta, "/resultado")))
+                    .andExpect(content().string(containsString("Você ainda não votou nesta votação.")));
+        }
+
+        @Test
+        @WithMockUser(username = "organizador", roles = ORGANIZADOR)
+        @DisplayName("Organizador não recebe selo de voto")
+        void organizadorSemSelo() throws Exception {
+            Votacao votacao = apurada(new MaioriaSimples(), 3, "Opção Azul");
+
+            mvc.perform(get(url(votacao, "/resultado")))
+                    .andExpect(content().string(allOf(not(containsString("Seu voto foi contado")),
+                            not(containsString("não votou nesta votação")))));
+        }
+
+        @Test
+        @WithMockUser(username = "organizador", roles = ORGANIZADOR)
+        @DisplayName("Relatório: código de verificação do texto e assinaturas para a impressão")
+        void relatorioComoAta() throws Exception {
+            Votacao votacao = apurada(new MaioriaSimples(), 3, "Opção Azul");
+            String codigo = CodigoVerificacao.de(RelatorioApuracao.de(votacao).formatar());
+
+            mvc.perform(get(url(votacao, "/relatorio")))
+                    .andExpect(content().string(allOf(
+                            containsString("Código de verificação do relatório: <code>" + codigo + "</code>"),
+                            containsString("Presidente da comissão eleitoral"),
+                            containsString("Secretário(a)"))));
         }
     }
 }

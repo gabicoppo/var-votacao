@@ -225,4 +225,88 @@ class RankingControllerTest {
             mvc.perform(get("/premiacoes/nao-existe/andamento.json")).andExpect(status().isNotFound());
         }
     }
+
+    @Nested
+    @DisplayName("Telão da premiação e ranking no celular")
+    class Telao {
+
+        @Test
+        @WithMockUser(username = "organizador", roles = "ORGANIZADOR")
+        @DisplayName("Aberta: cédulas ao vivo, sem pódio nem pontos")
+        void aberta() throws Exception {
+            PremiacaoCadastrada cadastro = craque(false);
+
+            mvc.perform(get(url(cadastro, "/telao")))
+                    .andExpect(status().isOk())
+                    .andExpect(view().name("premiacao/telao"))
+                    .andExpect(content().string(allOf(containsString("<body class=\"telao\">"),
+                            containsString("data-telao=\"premiacao\""),
+                            containsString("de <span data-aptos>8</span> cédulas recebidas"),
+                            containsString("/premiacoes/" + cadastro.id() + "/andamento.json"),
+                            not(containsString("data-podio-telao")), not(containsString(" pts")))));
+            assertEquals(StatusPremiacao.ABERTA, cadastro.premiacao().status());
+        }
+
+        @Test
+        @WithMockUser(username = "organizador", roles = "ORGANIZADOR")
+        @DisplayName("Apurada: pódio com os passos do 3º ao 1º e o botão do ranking completo")
+        void apurada() throws Exception {
+            PremiacaoCadastrada cadastro = craque(true);
+
+            mvc.perform(get(url(cadastro, "/telao")))
+                    .andExpect(content().string(allOf(containsString("data-podio-telao"),
+                            containsString("degrau degrau-ouro\" data-passo=\"2\""),
+                            containsString("degrau degrau-bronze\" data-passo=\"0\""),
+                            containsString("36 pts"), containsString("data-proximo"),
+                            containsString("Ver ranking completo"))));
+        }
+
+        @Test
+        @WithMockUser(username = "organizador", roles = "ORGANIZADOR")
+        @DisplayName("Encerrada aguarda a apuração; sem cédulas, o telão avisa que não há pódio")
+        void encerradaESemCedulas() throws Exception {
+            PremiacaoCadastrada encerrada = craque(false);
+            encerrada.premiacao().encerrar();
+            mvc.perform(get(url(encerrada, "/telao")))
+                    .andExpect(content().string(containsString("Premiação encerrada. Aguardando apuração…")));
+
+            PremiacaoTop3 vazia = new PremiacaoTop3("Vazia", "", List.of("A", "B", "C"),
+                    List.of(new CategoriaEleitor(TORCEDORES, 1)), Map.of("e1", TORCEDORES));
+            vazia.abrir();
+            vazia.encerrar();
+            vazia.apurar();
+            mvc.perform(get(url(premiacoes.salvar(vazia), "/telao")))
+                    .andExpect(content().string(containsString("Nenhuma cédula registrada")));
+        }
+
+        @Test
+        @WithMockUser(username = "t1", roles = "ELEITOR")
+        @DisplayName("Eleitor, mesmo apto, recebe 403")
+        void eleitor() throws Exception {
+            mvc.perform(get(url(craque(true), "/telao"))).andExpect(status().isForbidden());
+        }
+
+        @Test
+        @WithMockUser(username = "organizador", roles = "ORGANIZADOR")
+        @DisplayName("Premiação inexistente dá 404")
+        void inexistente() throws Exception {
+            mvc.perform(get("/premiacoes/nao-existe/telao")).andExpect(status().isNotFound());
+        }
+
+        @Test
+        @WithMockUser(username = "organizador", roles = "ORGANIZADOR")
+        @DisplayName("Ranking: botão do telão e cartões para o celular com pontos por grupo")
+        void cartoes() throws Exception {
+            PremiacaoCadastrada cadastro = craque(true);
+
+            mvc.perform(get(url(cadastro, "/ranking")))
+                    .andExpect(content().string(allOf(
+                            containsString("href=\"/premiacoes/" + cadastro.id() + "/telao\""),
+                            containsString("class=\"ranking-cartoes\""),
+                            containsString("card cartao-ranking cartao-ranking-podio"),
+                            containsString("Jornalistas:"),
+                            containsString("<strong>26</strong>"),
+                            containsString("ranking-tabela"))));
+        }
+    }
 }
