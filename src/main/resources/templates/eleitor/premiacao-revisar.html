@@ -17,11 +17,11 @@
   <p class="subtitulo" th:text="${cedula.titulo()}">Craque do Campeonato</p>
 
   <ol class="card card-destaque podio">
-    <li><span class="podio-lugar">1º</span> <strong th:text="${escolhas.primeiro()}">A</strong>
+    <li><span class="podio-lugar"><span aria-hidden="true">🥇</span> 1º</span> <strong th:text="${escolhas.primeiro()}">A</strong>
       <small th:text="|5 pts × ${cedula.peso()}|">5 pts × 1</small></li>
-    <li><span class="podio-lugar">2º</span> <strong th:text="${escolhas.segundo()}">B</strong>
+    <li><span class="podio-lugar"><span aria-hidden="true">🥈</span> 2º</span> <strong th:text="${escolhas.segundo()}">B</strong>
       <small th:text="|3 pts × ${cedula.peso()}|">3 pts × 1</small></li>
-    <li><span class="podio-lugar">3º</span> <strong th:text="${escolhas.terceiro()}">C</strong>
+    <li><span class="podio-lugar"><span aria-hidden="true">🥉</span> 3º</span> <strong th:text="${escolhas.terceiro()}">C</strong>
       <small th:text="|1 pt × ${cedula.peso()}|">1 pt × 1</small></li>
   </ol>
   <p class="ajuda">Depois de confirmar, a cédula não pode ser alterada.</p>
@@ -30,9 +30,11 @@
     <input type="hidden" name="primeiro" th:value="${escolhas.primeiro()}">
     <input type="hidden" name="segundo" th:value="${escolhas.segundo()}">
     <input type="hidden" name="terceiro" th:value="${escolhas.terceiro()}">
-    <button type="submit" class="btn btn-primario btn-grande">Confirmar cédula</button>
+    <button type="submit" class="btn btn-primario btn-grande" data-registrando>Confirmar cédula</button>
   </form>
-  <a class="btn btn-secundario btn-grande" th:href="@{/eleitor/premiacoes/{id}(id=${cedula.id()})}">Voltar e mudar</a>
+  <a class="btn btn-secundario btn-grande voltar" th:href="@{/eleitor/premiacoes/{id}(id=${cedula.id()})}">
+    Voltar e mudar</a>
+  <script th:src="@{/js/eleitor.js}" defer></script>
 </main>
 </body>
 </html>

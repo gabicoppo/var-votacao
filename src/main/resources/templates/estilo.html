@@ -23,7 +23,8 @@
     <a href="#cores">Cores</a> <a href="#tipografia">Tipografia</a> <a href="#estrutura">Estrutura</a>
     <a href="#cards">Cards</a> <a href="#botoes">Botões</a> <a href="#status">Status</a>
     <a href="#alertas">Alertas</a> <a href="#formularios">Formulários</a> <a href="#cedula">Cédula</a>
-    <a href="#dados">Dados</a> <a href="#outros">Outros</a> <a href="#layout">Layout</a>
+    <a href="#dados">Dados</a> <a href="#abas">Abas</a> <a href="#dialogo">Diálogo</a>
+    <a href="#outros">Outros</a> <a href="#layout">Layout</a>
   </nav>
 
   <!-- Cores -->
@@ -262,6 +263,70 @@ redirectAttributes.addFlashAttribute("alerta", Alerta.erro(MensagensErro.amigave
       </tbody>
     </table>
     <p class="ajuda">No celular a tabela rola na horizontal sem empurrar a página.</p>
+  </section>
+
+  <!-- Métricas com 3 itens -->
+  <section class="secao" id="metricas-3">
+    <h2 class="secao-titulo">Métricas com 3 itens</h2>
+    <div class="metricas">
+      <div class="metrica"><span class="metrica-valor">9</span><span class="metrica-rotulo">votos válidos</span></div>
+      <div class="metrica"><span class="metrica-valor">12</span><span class="metrica-rotulo">eleitores aptos</span></div>
+      <div class="metrica"><span class="metrica-valor">75%</span><span class="metrica-rotulo">participação</span></div>
+    </div>
+    <p class="ajuda">Com 3 itens, <code>.metricas</code> vira 3 colunas compactas já no celular (sem item sozinho
+      na última linha); com 4, fica 2 × 2. Em navegadores sem <code>:has()</code>, use <code>.metricas-3</code>.</p>
+  </section>
+
+  <!-- Abas -->
+  <section class="secao" id="abas">
+    <h2 class="secao-titulo">Abas de filtro</h2>
+    <nav class="abas" aria-label="Exemplo de abas">
+      <a class="aba" href="#abas" aria-current="page">Todas <span class="aba-contador">4</span></a>
+      <a class="aba" href="#abas">Rascunho <span class="aba-contador">1</span></a>
+      <a class="aba" href="#abas">Abertas <span class="aba-contador">1</span></a>
+      <a class="aba" href="#abas">Encerradas <span class="aba-contador">0</span></a>
+      <a class="aba" href="#abas">Apuradas <span class="aba-contador">2</span></a>
+    </nav>
+    <p class="ajuda"><code>.abas</code> é uma faixa com rolagem horizontal e <code>scroll-snap</code>; quando há
+      abas escondidas, um <em>fade</em> na borda avisa (o <code>var.js</code> marca
+      <code>data-mais-direita</code>/<code>data-mais-esquerda</code>). O mesmo vale para <code>.tabela</code>,
+      a navegação do cabeçalho e qualquer elemento com <code>data-rolagem</code>.</p>
+  </section>
+
+  <!-- Diálogo de confirmação -->
+  <section class="secao" id="dialogo">
+    <h2 class="secao-titulo">Diálogo de confirmação</h2>
+    <div class="card pilha">
+      <p>Qualquer <code>form[data-confirmar]</code> pede confirmação num diálogo antes de enviar. Sem JavaScript,
+        o form envia direto.</p>
+      <div class="acoes">
+        <form th:action="@{/estilo}" method="get" data-confirmar="Abrir a votação? Depois de aberta, a configuração
+              não muda mais." data-confirmar-titulo="Abrir votação">
+          <button type="submit" class="btn btn-primario">Abrir votação</button>
+        </form>
+        <form th:action="@{/estilo}" method="get" data-confirmar="Encerrar a votação agora? Ninguém mais poderá
+              votar." data-confirmar-titulo="Encerrar votação" data-confirmar-botao="Encerrar" data-confirmar-perigo>
+          <button type="submit" class="btn btn-perigo">Encerrar votação</button>
+        </form>
+      </div>
+      <pre class="guia-codigo"><code>&lt;form th:action="…" method="post"
+      data-confirmar="Encerrar a votação agora? Ninguém mais poderá votar."
+      data-confirmar-titulo="Encerrar votação"   &lt;!-- opcional, padrão "Tem certeza?" --&gt;
+      data-confirmar-botao="Encerrar"            &lt;!-- opcional, padrão "Confirmar" --&gt;
+      data-confirmar-perigo&gt;                     &lt;!-- opcional: botão vermelho --&gt;
+  &lt;button type="submit" class="btn btn-perigo"&gt;Encerrar&lt;/button&gt;
+&lt;/form&gt;</code></pre>
+      <p class="ajuda">Não use <code>window.confirm</code> nos JS das áreas: o <code>var.js</code> já cuida disso.</p>
+    </div>
+  </section>
+
+  <!-- Largura -->
+  <section class="secao" id="largura">
+    <h2 class="secao-titulo">Rótulos por largura</h2>
+    <p><code>.so-celular</code> aparece abaixo de 480 px e <code>.so-desktop</code> a partir daí. Use para rótulos
+      curtos no celular, com o rótulo completo no <code>aria-label</code>:
+      <span class="badge badge-info"><span class="so-desktop">Verificar comprovante</span><span
+        class="so-celular">Verificar</span></span></p>
   </section>
 
   <!-- Outros -->

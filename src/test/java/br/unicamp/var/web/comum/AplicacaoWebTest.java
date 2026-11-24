@@ -187,6 +187,30 @@ class AplicacaoWebTest {
         }
 
         @Test
+        @DisplayName("inclui o var.js (diálogo de confirmação e fades) e o theme-color em toda página")
+        void varJsEThemeColor() throws Exception {
+            mvc.perform(get("/login"))
+                    .andExpect(content().string(allOf(
+                            containsString("<script src=\"/js/var.js\" defer></script>"),
+                            containsString("<meta name=\"theme-color\" content=\"#0B3D2E\">"))));
+            mvc.perform(get("/css/var.css")).andExpect(content().string(allOf(
+                    containsString(".dialogo"), containsString(".abas"), containsString(".so-celular"))));
+            mvc.perform(get("/js/var.js")).andExpect(content().string(allOf(
+                    containsString("form.hasAttribute('data-confirmar')"), containsString("showModal()"))));
+        }
+
+        @Test
+        @WithMockUser(username = "e07", roles = "ELEITOR")
+        @DisplayName("no celular a navegação usa rótulos curtos, com o nome completo no aria-label")
+        void rotulosCurtos() throws Exception {
+            mvc.perform(get("/estilo"))
+                    .andExpect(content().string(allOf(
+                            containsString("aria-label=\"Minhas votações\""),
+                            containsString("aria-hidden=\"true\">Votações</span>"),
+                            containsString("aria-label=\"Sair (e07)\""))));
+        }
+
+        @Test
         @DisplayName("rodapé com o nome do projeto")
         void rodape() throws Exception {
             mvc.perform(get("/login"))

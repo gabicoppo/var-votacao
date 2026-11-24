@@ -5,10 +5,12 @@ import br.unicamp.var.processo.Votacao;
 import br.unicamp.var.top3.PremiacaoTop3;
 import br.unicamp.var.top3.StatusPremiacao;
 import br.unicamp.var.urna.Sigilo;
+import br.unicamp.var.web.comum.Formatador;
 import br.unicamp.var.web.comum.Fuso;
 import br.unicamp.var.web.comum.PremiacaoCadastrada;
 import java.time.Clock;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
@@ -30,6 +32,10 @@ import java.util.Optional;
  *   <li><b>Resultados:</b> apurada.</li>
  * </ul>
  *
+ * <p>Se houver mais de um item em "Para votar agora", o de prazo mais curto ganha o selo "⏰ Encerra hoje"
+ * quando o período dele termina no dia de hoje (fuso {@link Fuso#ZONA}). Os cards de premiação trazem
+ * "Top 3 · peso N" no lugar do sigilo, que a premiação não tem (#23).</p>
+ *
  * <p>Cada votação é lida dentro de {@code synchronized (votacao)}: {@link Votacao} não é thread-safe.
  * Nenhum card traz resultado parcial nem o voto do eleitor (RNF-01).</p>
  *
@@ -48,6 +54,7 @@ public record PainelEleitor(List<CartaoVotacao> votarAgora, List<CartaoVotacao> 
     private static final String SECRETO = "Voto secreto";
     private static final String IDENTIFICADO = "Voto identificado";
     private static final String SEM_PRAZO = "sem prazo definido";
+    private static final Formatador FORMATADOR = new Formatador();
 
     /** Copia as listas, que ficam imutáveis. */
     public PainelEleitor {
@@ -92,7 +99,7 @@ public record PainelEleitor(List<CartaoVotacao> votarAgora, List<CartaoVotacao> 
             classificar(eleitorId, cadastro, secoes);
         }
         secoes.votarAgora.sort(Comparator.comparing(Item::fim, Comparator.nullsLast(Comparator.naturalOrder())));
-        return new PainelEleitor(cartoes(secoes.votarAgora), secoes.jaVotei, secoes.emBreve,
+        return new PainelEleitor(cartoes(secoes.votarAgora, agora), secoes.jaVotei, secoes.emBreve,
                 secoes.aguardando, secoes.resultados);
     }
 
@@ -158,15 +165,16 @@ public record PainelEleitor(List<CartaoVotacao> votarAgora, List<CartaoVotacao> 
         boolean votou = premiacao.jaVotou(eleitorId);
         String link = "/eleitor/premiacoes/" + cadastro.id();
         if (status == StatusPremiacao.ABERTA && !votou) {
-            secoes.votarAgora.add(new Item(cartao(cadastro, "aberta para votação", true, false, link), null));
+            CartaoVotacao cartao = cartao(cadastro, eleitorId, "aberta para votação", true, false, link);
+            secoes.votarAgora.add(new Item(cartao, null));
         } else if (status == StatusPremiacao.ABERTA) {
-            secoes.jaVotei.add(cartao(cadastro, "cédula registrada", false, true, null));
+            secoes.jaVotei.add(cartao(cadastro, eleitorId, "cédula registrada", false, true, null));
         } else if (status == StatusPremiacao.RASCUNHO) {
-            secoes.emBreve.add(cartao(cadastro, "abre em breve", false, false, null));
+            secoes.emBreve.add(cartao(cadastro, eleitorId, "abre em breve", false, false, null));
         } else if (status == StatusPremiacao.ENCERRADA) {
-            secoes.aguardando.add(cartao(cadastro, "encerrada", false, votou, null));
+            secoes.aguardando.add(cartao(cadastro, eleitorId, "encerrada", false, votou, null));
         } else {
-            secoes.resultados.add(cartao(cadastro, "ranking publicado", false, votou,
+            secoes.resultados.add(cartao(cadastro, eleitorId, "ranking publicado", false, votou,
                     "/premiacoes/" + cadastro.id() + "/ranking"));
         }
     }
@@ -176,15 +184,24 @@ public record PainelEleitor(List<CartaoVotacao> votarAgora, List<CartaoVotacao> 
         String status = votacao.status();
         return new CartaoVotacao(votacao.id(), votacao.pergunta(), resumir(votacao.descricao()), status,
                 capitalizar(status), prazo, votacao.sigilo() == Sigilo.SECRETO ? SECRETO : IDENTIFICADO,
-                podeVotar, jaVotou, link, false);
+                podeVotar, jaVotou, link, false, false);
     }
 
-    private static CartaoVotacao cartao(PremiacaoCadastrada cadastro, String prazo, boolean podeVotar,
-                                        boolean jaVotou, String link) {
+    private static CartaoVotacao cartao(PremiacaoCadastrada cadastro, String eleitorId, String prazo,
+                                        boolean podeVotar, boolean jaVotou, String link) {
         PremiacaoTop3 premiacao = cadastro.premiacao();
         String status = premiacao.status().name().toLowerCase(Locale.ROOT);
         return new CartaoVotacao(cadastro.id(), premiacao.titulo(), resumir(premiacao.descricao()), status,
-                capitalizar(status), prazo, SECRETO, podeVotar, jaVotou, link, true);
+                capitalizar(status), prazo, modalidadeTop3(premiacao, eleitorId), podeVotar, jaVotou, link, true,
+                false);
+    }
+
+    /**
+     * "Top 3 · peso 2": o peso do grupo do eleitor na premiação (a premiação não tem sigilo). Só é chamado
+     * para eleitores com categoria, filtrados em {@code classificar}.
+     */
+    private static String modalidadeTop3(PremiacaoTop3 premiacao, String eleitorId) {
+        return "Top 3 · peso " + FORMATADOR.numero(premiacao.categoriaDe(eleitorId).orElseThrow().peso());
     }
 
     private static String prazo(Optional<PeriodoVotacao> periodo, Instant agora) {
@@ -195,6 +212,10 @@ public record PainelEleitor(List<CartaoVotacao> votarAgora, List<CartaoVotacao> 
         return periodo.map(p -> TempoRestante.descreverInicio(agora, p.inicio(), Fuso.ZONA)).orElse("abre em breve");
     }
 
+    /**
+     * Resume a descrição para o card, cortando na última palavra inteira e acrescentando "…". Uma
+     * palavra maior que metade do limite é cortada no limite, para o resumo não ficar curto demais.
+     */
     static String resumir(String texto) {
         if (texto == null) {
             return "";
@@ -203,15 +224,29 @@ public record PainelEleitor(List<CartaoVotacao> votarAgora, List<CartaoVotacao> 
         if (limpo.length() <= TAMANHO_DESCRICAO) {
             return limpo;
         }
-        return limpo.substring(0, TAMANHO_DESCRICAO - 1).stripTrailing() + "…";
+        String corte = limpo.substring(0, TAMANHO_DESCRICAO - 1);
+        int espaco = corte.lastIndexOf(' ');
+        if (espaco > TAMANHO_DESCRICAO / 2) {
+            corte = corte.substring(0, espaco);
+        }
+        return corte.replaceAll("[\\s,;:.–—-]+$", "") + "…";
     }
 
     private static String capitalizar(String status) {
         return status.substring(0, 1).toUpperCase(Locale.ROOT) + status.substring(1);
     }
 
-    private static List<CartaoVotacao> cartoes(List<Item> itens) {
-        return itens.stream().map(Item::cartao).toList();
+    /** Cards de "Para votar agora"; com mais de um, o primeiro (prazo mais curto) ganha o selo se encerra hoje. */
+    private static List<CartaoVotacao> cartoes(List<Item> itens, Instant agora) {
+        List<CartaoVotacao> cartoes = new ArrayList<>(itens.stream().map(Item::cartao).toList());
+        if (itens.size() > 1 && encerraHoje(itens.get(0).fim(), agora)) {
+            cartoes.set(0, cartoes.get(0).comSeloEncerraHoje());
+        }
+        return cartoes;
+    }
+
+    private static boolean encerraHoje(Instant fim, Instant agora) {
+        return fim != null && LocalDate.ofInstant(fim, Fuso.ZONA).equals(LocalDate.ofInstant(agora, Fuso.ZONA));
     }
 
     /** Card de "Para votar agora" com o fim do período, usado só para ordenar. */
