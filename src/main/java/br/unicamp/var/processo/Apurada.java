@@ -1,16 +1,21 @@
 package br.unicamp.var.processo;
 
+import br.unicamp.var.apuracao.ContagemVotos;
 import br.unicamp.var.apuracao2turno.ResultadoApuracao;
+import br.unicamp.var.resultado.ResultadoDetalhado;
 
 /**
- * Votação já apurada: guarda o resultado, que continua disponível para consulta.
+ * Votação já apurada: guarda o resultado e a contagem usada na apuração, que
+ * continuam disponíveis para consulta (história #29).
  */
 final class Apurada implements EstadoVotacao {
 
     private final ResultadoApuracao resultado;
+    private final ResultadoDetalhado detalhado;
 
-    Apurada(ResultadoApuracao resultado) {
+    Apurada(ContagemVotos contagem, ResultadoApuracao resultado) {
         this.resultado = resultado;
+        this.detalhado = ResultadoDetalhado.de(contagem, resultado);
     }
 
     @Override
@@ -21,5 +26,10 @@ final class Apurada implements EstadoVotacao {
     @Override
     public ResultadoApuracao apurar(Votacao votacao) {
         return resultado;
+    }
+
+    @Override
+    public ResultadoDetalhado resultadoDetalhado(Votacao votacao) {
+        return detalhado;
     }
 }

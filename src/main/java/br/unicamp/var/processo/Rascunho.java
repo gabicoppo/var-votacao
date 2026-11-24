@@ -21,4 +21,16 @@ final class Rascunho implements EstadoVotacao {
     public void abrir(Votacao votacao) {
         votacao.mudarPara(new Aberta());
     }
+
+    /**
+     * Abre a votação se o início do período já chegou; o novo estado aplica o relógio
+     * em seguida, então uma votação cujo período inteiro já passou vai direto a encerrada.
+     */
+    @Override
+    public void atualizarPeloRelogio(Votacao votacao) {
+        if (votacao.periodoComecou()) {
+            abrir(votacao);
+            votacao.atualizarPeloRelogio();
+        }
+    }
 }
