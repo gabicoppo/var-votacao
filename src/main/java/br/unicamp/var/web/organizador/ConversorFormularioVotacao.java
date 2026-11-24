@@ -7,9 +7,9 @@ import br.unicamp.var.apuracao.RegraApuracao;
 import br.unicamp.var.eleitorado.Eleitorado;
 import br.unicamp.var.processo.PeriodoVotacao;
 import br.unicamp.var.processo.Votacao;
+import br.unicamp.var.web.comum.Fuso;
 import java.time.Clock;
 import java.time.LocalDateTime;
-import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -25,9 +25,6 @@ import java.util.regex.Pattern;
  * português para a tela. {@link #paraVotacao} só deve ser chamado com o formulário válido.</p>
  */
 public final class ConversorFormularioVotacao {
-
-    /** Fuso das datas digitadas pelo organizador. */
-    static final ZoneId FUSO = ZoneId.of("America/Sao_Paulo");
 
     private static final int MINIMO_OPCOES = 2;
     private static final double CEM_POR_CENTO = 100.0;
@@ -197,7 +194,7 @@ public final class ConversorFormularioVotacao {
                 .criadaPor(autor);
         if (f.getInicio() != null && f.getFim() != null) {
             builder.periodo(new PeriodoVotacao(
-                    f.getInicio().atZone(FUSO).toInstant(), f.getFim().atZone(FUSO).toInstant()));
+                    f.getInicio().atZone(Fuso.ZONA).toInstant(), f.getFim().atZone(Fuso.ZONA).toInstant()));
         }
         return builder.build();
     }

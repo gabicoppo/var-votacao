@@ -2,6 +2,7 @@ package br.unicamp.var.web.organizador;
 
 import br.unicamp.var.urna.Sigilo;
 import java.time.LocalDateTime;
+import org.springframework.format.annotation.DateTimeFormat;
 
 /**
  * Dados digitados no formulário "Nova votação" (histórias #19, #20, #21, #22 e #24).
@@ -20,7 +21,9 @@ public class FormularioVotacao {
     private String quorum = "50%";
     private String fracaoExigida = "2/3";
     private Sigilo sigilo = Sigilo.SECRETO;
+    @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
     private LocalDateTime inicio;
+    @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
     private LocalDateTime fim;
     private String eleitores = "";
 
