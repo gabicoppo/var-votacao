@@ -74,7 +74,7 @@ class PainelEleitorTest {
             assertTrue(cartao.podeVotar());
             assertEquals("sem prazo definido", cartao.prazo());
             assertEquals("Aberta", cartao.textoStatus());
-            assertEquals("Voto secreto", cartao.sigilo());
+            assertEquals("Voto secreto", cartao.modalidade());
             assertEquals(1, painel.totalParaVotar());
             assertFalse(painel.vazio());
         }
@@ -177,7 +177,7 @@ class PainelEleitorTest {
 
             CartaoVotacao cartao = PainelEleitor.montar(ELEITOR, List.of(votacao), RELOGIO).votarAgora().get(0);
 
-            assertEquals("Voto identificado", cartao.sigilo());
+            assertEquals("Voto identificado", cartao.modalidade());
             assertEquals(PainelEleitor.TAMANHO_DESCRICAO, cartao.descricaoCurta().length());
             assertTrue(cartao.descricaoCurta().endsWith("…"));
             assertEquals("", PainelEleitor.resumir(null));
@@ -250,6 +250,95 @@ class PainelEleitorTest {
             cadastro.premiacao().abrir();
 
             assertTrue(PainelEleitor.montar("e99", List.of(), List.of(cadastro), RELOGIO).vazio());
+        }
+    }
+
+    @Nested
+    @DisplayName("Polimento da Fase 3: peso, selo \"Encerra hoje\" e resumo")
+    class Polimento {
+
+        private PremiacaoCadastrada premiacaoComPesos() {
+            PremiacaoTop3 premiacao = new PremiacaoTop3("Craque", "Melhor do campeonato",
+                    List.of("Atleta A", "Atleta B", "Atleta C"),
+                    List.of(new CategoriaEleitor("Jornalistas", 2.0), new CategoriaEleitor("Torcedores", 1.5)),
+                    Map.of("e01", "Jornalistas", "e02", "Torcedores"));
+            premiacao.abrir();
+            return new PremiacaoCadastrada("p1", premiacao, AGORA);
+        }
+
+        @Test
+        @DisplayName("card de premiação mostra \"Top 3 · peso N\" do grupo do eleitor, e não o sigilo")
+        void premiacaoMostraPeso() {
+            PremiacaoCadastrada cadastro = premiacaoComPesos();
+
+            CartaoVotacao jornalista = PainelEleitor.montar("e01", List.of(), List.of(cadastro), RELOGIO)
+                    .votarAgora().get(0);
+            CartaoVotacao torcedor = PainelEleitor.montar("e02", List.of(), List.of(cadastro), RELOGIO)
+                    .votarAgora().get(0);
+
+            assertEquals("Top 3 · peso 2", jornalista.modalidade());
+            assertEquals("Top 3 · peso 1,5", torcedor.modalidade());
+        }
+
+        @Test
+        @DisplayName("votação continua mostrando \"Voto secreto\" ou \"Voto identificado\"")
+        void votacaoMostraSigilo() {
+            Votacao secreta = aberta("Secreta");
+            Votacao nominal = votacao("Nominal").sigilo(Sigilo.IDENTIFICADO).build();
+            nominal.abrir();
+
+            List<CartaoVotacao> cartoes = PainelEleitor.montar(ELEITOR, List.of(secreta, nominal), RELOGIO)
+                    .votarAgora();
+
+            assertEquals(List.of("Voto secreto", "Voto identificado"),
+                    cartoes.stream().map(CartaoVotacao::modalidade).toList());
+        }
+
+        @Test
+        @DisplayName("com mais de uma para votar, a de prazo mais curto que encerra hoje ganha o selo")
+        void seloEncerraHoje() {
+            Votacao hoje = votacao("Hoje").periodo(periodo(Duration.ofDays(-1), Duration.ofHours(5))).build();
+            hoje.abrir();
+            Votacao depois = votacao("Depois").periodo(periodo(Duration.ofDays(-1), Duration.ofDays(3))).build();
+            depois.abrir();
+
+            List<CartaoVotacao> cartoes = PainelEleitor.montar(ELEITOR, List.of(depois, hoje), RELOGIO).votarAgora();
+
+            assertEquals(List.of("Hoje", "Depois"), perguntas(cartoes));
+            assertTrue(cartoes.get(0).encerraHoje());
+            assertFalse(cartoes.get(1).encerraHoje());
+        }
+
+        @Test
+        @DisplayName("sem selo se só há uma para votar, se a mais próxima encerra amanhã ou se não há prazo")
+        void semSelo() {
+            Votacao hoje = votacao("Hoje").periodo(periodo(Duration.ofDays(-1), Duration.ofHours(5))).build();
+            hoje.abrir();
+            Votacao amanha = votacao("Amanhã").periodo(periodo(Duration.ofDays(-1), Duration.ofDays(1))).build();
+            amanha.abrir();
+
+            assertFalse(PainelEleitor.montar(ELEITOR, List.of(hoje), RELOGIO).votarAgora().get(0).encerraHoje());
+            assertFalse(PainelEleitor.montar(ELEITOR, List.of(amanha, aberta("Sem prazo")), RELOGIO)
+                    .votarAgora().get(0).encerraHoje());
+            assertTrue(PainelEleitor.montar(ELEITOR, List.of(aberta("A"), aberta("B")), RELOGIO).votarAgora()
+                    .stream().noneMatch(CartaoVotacao::encerraHoje));
+        }
+
+        @Test
+        @DisplayName("descrição longa é cortada na última palavra inteira, sem pontuação solta antes do \"…\"")
+        void resumoPorPalavra() {
+            String texto = "Escolha da diretoria para o triênio 2027-2029. Voto secreto; se nenhuma chapa tiver "
+                    + "mais da metade dos votos válidos, as duas mais votadas vão para o segundo turno, uma semana "
+                    + "depois.";
+
+            String resumo = PainelEleitor.resumir(texto);
+            String semReticencias = resumo.substring(0, resumo.length() - 1);
+
+            assertTrue(resumo.endsWith("…"));
+            assertTrue(resumo.length() <= PainelEleitor.TAMANHO_DESCRICAO);
+            assertTrue(texto.startsWith(semReticencias + " ") || texto.startsWith(semReticencias + ","), resumo);
+            assertFalse(semReticencias.endsWith(","));
+            assertEquals("a".repeat(100) + " fim…", PainelEleitor.resumir("a".repeat(100) + " fim, " + "b".repeat(60)));
         }
     }
 }
