@@ -161,7 +161,8 @@ public abstract class E2EBase {
     protected static void acaoConfirmada(Page pagina, String botao) {
         pagina.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(botao).setExact(true)).click();
         Locator dialogo = pagina.getByRole(AriaRole.DIALOG);
-        dialogo.getByRole(AriaRole.BUTTON, new Locator.GetByRoleOptions().setName("Confirmar")).click();
+        // O rótulo do botão de confirmar muda por área (data-confirmar-botao); o outro é sempre "Cancelar".
+        dialogo.getByRole(AriaRole.BUTTON).filter(new Locator.FilterOptions().setHasNotText("Cancelar")).click();
         pagina.waitForLoadState();
     }
 
