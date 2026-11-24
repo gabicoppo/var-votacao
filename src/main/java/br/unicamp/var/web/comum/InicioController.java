@@ -1,8 +1,10 @@
 package br.unicamp.var.web.comum;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 
 /**
@@ -13,6 +15,18 @@ import org.springframework.web.bind.annotation.GetMapping;
  */
 @Controller
 public class InicioController {
+
+    private final boolean demoAtivo;
+
+    /**
+     * Cria o controller.
+     *
+     * @param demoAtivo valor de {@code var.demo.ativo}; se verdadeiro, o login mostra as contas de
+     *                  demonstração
+     */
+    public InicioController(@Value("${var.demo.ativo:false}") boolean demoAtivo) {
+        this.demoAtivo = demoAtivo;
+    }
 
     /**
      * Página inicial ou redirecionamento pelo papel.
@@ -32,12 +46,14 @@ public class InicioController {
     }
 
     /**
-     * Página de login.
+     * Página de login; com a demonstração ativa, mostra as contas de demonstração.
      *
+     * @param modelo modelo da página
      * @return a view {@code login}
      */
     @GetMapping("/login")
-    public String login() {
+    public String login(Model modelo) {
+        modelo.addAttribute("demoAtivo", demoAtivo);
         return "login";
     }
 

@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{fragments/layout :: layout(~{::title}, ~{::main}, ~{})}">
+<head>
+  <title>Acesso negado</title>
+</head>
+<body>
+<main class="erro-pagina">
+  <div class="card card-destaque">
+    <p class="erro-codigo" aria-hidden="true"><span>🟥</span> 403</p>
+    <h1>Acesso negado</h1>
+    <p class="subtitulo">Você não tem permissão para ver esta página. Se acha que deveria ter, entre com outra conta.</p>
+    <a class="btn btn-primario btn-grande" th:href="@{/}">Voltar ao início</a>
+  </div>
+</main>
+</body>
+</html>

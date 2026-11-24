@@ -30,6 +30,20 @@
       <button type="submit" class="btn btn-primario btn-grande">Entrar</button>
     </form>
   </div>
+
+  <aside class="card demo-contas" th:if="${demoAtivo}" aria-labelledby="demo-titulo">
+    <h2 id="demo-titulo" class="card-titulo">Contas de demonstração</h2>
+    <p class="card-meta">Dados fictícios, recriados a cada reinício.</p>
+    <table class="tabela">
+      <caption class="sr-only">Usuários e senhas de demonstração</caption>
+      <thead><tr><th scope="col">Papel</th><th scope="col">Usuário</th><th scope="col">Senha</th></tr></thead>
+      <tbody>
+        <tr><td>Organizador</td><td><code>organizador</code></td><td><code>var2026</code></td></tr>
+        <tr><td>Eleitor</td><td><code>e01</code> a <code>e12</code></td><td><code>1234</code></td></tr>
+      </tbody>
+    </table>
+    <p class="ajuda">Na eleição presidencial, e01 a e04 ainda não votaram.</p>
+  </aside>
 </main>
 </body>
 </html>
