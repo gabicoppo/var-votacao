@@ -22,9 +22,10 @@ class PremiacaoE2E extends E2EBase {
         entrar(eleitor, "e01", SENHA_ELEITOR);
         abrirCartao(eleitor, CRAQUE);
         assertThat(eleitor.getByText("Você vota como Jornalistas")).isVisible();
-        eleitor.getByLabel("1º lugar").selectOption("Davi Prado");
-        eleitor.getByLabel("2º lugar").selectOption("Rafa Lima");
-        eleitor.getByLabel("3º lugar").selectOption("Nico Sales");
+        // Cédula por toque: os jogadores são tocados na ordem 1º, 2º e 3º (sem JS, são três selects).
+        for (String jogador : new String[] {"Davi Prado", "Rafa Lima", "Nico Sales"}) {
+            eleitor.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(jogador)).click();
+        }
         capturar(eleitor, "01-cedula-top3");
         eleitor.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Revisar cédula")).click();
         assertThat(eleitor.getByRole(AriaRole.HEADING, new Page.GetByRoleOptions().setName("Confira sua cédula")))

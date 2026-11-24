@@ -15,7 +15,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 /**
  * Acessibilidade básica nas páginas principais: campos com rótulo, imagens com {@code alt} e um único
- * {@code h1}.
+ * {@code h1}. Campos fora da árvore de acessibilidade ({@code aria-hidden="true"}, como o texto de apoio
+ * do "Copiar convite") não precisam de rótulo.
  */
 @DisplayName("Acessibilidade básica")
 class AcessibilidadeE2E extends E2EBase {
@@ -24,7 +25,9 @@ class AcessibilidadeE2E extends E2EBase {
     private static final String VERIFICACAO = """
             () => {
               const problemas = [];
-              document.querySelectorAll('input:not([type=hidden]), select, textarea').forEach(c => {
+              const campos = 'input:not([type=hidden]), select, textarea';
+              document.querySelectorAll(campos).forEach(c => {
+                if (c.closest('[aria-hidden="true"]')) { return; }
                 const rotulo = (c.labels && c.labels.length > 0) || c.getAttribute('aria-label')
                     || c.getAttribute('aria-labelledby');
                 if (!rotulo) { problemas.push('campo sem rótulo: ' + (c.name || c.id || c.type)); }
