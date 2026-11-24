@@ -14,20 +14,34 @@
     </div>
   </div>
 
+  <!--/* Quem chega pelo link do comprovante (?votacao=&codigo=) já vê o resultado, sem clicar em nada. */-->
   <div th:switch="${pagina.resultado()?.name()}" class="resultado-verificacao">
-    <div th:case="'VALIDO'" class="alerta alerta-sucesso verificacao-ok" role="status">
-      <span>Este comprovante foi emitido por esta votação: seu voto está na contagem.
-        <small th:text="${pagina.pergunta()}">Pergunta</small></span>
-    </div>
-    <div th:case="'INVALIDO'" class="alerta alerta-erro" role="alert">
-      Código não encontrado nesta votação. Confira se digitou o código certo e escolheu a votação certa.
-    </div>
+    <section th:case="'VALIDO'" class="card veredito veredito-ok" role="status" aria-labelledby="veredito-titulo">
+      <div class="veredito-icone" aria-hidden="true">✓</div>
+      <h2 id="veredito-titulo">Voto contado</h2>
+      <p class="subtitulo" th:text="${pagina.pergunta()}">Pergunta</p>
+      <p>Este comprovante foi emitido por esta votação: seu voto está na urna e entra na apuração.</p>
+      <p class="veredito-nota">A verificação <strong>não mostra em quem você votou</strong>, nem para você nem
+        para ninguém.</p>
+    </section>
+    <section th:case="'INVALIDO'" class="card veredito veredito-erro" role="alert" aria-labelledby="veredito-titulo">
+      <div class="veredito-icone" aria-hidden="true">✗</div>
+      <h2 id="veredito-titulo">Código não encontrado nesta votação</h2>
+      <p class="subtitulo" th:text="${pagina.pergunta()}">Pergunta</p>
+      <p>Nenhum voto desta votação recebeu este código. Confira se digitou o código exatamente como no
+        comprovante e se escolheu a votação certa.</p>
+      <p class="veredito-nota">A verificação não mostra nem altera nenhum voto. Se o código estiver certo e mesmo
+        assim não aparecer, fale com o organizador.</p>
+    </section>
     <div th:case="'VOTACAO_INEXISTENTE'" class="alerta alerta-erro" role="alert">
       Votação não encontrada. Escolha a votação na lista.
     </div>
   </div>
 
-  <form class="form card" th:action="@{/verificar}" method="get">
+  <form class="form card" th:action="@{/verificar}" method="get" aria-labelledby="form-verificar-titulo">
+    <h2 id="form-verificar-titulo" class="form-verificar-titulo"
+        th:text="${pagina.resultado() != null} ? 'Verificar outro código' : 'Informe o comprovante'">
+      Informe o comprovante</h2>
     <div class="campo">
       <label for="votacao">Votação</label>
       <select id="votacao" name="votacao" required>
@@ -39,8 +53,9 @@
     <div class="campo">
       <label for="codigo">Código do comprovante</label>
       <input id="codigo" name="codigo" type="text" th:value="${pagina.codigo()}" autocomplete="off"
-             autocapitalize="characters" spellcheck="false" maxlength="40" class="campo-codigo" required>
-      <p class="ajuda">O código aparece na tela logo depois do voto (ex.: K7PXM4QA).</p>
+             autocapitalize="characters" spellcheck="false" maxlength="40" class="campo-codigo" required
+             aria-describedby="codigo-ajuda">
+      <p id="codigo-ajuda" class="ajuda">O código aparece na tela logo depois do voto (ex.: K7PXM4QA).</p>
     </div>
     <button type="submit" class="btn btn-primario btn-grande">Verificar</button>
   </form>

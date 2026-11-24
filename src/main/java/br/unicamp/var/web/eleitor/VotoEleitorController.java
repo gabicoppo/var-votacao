@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 /**
  * Voto numa votação em até 3 telas (RNF-04): cédula → revisão → comprovante (histórias #26 e #28).
@@ -99,7 +100,9 @@ public class VotoEleitorController {
     }
 
     /**
-     * Tela 3: o comprovante, mostrado uma vez (chega por flash). Recarregar leva ao painel.
+     * Tela 3: o comprovante, mostrado uma vez (chega por flash). Recarregar leva ao painel. Recebe também
+     * {@code urlBase} (ex.: {@code https://var.exemplo}), para o cartão impresso trazer o link completo de
+     * verificação.
      *
      * @param id        id da votação
      * @param usuario   eleitor logado
@@ -111,6 +114,7 @@ public class VotoEleitorController {
     public String comprovante(@PathVariable String id, @AuthenticationPrincipal UserDetails usuario, Model modelo,
                               RedirectAttributes redirecao) {
         if (modelo.containsAttribute(COMPROVANTE)) {
+            modelo.addAttribute("urlBase", ServletUriComponentsBuilder.fromCurrentContextPath().toUriString());
             return "eleitor/comprovante";
         }
         if (servico.jaVotou(id, usuario.getUsername())) {

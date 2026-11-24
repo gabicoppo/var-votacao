@@ -9,7 +9,7 @@
   <div class="card card-destaque">
     <p class="erro-codigo" aria-hidden="true">🟥</p>
     <h1>Você não está na lista de eleitores desta votação</h1>
-    <p class="subtitulo" th:text="${titulo}">Pergunta</p>
+    <p class="subtitulo" th:text="${tituloVotacao}">Pergunta</p>
     <p>Só eleitores aptos podem votar. Se acha que deveria estar na lista, fale com o organizador.</p>
     <a class="btn btn-primario btn-grande" th:href="@{/eleitor}">Voltar às minhas votações</a>
   </div>

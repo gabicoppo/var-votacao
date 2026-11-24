@@ -13,22 +13,31 @@
     <li class="ativo" aria-current="step">Comprovante</li>
   </ol>
 
-  <div class="card comprovante">
-    <div class="check-grande" aria-hidden="true">✓</div>
+  <!--/* RNF-01: o comprovante nunca traz a opção escolhida. Na impressão, só este cartão aparece. */-->
+  <div class="card comprovante" th:with="linkCompleto=${urlBase + comprovante.linkVerificar()}"
+       th:attr="data-pergunta=${comprovante.pergunta()},data-link=${linkCompleto}">
+    <p class="comprovante-marca so-impressao">
+      <img th:src="@{/img/logo-var.svg}" alt="" width="32" height="36"> VAR · Comprovante de voto</p>
+    <div class="check-grande nao-imprimir" aria-hidden="true">✓</div>
     <h1>Voto registrado</h1>
     <p class="subtitulo" th:text="${comprovante.pergunta()}">Pergunta</p>
     <p class="comprovante-rotulo">Código do comprovante</p>
     <p><span class="codigo" id="codigo-comprovante" th:text="${comprovante.codigo()}">ABCD2345</span></p>
     <p class="card-meta comprovante-data">Registrado em
       <span th:text="${@fmt.dataHora(comprovante.registradoEm())}">24/11/2026 18:30</span></p>
-    <p class="ajuda">Guarde este código: ele mostra que seu voto está na contagem, sem revelar sua escolha.
-      Ele só aparece agora.</p>
+    <p class="comprovante-aviso">Guarde este código. Ele prova que seu voto foi contado, mas
+      <strong>não revela em quem você votou</strong>.</p>
+    <p class="comprovante-link so-impressao">Confira em <span th:text="${linkCompleto}">https://…</span></p>
+
     <div class="acoes acoes-comprovante nao-imprimir">
-      <button type="button" class="btn btn-primario" data-copiar="#codigo-comprovante">Copiar código</button>
+      <button type="button" class="btn btn-primario" data-salvar hidden>Salvar comprovante</button>
+      <button type="button" class="btn btn-secundario" data-compartilhar hidden>Compartilhar</button>
+      <button type="button" class="btn btn-secundario" data-copiar="#codigo-comprovante" hidden>Copiar código</button>
       <a class="btn btn-secundario" th:href="@{${comprovante.linkVerificar()}}">Verificar depois</a>
-      <button type="button" class="btn" onclick="window.print()">Imprimir</button>
     </div>
-    <p class="copiado" role="status" aria-live="polite"></p>
+    <p class="ajuda nao-imprimir" data-dica-salvar hidden>"Salvar comprovante" abre a impressão: escolha
+      "Salvar como PDF" para guardar no celular.</p>
+    <p class="copiado nao-imprimir" role="status" aria-live="polite"></p>
   </div>
   <p class="nao-imprimir"><a th:href="@{/eleitor}">← Voltar às minhas votações</a></p>
   <script th:src="@{/js/eleitor.js}" defer></script>
