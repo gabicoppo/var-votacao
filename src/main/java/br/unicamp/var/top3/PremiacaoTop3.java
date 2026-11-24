@@ -5,12 +5,16 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
 /**
  * Votação de uma categoria de premiação, como Craque do Campeonato (#23).
  * Título, critério de avaliação, candidatos e grupos ficam fixos desde a criação.
  * Cada eleitor apto pode entregar uma única cédula. O ranking só é publicado após o encerramento (#30).
+ *
+ * <p>Os identificadores de eleitor são comparados sem os espaços das pontas ({@link String#strip()}),
+ * como no {@code Eleitorado}, e diferenciam maiúsculas de minúsculas.</p>
  */
 public final class PremiacaoTop3 {
 
@@ -45,12 +49,14 @@ public final class PremiacaoTop3 {
         this.categorias = List.copyOf(categorias);
         Map<String, CategoriaEleitor> grupos = new HashMap<>();
         ValidacaoTop3.presente(categoriaPorEleitor, "mapa de eleitores").forEach((id, nome) -> {
-            ValidacaoTop3.nome(id, "id do eleitor");
+            String idNormalizado = ValidacaoTop3.nome(id, "id do eleitor").strip();
             CategoriaEleitor grupo = porNome.get(nome);
             if (grupo == null) {
                 throw new IllegalArgumentException("categoria do eleitor inexistente");
             }
-            grupos.put(id, grupo);
+            if (grupos.put(idNormalizado, grupo) != null) {
+                throw new IllegalArgumentException("id de eleitor repetido");
+            }
         });
         this.grupoPorEleitor = Map.copyOf(grupos);
     }
@@ -91,18 +97,19 @@ public final class PremiacaoTop3 {
     /**
      * Registra a cédula com o peso do grupo do eleitor (#23).
      *
-     * @param eleitorId identificador cadastrado na configuração
+     * @param eleitorId identificador cadastrado na configuração; espaços nas pontas são ignorados
      * @param cedula três candidatos inscritos na premiação
      * @throws IllegalStateException se a votação estiver fechada ou o eleitor já tiver votado
      * @throws IllegalArgumentException se o eleitor, a cédula ou um candidato for inválido
      */
     public synchronized void registrarCedula(String eleitorId, CedulaTop3 cedula) {
         exigirEstado(StatusPremiacao.ABERTA);
-        CategoriaEleitor grupo = grupoPorEleitor.get(ValidacaoTop3.nome(eleitorId, "id do eleitor"));
+        String id = ValidacaoTop3.nome(eleitorId, "id do eleitor").strip();
+        CategoriaEleitor grupo = grupoPorEleitor.get(id);
         if (grupo == null) {
             throw new IllegalArgumentException("eleitor nao apto");
         }
-        if (votantes.contains(eleitorId)) {
+        if (votantes.contains(id)) {
             throw new IllegalStateException("eleitor ja votou");
         }
         List<VotoCategoria> votos = ValidacaoTop3.presente(cedula, "cedula").comPeso(grupo.peso());
@@ -112,7 +119,7 @@ public final class PremiacaoTop3 {
             }
         }
         votosPorCategoria.computeIfAbsent(grupo.nome(), nome -> new ArrayList<>()).addAll(votos);
-        votantes.add(eleitorId);
+        votantes.add(id);
     }
 
     /** Encerra o recebimento de cédulas da votação aberta (#23). */
@@ -173,8 +180,45 @@ public final class PremiacaoTop3 {
         return votantes.size();
     }
 
-    /** Indica se há cédula aceita para o identificador informado (#23). */
+    /**
+     * Indica se há cédula aceita para o identificador informado (#23).
+     *
+     * @param eleitorId identificador do eleitor; espaços nas pontas são ignorados
+     * @return {@code false} se o identificador for nulo, desconhecido ou ainda não tiver votado
+     */
     public synchronized boolean jaVotou(String eleitorId) {
-        return votantes.contains(eleitorId);
+        return eleitorId != null && votantes.contains(eleitorId.strip());
+    }
+
+    /**
+     * Informa o grupo do eleitor sem registrar voto, para a tela decidir o que mostrar (#23).
+     *
+     * @param eleitorId identificador do eleitor; espaços nas pontas são ignorados
+     * @return grupo do eleitor, ou vazio se o identificador for nulo ou não estiver cadastrado
+     */
+    public Optional<CategoriaEleitor> categoriaDe(String eleitorId) {
+        if (eleitorId == null) {
+            return Optional.empty();
+        }
+        return Optional.ofNullable(grupoPorEleitor.get(eleitorId.strip()));
+    }
+
+    /**
+     * Indica se o eleitor pode votar nesta premiação, sem tentar votar (#23).
+     *
+     * @param eleitorId identificador do eleitor; espaços nas pontas são ignorados
+     * @return {@code true} se o identificador tiver um grupo cadastrado
+     */
+    public boolean ehApto(String eleitorId) {
+        return categoriaDe(eleitorId).isPresent();
+    }
+
+    /**
+     * Conta os eleitores aptos, denominador da participação (#23).
+     *
+     * @return número de eleitores cadastrados na configuração
+     */
+    public int totalEleitores() {
+        return grupoPorEleitor.size();
     }
 }
