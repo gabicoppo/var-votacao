@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{fragments/layout :: layout(~{::title}, ~{::main}, ~{::link})}">
+<head>
+  <title>Votação indisponível</title>
+  <link rel="stylesheet" th:href="@{/css/eleitor.css}">
+</head>
+<body>
+<main class="fluxo-voto">
+  <div class="card card-destaque aviso-voto" th:if="${cedula.situacao().name() == 'JA_VOTOU'}">
+    <p class="aviso-icone" aria-hidden="true">✓</p>
+    <h1>Você já votou nesta votação</h1>
+    <p class="subtitulo" th:text="${cedula.pergunta()}">Pergunta</p>
+    <p>Cada eleitor vota uma única vez. Use o código do comprovante para conferir que seu voto está na
+      contagem.</p>
+    <a class="btn btn-primario btn-grande" th:href="@{/verificar(votacao=${cedula.id()})}">Verificar comprovante</a>
+  </div>
+
+  <div class="card card-destaque aviso-voto" th:unless="${cedula.situacao().name() == 'JA_VOTOU'}">
+    <p class="aviso-icone" aria-hidden="true">⏸</p>
+    <h1>Esta votação não está recebendo votos agora</h1>
+    <p class="subtitulo" th:text="${cedula.pergunta()}">Pergunta</p>
+    <dl class="datas-votacao" th:if="${cedula.inicio() != null}">
+      <dt>Abre em</dt><dd th:text="${@fmt.dataHora(cedula.inicio())}">24/11/2026 09:00</dd>
+      <dt>Encerra em</dt><dd th:text="${@fmt.dataHora(cedula.fim())}">27/11/2026 18:00</dd>
+    </dl>
+    <p th:unless="${cedula.inicio() != null}">O organizador ainda não abriu a votação ou ela já foi encerrada.</p>
+  </div>
+  <p><a class="btn btn-secundario" th:href="@{/eleitor}">← Minhas votações</a></p>
+</main>
+</body>
+</html>

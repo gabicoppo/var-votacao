@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{fragments/layout :: layout(~{::title}, ~{::main}, ~{::link})}">
+<head>
+  <title>Cédula registrada</title>
+  <link rel="stylesheet" th:href="@{/css/eleitor.css}">
+</head>
+<body>
+<main class="fluxo-voto">
+  <ol class="passos" aria-label="Etapas da cédula">
+    <li class="feito">Escolher</li>
+    <li class="feito">Revisar</li>
+    <li class="ativo" aria-current="step">Pronto</li>
+  </ol>
+  <div class="card comprovante">
+    <div class="check-grande" aria-hidden="true">✓</div>
+    <h1>Cédula registrada</h1>
+    <p class="subtitulo" th:text="${cedula.titulo()}">Craque do Campeonato</p>
+    <p>Obrigado! O ranking sai quando o organizador encerrar e apurar a premiação.</p>
+    <a class="btn btn-primario btn-grande" th:href="@{/eleitor}">Voltar às minhas votações</a>
+  </div>
+</main>
+</body>
+</html>

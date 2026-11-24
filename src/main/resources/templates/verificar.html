@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{fragments/layout :: layout(~{::title}, ~{::main}, ~{::link})}">
+<head>
+  <title>Verificar comprovante</title>
+  <link rel="stylesheet" th:href="@{/css/eleitor.css}">
+</head>
+<body>
+<main class="fluxo-voto">
+  <div class="pagina-cabecalho">
+    <div>
+      <h1>Verificar comprovante</h1>
+      <p class="subtitulo">Confira se o seu voto está na contagem. A verificação nunca mostra em quem você votou.</p>
+    </div>
+  </div>
+
+  <div th:switch="${pagina.resultado()?.name()}" class="resultado-verificacao">
+    <div th:case="'VALIDO'" class="alerta alerta-sucesso verificacao-ok" role="status">
+      <span>Este comprovante foi emitido por esta votação: seu voto está na contagem.
+        <small th:text="${pagina.pergunta()}">Pergunta</small></span>
+    </div>
+    <div th:case="'INVALIDO'" class="alerta alerta-erro" role="alert">
+      Código não encontrado nesta votação. Confira se digitou o código certo e escolheu a votação certa.
+    </div>
+    <div th:case="'VOTACAO_INEXISTENTE'" class="alerta alerta-erro" role="alert">
+      Votação não encontrada. Escolha a votação na lista.
+    </div>
+  </div>
+
+  <form class="form card" th:action="@{/verificar}" method="get">
+    <div class="campo">
+      <label for="votacao">Votação</label>
+      <select id="votacao" name="votacao" required>
+        <option value="">Escolha a votação</option>
+        <option th:each="v : ${pagina.votacoes()}" th:value="${v.id()}" th:text="${v.pergunta()}"
+                th:selected="${v.id() == pagina.votacaoId()}">Votação</option>
+      </select>
+    </div>
+    <div class="campo">
+      <label for="codigo">Código do comprovante</label>
+      <input id="codigo" name="codigo" type="text" th:value="${pagina.codigo()}" autocomplete="off"
+             autocapitalize="characters" spellcheck="false" maxlength="40" class="campo-codigo" required>
+      <p class="ajuda">O código aparece na tela logo depois do voto (ex.: K7PXM4QA).</p>
+    </div>
+    <button type="submit" class="btn btn-primario btn-grande">Verificar</button>
+  </form>
+</main>
+</body>
+</html>

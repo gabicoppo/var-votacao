@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{fragments/layout :: layout(~{::title}, ~{::main}, ~{::link})}">
+<head>
+  <title>Cédula Top 3</title>
+  <link rel="stylesheet" th:href="@{/css/eleitor.css}">
+</head>
+<body>
+<main class="fluxo-voto">
+  <ol class="passos" aria-label="Etapas da cédula">
+    <li class="ativo" aria-current="step">Escolher</li>
+    <li>Revisar</li>
+    <li>Pronto</li>
+  </ol>
+
+  <div class="pagina-cabecalho">
+    <div>
+      <h1 th:text="${cedula.titulo()}">Craque do Campeonato</h1>
+      <p class="subtitulo" th:if="${!#strings.isEmpty(cedula.descricao())}" th:text="${cedula.descricao()}">Critério</p>
+    </div>
+  </div>
+
+  <div class="card regra-top3">
+    <p>Você vota como <strong th:text="${cedula.categoria()}">Torcedores</strong>
+      (peso <strong th:text="${cedula.peso()}">1</strong>).</p>
+    <p class="ajuda">1º = 5 pontos, 2º = 3, 3º = 1, multiplicados pelo peso do seu grupo.</p>
+  </div>
+
+  <form class="form form-top3" th:action="@{/eleitor/premiacoes/{id}/revisar(id=${cedula.id()})}" method="post">
+    <div th:replace="~{eleitor/premiacao-cedula :: lugar('primeiro', '1º lugar', ${escolhas?.primeiro()})}"></div>
+    <div th:replace="~{eleitor/premiacao-cedula :: lugar('segundo', '2º lugar', ${escolhas?.segundo()})}"></div>
+    <div th:replace="~{eleitor/premiacao-cedula :: lugar('terceiro', '3º lugar', ${escolhas?.terceiro()})}"></div>
+    <p th:if="${erro != null}" class="erro-campo" role="alert" th:text="${erro}">Escolha três candidatos.</p>
+    <button type="submit" class="btn btn-primario btn-grande">Revisar cédula</button>
+  </form>
+
+  <!--/* Um select de lugar; o JS esconde, nos outros, o candidato já escolhido. */-->
+  <th:block th:if="${false}">
+    <div th:fragment="lugar(nome, rotulo, atual)" class="campo" th:classappend="${erro != null} ? 'campo-com-erro'">
+      <label th:for="${nome}" th:text="${rotulo}">1º lugar</label>
+      <select th:id="${nome}" th:name="${nome}" required data-top3>
+        <option value="">Escolha um candidato</option>
+        <option th:each="candidato : ${cedula.candidatos()}" th:value="${candidato}" th:text="${candidato}"
+                th:selected="${candidato == atual}">Candidato</option>
+      </select>
+    </div>
+  </th:block>
+  <script th:src="@{/js/eleitor.js}" defer></script>
+</main>
+</body>
+</html>
