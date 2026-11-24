@@ -19,4 +19,14 @@ final class Aberta implements EstadoVotacao {
     public void encerrar(Votacao votacao) {
         votacao.mudarPara(new Encerrada());
     }
+
+    /**
+     * Encerra a votação se o fim do período já chegou.
+     */
+    @Override
+    public void atualizarPeloRelogio(Votacao votacao) {
+        if (votacao.periodoTerminou()) {
+            encerrar(votacao);
+        }
+    }
 }

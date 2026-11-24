@@ -20,6 +20,16 @@ interface EstadoVotacao {
      */
     String nome();
 
+    /**
+     * Aplica o período de votação ao estado atual (história #20). Por padrão não faz nada:
+     * só rascunho (que abre no início) e aberta (que encerra no fim) reagem ao relógio.
+     *
+     * @param votacao votação cujo relógio e período são consultados
+     */
+    default void atualizarPeloRelogio(Votacao votacao) {
+        // nenhum efeito nos estados que não dependem do horário
+    }
+
     default void alterarRegra(Votacao votacao, RegraApuracao novaRegra) {
         throw operacaoProibida("alterar a regra de apuração");
     }

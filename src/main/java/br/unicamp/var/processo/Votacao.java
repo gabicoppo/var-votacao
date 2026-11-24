@@ -12,6 +12,7 @@ import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 
@@ -29,6 +30,11 @@ import java.util.UUID;
  * <p>É criada pelo {@link Builder}, obtido em {@link #nova()} (história #19: pergunta,
  * opções ou candidatos do cadastro e descrição).</p>
  *
+ * <p>Com um {@link PeriodoVotacao} configurado (história #20), a votação abre no início e
+ * encerra no fim do período: o horário é lido do {@link Clock} da votação em
+ * {@link #atualizarPeloRelogio()}, chamado também antes de cada voto. Abrir e encerrar
+ * manualmente continuam permitidos (o organizador pode encerrar antes do fim).</p>
+ *
  * <p>Fora do escopo: controle de eleitor único, sigilo, persistência e interface.</p>
  */
 public final class Votacao {
@@ -40,6 +46,8 @@ public final class Votacao {
     private final String descricao;
     private final List<String> opcoes;
     private final int totalAptos;
+    private final PeriodoVotacao periodo;
+    private final Clock relogio;
     private final Instant criadaEm;
     private final Map<String, Integer> votos = new LinkedHashMap<>();
     private RegraApuracao regra;
@@ -67,7 +75,9 @@ public final class Votacao {
         this.opcoes = validarOpcoes(builder.opcoes);
         this.regra = builder.regra;
         this.totalAptos = builder.totalAptos;
-        this.criadaEm = builder.relogio.instant();
+        this.periodo = builder.periodo;
+        this.relogio = builder.relogio;
+        this.criadaEm = relogio.instant();
         for (String opcao : this.opcoes) {
             votos.put(opcao, 0);
         }
@@ -119,14 +129,27 @@ public final class Votacao {
     }
 
     /**
-     * Registra um voto. Só é permitido com a votação aberta.
+     * Aplica o período ao ciclo (história #20): em rascunho, abre se o início já chegou; aberta,
+     * encerra se o fim já chegou. Sem período configurado, não faz nada.
+     */
+    public void atualizarPeloRelogio() {
+        estado.atualizarPeloRelogio(this);
+    }
+
+    /**
+     * Registra um voto. Só é permitido com a votação aberta e, se houver período, dentro dele
+     * (história #20). Antes de registrar, aplica o relógio ({@link #atualizarPeloRelogio()}).
      *
      * @param opcao opção escolhida
      * @throws IllegalArgumentException se a opção não existir
-     * @throws IllegalStateException    se a votação não estiver aberta ou se o
-     *                                  número de votos já for igual ao de aptos
+     * @throws IllegalStateException    se o horário estiver fora do período, se a votação não
+     *                                  estiver aberta ou se o número de votos já for igual ao de aptos
      */
     public void registrarVoto(String opcao) {
+        atualizarPeloRelogio();
+        if (periodo != null && !periodo.contem(relogio.instant())) {
+            throw new IllegalStateException("voto fora do periodo de votacao");
+        }
         estado.registrarVoto(this, opcao);
     }
 
@@ -196,6 +219,15 @@ public final class Votacao {
     }
 
     /**
+     * Período de votação (história #20).
+     *
+     * @return o período, ou vazio se a votação só abre e encerra manualmente
+     */
+    public Optional<PeriodoVotacao> periodo() {
+        return Optional.ofNullable(periodo);
+    }
+
+    /**
      * Instante de criação da votação, lido do relógio configurado.
      *
      * @return o instante de criação
@@ -211,6 +243,14 @@ public final class Votacao {
      */
     public RegraApuracao regra() {
         return regra;
+    }
+
+    boolean periodoComecou() {
+        return periodo != null && !periodo.naoComecou(relogio.instant());
+    }
+
+    boolean periodoTerminou() {
+        return periodo != null && periodo.terminou(relogio.instant());
     }
 
     void mudarPara(EstadoVotacao novoEstado) {
@@ -249,6 +289,7 @@ public final class Votacao {
         private List<String> opcoes;
         private RegraApuracao regra;
         private int totalAptos;
+        private PeriodoVotacao periodo;
         private Clock relogio = Clock.systemUTC();
 
         private Builder() {
@@ -325,7 +366,23 @@ public final class Votacao {
         }
 
         /**
-         * Define o relógio usado para datar a votação (opcional; o padrão é {@link Clock#systemUTC()}).
+         * Define o período de votação (opcional; sem período, a votação só abre e encerra manualmente).
+         *
+         * @param periodo período em que a votação recebe votos
+         * @return este builder
+         * @throws IllegalArgumentException se o período for nulo
+         */
+        public Builder periodo(PeriodoVotacao periodo) {
+            if (periodo == null) {
+                throw new IllegalArgumentException("periodo nao pode ser nulo");
+            }
+            this.periodo = periodo;
+            return this;
+        }
+
+        /**
+         * Define o relógio usado para datar a votação e aplicar o período
+         * (opcional; o padrão é {@link Clock#systemUTC()}).
          *
          * @param relogio relógio da votação
          * @return este builder

@@ -12,12 +12,15 @@ import br.unicamp.var.apuracao.RegraApuracao;
 import br.unicamp.var.apuracao2turno.ResultadoApuracao;
 import br.unicamp.var.cadastro.CadastroCandidatos;
 import java.time.Clock;
+import java.time.Duration;
 import java.time.Instant;
+import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -446,6 +449,222 @@ class VotacaoTest {
             RegraApuracao regra = new MaioriaSimples();
 
             assertSame(regra, novaVotacao(regra, 10).regra());
+        }
+    }
+
+    /** Relógio de teste que só anda quando o teste manda. */
+    private static final class RelogioAjustavel extends Clock {
+
+        private Instant agora;
+
+        RelogioAjustavel(Instant agora) {
+            this.agora = agora;
+        }
+
+        void ajustarPara(Instant novoAgora) {
+            this.agora = novoAgora;
+        }
+
+        @Override
+        public Instant instant() {
+            return agora;
+        }
+
+        @Override
+        public ZoneId getZone() {
+            return ZoneOffset.UTC;
+        }
+
+        @Override
+        public Clock withZone(ZoneId zone) {
+            return this;
+        }
+    }
+
+    @Nested
+    @DisplayName("Período no ciclo (#20)")
+    class PeriodoNoCiclo {
+
+        private final Instant inicio = CRIACAO.plus(Duration.ofDays(1));
+        private final Instant fim = inicio.plus(Duration.ofHours(10));
+        private final PeriodoVotacao periodo = new PeriodoVotacao(inicio, fim);
+
+        private Votacao comPeriodo(Clock relogio) {
+            return configuracaoValida().periodo(periodo).relogio(relogio).build();
+        }
+
+        private Clock fixoEm(Instant instante) {
+            return Clock.fixed(instante, ZoneOffset.UTC);
+        }
+
+        @Test
+        @DisplayName("sem período informado, o período é vazio")
+        void semPeriodoOPeriodoEhVazio() {
+            assertEquals(Optional.empty(), rascunho().periodo());
+        }
+
+        @Test
+        @DisplayName("guarda o período informado")
+        void guardaPeriodo() {
+            assertEquals(Optional.of(periodo), comPeriodo(RELOGIO_FIXO).periodo());
+        }
+
+        @Test
+        @DisplayName("rejeita período nulo no builder")
+        void rejeitaPeriodoNulo() {
+            assertThrows(IllegalArgumentException.class, () -> Votacao.nova().periodo(null));
+        }
+
+        @Test
+        @DisplayName("sem período, atualizar pelo relógio não muda nenhum estado")
+        void semPeriodoAtualizarNaoFazNada() {
+            Votacao votacao = rascunho();
+            votacao.atualizarPeloRelogio();
+            assertEquals("rascunho", votacao.status());
+
+            votacao.abrir();
+            votacao.atualizarPeloRelogio();
+            assertEquals("aberta", votacao.status());
+        }
+
+        @Test
+        @DisplayName("antes do início, continua em rascunho")
+        void antesDoInicioContinuaEmRascunho() {
+            Votacao votacao = comPeriodo(fixoEm(inicio.minusNanos(1)));
+
+            votacao.atualizarPeloRelogio();
+
+            assertEquals("rascunho", votacao.status());
+        }
+
+        @Test
+        @DisplayName("no início exato, abre sozinha")
+        void noInicioAbreSozinha() {
+            Votacao votacao = comPeriodo(fixoEm(inicio));
+
+            votacao.atualizarPeloRelogio();
+
+            assertEquals("aberta", votacao.status());
+        }
+
+        @Test
+        @DisplayName("um instante antes do fim, continua aberta")
+        void logoAntesDoFimContinuaAberta() {
+            Votacao votacao = comPeriodo(Clock.offset(fixoEm(fim), Duration.ofNanos(-1)));
+
+            votacao.atualizarPeloRelogio();
+
+            assertEquals("aberta", votacao.status());
+        }
+
+        @Test
+        @DisplayName("no fim exato, encerra sozinha")
+        void noFimEncerraSozinha() {
+            RelogioAjustavel relogio = new RelogioAjustavel(inicio);
+            Votacao votacao = comPeriodo(relogio);
+            votacao.atualizarPeloRelogio();
+
+            relogio.ajustarPara(fim);
+            votacao.atualizarPeloRelogio();
+
+            assertEquals("encerrada", votacao.status());
+        }
+
+        @Test
+        @DisplayName("em rascunho com o período inteiro já passado, vai direto a encerrada")
+        void periodoPassadoVaiDiretoAEncerrada() {
+            Votacao votacao = comPeriodo(Clock.offset(fixoEm(fim), Duration.ofHours(1)));
+
+            votacao.atualizarPeloRelogio();
+
+            assertEquals("encerrada", votacao.status());
+        }
+
+        @Test
+        @DisplayName("encerrada e apurada não mudam com o relógio")
+        void encerradaEApuradaNaoMudamComORelogio() {
+            RelogioAjustavel relogio = new RelogioAjustavel(inicio);
+            Votacao votacao = comPeriodo(relogio);
+            votacao.abrir();
+            votacao.encerrar();
+
+            votacao.atualizarPeloRelogio();
+            assertEquals("encerrada", votacao.status());
+
+            votacao.apurar();
+            relogio.ajustarPara(fim);
+            votacao.atualizarPeloRelogio();
+            assertEquals("apurada", votacao.status());
+        }
+
+        @Test
+        @DisplayName("o organizador pode abrir manualmente antes do início")
+        void abreManualmenteAntesDoInicio() {
+            Votacao votacao = comPeriodo(fixoEm(inicio.minusSeconds(60)));
+
+            votacao.abrir();
+
+            assertEquals("aberta", votacao.status());
+        }
+
+        @Test
+        @DisplayName("o organizador pode encerrar manualmente antes do fim")
+        void encerraManualmenteAntesDoFim() {
+            Votacao votacao = comPeriodo(fixoEm(inicio));
+            votacao.atualizarPeloRelogio();
+
+            votacao.encerrar();
+
+            assertEquals("encerrada", votacao.status());
+        }
+
+        @Test
+        @DisplayName("o voto dentro do período abre a votação e é aceito")
+        void votoDentroDoPeriodoAbreEAceita() {
+            Votacao votacao = comPeriodo(fixoEm(inicio));
+
+            votacao.registrarVoto("Gabriela");
+
+            assertEquals("aberta", votacao.status());
+        }
+
+        @Test
+        @DisplayName("rejeita voto antes do início, mesmo com a votação aberta manualmente")
+        void rejeitaVotoAntesDoInicio() {
+            Votacao votacao = comPeriodo(fixoEm(inicio.minusNanos(1)));
+            votacao.abrir();
+
+            IllegalStateException erro = assertThrows(IllegalStateException.class,
+                    () -> votacao.registrarVoto("Gabriela"));
+
+            assertEquals("voto fora do periodo de votacao", erro.getMessage());
+        }
+
+        @Test
+        @DisplayName("rejeita voto em rascunho antes do início")
+        void rejeitaVotoEmRascunhoAntesDoInicio() {
+            Votacao votacao = comPeriodo(fixoEm(inicio.minusNanos(1)));
+
+            IllegalStateException erro = assertThrows(IllegalStateException.class,
+                    () -> votacao.registrarVoto("Gabriela"));
+
+            assertEquals("voto fora do periodo de votacao", erro.getMessage());
+            assertEquals("rascunho", votacao.status());
+        }
+
+        @Test
+        @DisplayName("rejeita voto no fim exato e encerra a votação")
+        void rejeitaVotoNoFimEEncerra() {
+            RelogioAjustavel relogio = new RelogioAjustavel(inicio);
+            Votacao votacao = comPeriodo(relogio);
+            votacao.registrarVoto("Gabriela");
+
+            relogio.ajustarPara(fim);
+            IllegalStateException erro = assertThrows(IllegalStateException.class,
+                    () -> votacao.registrarVoto("Fabricio"));
+
+            assertEquals("voto fora do periodo de votacao", erro.getMessage());
+            assertEquals("encerrada", votacao.status());
         }
     }
 
