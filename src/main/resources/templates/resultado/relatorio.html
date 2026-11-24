@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{fragments/layout :: layout(~{::title}, ~{::main}, ~{::link})}">
+<head>
+  <title>Relatório de apuração</title>
+  <link rel="stylesheet" th:href="@{/css/resultado.css}">
+</head>
+<body>
+<main class="relatorio" th:with="r=${relatorio}">
+  <div class="acoes relatorio-acoes nao-imprimir">
+    <a class="btn btn-secundario" th:href="@{/votacoes/{id}/resultado(id=${r.id()})}">Voltar ao resultado</a>
+    <button type="button" class="btn btn-primario" data-imprimir>Imprimir / salvar PDF</button>
+  </div>
+
+  <article class="card ata">
+    <header class="ata-cabecalho">
+      <img class="ata-logo" th:src="@{/img/logo-var.svg}" alt="VAR" width="48" height="54">
+      <div>
+        <p class="ata-sobretitulo">VAR — Votação, Apuração e Resultados</p>
+        <h1>Relatório de apuração</h1>
+        <p class="subtitulo" th:text="${r.pergunta()}">Pergunta</p>
+      </div>
+    </header>
+    <pre class="ata-texto" th:text="${r.texto()}">Relatório de apuração</pre>
+    <footer class="ata-rodape">
+      <span>Emitido em <time th:text="${@fmt.dataHora(r.emitidoEm())}">24/11/2026 18:30</time> (horário de Brasília)</span>
+      <span>Votação <code th:text="${r.id()}">id</code></span>
+    </footer>
+  </article>
+
+  <script th:src="@{/js/resultado.js}" defer></script>
+</main>
+</body>
+</html>

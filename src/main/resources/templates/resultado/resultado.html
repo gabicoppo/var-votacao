@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{fragments/layout :: layout(~{::title}, ~{::main}, ~{::link})}">
+<head>
+  <title>Resultado</title>
+  <link rel="stylesheet" th:href="@{/css/resultado.css}">
+</head>
+<body>
+<main th:with="p=${pagina}, v=${pagina.votacao()}">
+  <div class="pagina-cabecalho">
+    <div>
+      <p class="selos">
+        <span th:replace="~{fragments/componentes :: badgeVotacao(${v.status()})}"></span>
+        <span class="badge badge-info" th:if="${v.turno() > 1}" th:text="|${v.turno()}º turno|">2º turno</span>
+      </p>
+      <h1 th:text="${v.pergunta()}">Pergunta da votação</h1>
+      <p class="subtitulo" th:unless="${#strings.isEmpty(v.descricao())}" th:text="${v.descricao()}">Descrição</p>
+    </div>
+    <div class="acoes nao-imprimir">
+      <a class="btn btn-primario" th:if="${p.apurada()}"
+         th:href="@{/votacoes/{id}/relatorio(id=${v.id()})}">Relatório</a>
+      <a class="btn btn-secundario" th:if="${p.segundoTurnoId() != null}"
+         th:href="@{/votacoes/{id}/resultado(id=${p.segundoTurnoId()})}">Ver o 2º turno</a>
+      <a class="btn btn-secundario" th:if="${v.turnoAnteriorId() != null}"
+         th:href="@{/votacoes/{id}/resultado(id=${v.turnoAnteriorId()})}">Ver o 1º turno</a>
+      <a class="btn btn-secundario" th:if="${organizador}"
+         th:href="@{/organizador/votacoes/{id}(id=${v.id()})}">Voltar à gestão</a>
+    </div>
+  </div>
+
+  <!--/* Antes da apuração: só a participação (RNF-01), atualizada a cada 10 s. */-->
+  <section th:unless="${p.apurada()}" class="andamento" aria-labelledby="titulo-andamento"
+           th:with="a=${p.andamento()}"
+           th:attr="data-andamento-url=@{/votacoes/{id}/andamento.json(id=${v.id()})},data-status=${a.status()}">
+    <div class="card card-destaque andamento-card">
+      <h2 class="card-titulo" id="titulo-andamento"
+          th:text="${a.status() == 'encerrada'} ? 'Votação encerrada' : 'Votação em andamento'">Votação em andamento</h2>
+      <p class="participacao-destaque">
+        <span class="participacao-numero" data-participacao th:text="${a.participacaoTexto()}">58,3%</span>
+        <span class="participacao-legenda">de participação</span>
+      </p>
+      <p class="participacao-contagem">
+        <strong data-votantes th:text="${a.votantes()}">7</strong> de <strong data-aptos th:text="${a.aptos()}">12</strong>
+        eleitores aptos já votaram
+      </p>
+      <div class="barra">
+        <div class="barra-trilho" role="progressbar" aria-label="Participação" aria-valuemin="0" aria-valuemax="100"
+             th:attr="aria-valuenow=${a.largura()}">
+          <div class="barra-preenchimento" data-barra th:style="|width: ${a.largura()}%|"></div>
+        </div>
+      </div>
+      <p class="tempo" th:unless="${#strings.isEmpty(a.tempoTexto())}">
+        <span aria-hidden="true">⏱</span> <span th:text="${a.tempoTexto()}">Encerra em 2 dias</span>
+      </p>
+      <p class="ajuda">O resultado por opção só aparece depois da apuração. Até lá, ninguém vê como está a contagem,
+        nem o organizador. Esta página se atualiza sozinha.</p>
+    </div>
+  </section>
+
+  <!--/* Depois da apuração: Momento VAR, faixa de situação, barras e métricas. */-->
+  <th:block th:if="${p.apurada()}" th:with="g=${p.grafico()}">
+    <div class="var-revisao nao-imprimir" data-var-revisao th:attr="data-votacao=${v.id()}" aria-hidden="true">
+      <div class="var-monitor">
+        <div class="var-tela">
+          <span class="var-gramado"></span>
+          <span class="var-linha-impedimento"></span>
+          <span class="var-bola"></span>
+          <span class="var-varredura"></span>
+          <span class="var-rec">REC</span>
+        </div>
+        <p class="var-texto">Revisão do VAR<span class="var-reticencias">…</span></p>
+        <p class="var-pular">Toque para pular</p>
+      </div>
+    </div>
+
+    <div class="revelacao" data-revelacao>
+      <section class="faixa-situacao" th:classappend="${g.tipoSituacao().classeCss()}" role="status"
+               aria-labelledby="titulo-situacao">
+        <p class="faixa-rotulo">Resultado oficial</p>
+        <h2 class="faixa-titulo" id="titulo-situacao" th:text="${g.titulo()}">Chapa A venceu</h2>
+        <p class="faixa-explicacao" th:text="${g.explicacao()}">Explicação</p>
+      </section>
+
+      <section class="secao" aria-labelledby="titulo-votos">
+        <h2 class="secao-titulo" id="titulo-votos">Votos por opção</h2>
+        <div class="card barras-resultado">
+          <div th:each="b : ${g.barras()}" class="barra" th:classappend="${b.destaque().classeCss()}">
+            <div class="barra-rotulo">
+              <span><span class="barra-colocacao" th:text="|${b.colocacao()}º|">1º</span>
+                <span th:text="${b.opcao()}">Opção</span>
+                <span class="selo-finalista" th:if="${b.destaque().name() == 'FINALISTA'}">2º turno</span></span>
+              <span class="barra-numeros"><strong th:text="${b.percentualTexto()}">66,7%</strong>
+                <small th:text="${b.votosTexto()}">6 votos</small></span>
+            </div>
+            <div class="barra-trilho">
+              <div class="barra-preenchimento" th:style="|width: ${b.largura()}%|"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <div class="metricas">
+        <div class="metrica">
+          <span class="metrica-valor" th:text="${g.votantes()}">9</span>
+          <span class="metrica-rotulo">votos válidos</span>
+        </div>
+        <div class="metrica">
+          <span class="metrica-valor" th:text="${g.aptos()}">12</span>
+          <span class="metrica-rotulo">eleitores aptos</span>
+        </div>
+        <div class="metrica">
+          <span class="metrica-valor" th:text="${g.participacaoTexto()}">75%</span>
+          <span class="metrica-rotulo">participação</span>
+        </div>
+      </div>
+    </div>
+  </th:block>
+
+  <section class="secao" aria-labelledby="titulo-regras">
+    <h2 class="secao-titulo" id="titulo-regras">Como esta votação funciona</h2>
+    <dl class="card ficha">
+      <div><dt>Regra</dt><dd th:text="${v.regra()}">Maioria absoluta</dd></div>
+      <div><dt>Sigilo</dt><dd th:text="${v.sigilo()}">Secreto</dd></div>
+      <div><dt>Turno</dt><dd th:text="|${v.turno()}º|">1º</dd></div>
+      <div th:if="${v.inicio() != null}"><dt>Período</dt>
+        <dd th:text="|${@fmt.dataHora(v.inicio())} a ${@fmt.dataHora(v.fim())}|">01/12/2026 08:00 a 03/12/2026 18:00</dd>
+      </div>
+    </dl>
+  </section>
+
+  <script th:src="@{/js/resultado.js}" defer></script>
+</main>
+</body>
+</html>
