@@ -3,6 +3,9 @@ package br.unicamp.var.web.comum;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestBuilders.formLogin;
 import static org.springframework.security.test.web.servlet.response.SecurityMockMvcResultMatchers.authenticated;
 import static org.springframework.security.test.web.servlet.response.SecurityMockMvcResultMatchers.unauthenticated;
+import static org.hamcrest.Matchers.containsString;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl;
 
 import org.junit.jupiter.api.DisplayName;
@@ -24,6 +27,25 @@ class LoginDemonstracaoTest {
 
     @Autowired
     private ContasUsuarios contas;
+
+    @Autowired
+    private RepositorioVotacoes votacoes;
+
+    @Autowired
+    private RepositorioPremiacoes premiacoes;
+
+    @Test
+    @DisplayName("os dados de demonstração são carregados no início")
+    void dadosCarregados() {
+        org.junit.jupiter.api.Assertions.assertEquals(4, votacoes.listar().size());
+        org.junit.jupiter.api.Assertions.assertEquals(1, premiacoes.listar().size());
+    }
+
+    @Test
+    @DisplayName("o login mostra o quadro de contas de demonstração")
+    void quadroDeContas() throws Exception {
+        mvc.perform(get("/login")).andExpect(content().string(containsString("Contas de demonstração")));
+    }
 
     @Test
     @DisplayName("organizador/var2026 entra como ORGANIZADOR e passa por /")
