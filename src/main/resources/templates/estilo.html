@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{fragments/layout :: layout(~{::title}, ~{::main}, ~{::link})}">
+<head>
+  <title>Guia de estilo</title>
+  <link rel="stylesheet" th:href="@{/css/estilo.css}">
+</head>
+<body>
+<main>
+  <div class="pagina-cabecalho">
+    <div>
+      <h1>Guia de estilo</h1>
+      <p class="subtitulo">Todos os componentes de <code>var.css</code>, com exemplos prontos para copiar.</p>
+    </div>
+    <div class="acoes">
+      <a class="btn btn-secundario" href="#formularios">Formulários</a>
+      <a class="btn btn-primario" href="#layout">Como usar o layout</a>
+    </div>
+  </div>
+
+  <nav class="card guia-indice" aria-label="Índice do guia">
+    <strong>Índice</strong>
+    <a href="#cores">Cores</a> <a href="#tipografia">Tipografia</a> <a href="#estrutura">Estrutura</a>
+    <a href="#cards">Cards</a> <a href="#botoes">Botões</a> <a href="#status">Status</a>
+    <a href="#alertas">Alertas</a> <a href="#formularios">Formulários</a> <a href="#cedula">Cédula</a>
+    <a href="#dados">Dados</a> <a href="#outros">Outros</a> <a href="#layout">Layout</a>
+  </nav>
+
+  <!-- Cores -->
+  <section class="secao" id="cores">
+    <h2 class="secao-titulo">Cores</h2>
+    <div class="guia-cores">
+      <div class="guia-cor" style="background:#0B3D2E;color:#fff"><strong>Gramado</strong><code>#0B3D2E</code><span>cabeçalho</span></div>
+      <div class="guia-cor" style="background:#1F7A4D;color:#fff"><strong>Campo</strong><code>#1F7A4D</code><span>primária</span></div>
+      <div class="guia-cor" style="background:#F5C518;color:#17201C"><strong>Cartão amarelo</strong><code>#F5C518</code><span>destaque</span></div>
+      <div class="guia-cor" style="background:#D7263D;color:#fff"><strong>Cartão vermelho</strong><code>#D7263D</code><span>erro e perigo</span></div>
+      <div class="guia-cor" style="background:#F4F6F5;color:#17201C"><strong>Fundo</strong><code>#F4F6F5</code><span>página</span></div>
+      <div class="guia-cor" style="background:#17201C;color:#fff"><strong>Texto</strong><code>#17201C</code><span>corpo</span></div>
+    </div>
+    <p class="ajuda">Use as variáveis CSS (<code>var(--campo)</code>, <code>var(--cartao-amarelo)</code>…) em vez dos códigos.</p>
+  </section>
+
+  <!-- Tipografia -->
+  <section class="secao" id="tipografia">
+    <h2 class="secao-titulo">Tipografia</h2>
+    <div class="card pilha">
+      <h1>Título de página (h1, peso 800)</h1>
+      <h2>Título de seção (h2)</h2>
+      <h3>Subtítulo (h3)</h3>
+      <p>Texto do corpo com a pilha de fontes do sistema. <a href="#tipografia">Links são sublinhados</a>
+        e <small>textos auxiliares ficam em cinza.</small></p>
+    </div>
+  </section>
+
+  <!-- Estrutura -->
+  <section class="secao" id="estrutura">
+    <h2 class="secao-titulo">Estrutura</h2>
+    <p><code>.container</code> já envolve todo <code>&lt;main&gt;</code>. Comece a página com
+      <code>.pagina-cabecalho</code> (com <code>h1</code>, <code>.subtitulo</code> e <code>.acoes</code>), agrupe com
+      <code>.secao</code> + <code>.secao-titulo</code>, use <code>.grade</code> para cards e <code>.pilha</code>
+      para empilhar com espaçamento.</p>
+    <div class="card">
+      <div class="pagina-cabecalho">
+        <div>
+          <h1>Painel do organizador</h1>
+          <p class="subtitulo">4 votações · 1 premiação</p>
+        </div>
+        <div class="acoes">
+          <a class="btn btn-secundario" href="#estrutura">Nova premiação</a>
+          <a class="btn btn-primario" href="#estrutura">Nova votação</a>
+        </div>
+      </div>
+    </div>
+    <pre class="guia-codigo"><code>&lt;div class="pagina-cabecalho"&gt;
+  &lt;div&gt;&lt;h1&gt;Painel&lt;/h1&gt;&lt;p class="subtitulo"&gt;…&lt;/p&gt;&lt;/div&gt;
+  &lt;div class="acoes"&gt;&lt;a class="btn btn-primario" href="…"&gt;Nova votação&lt;/a&gt;&lt;/div&gt;
+&lt;/div&gt;
+&lt;section class="secao"&gt;&lt;h2 class="secao-titulo"&gt;Abertas&lt;/h2&gt;&lt;div class="grade"&gt;…&lt;/div&gt;&lt;/section&gt;</code></pre>
+  </section>
+
+  <!-- Cards -->
+  <section class="secao" id="cards">
+    <h2 class="secao-titulo">Cards</h2>
+    <div class="grade">
+      <div class="card">
+        <h3 class="card-titulo">Card simples</h3>
+        <p class="card-meta"><span>.card</span><span>.card-titulo</span><span>.card-meta</span></p>
+        <p>Conteúdo do card.</p>
+      </div>
+      <div class="card card-destaque">
+        <h3 class="card-titulo">Card em destaque</h3>
+        <p class="card-meta"><span>.card-destaque</span></p>
+        <p>Faixa amarela no topo, para o que pede atenção.</p>
+        <div class="card-rodape">
+          <span class="badge badge-aberta">Aberta</span>
+          <a class="btn btn-primario" href="#cards">Votar</a>
+        </div>
+      </div>
+      <a class="card card-link" href="#cards">
+        <h3 class="card-titulo">Eleição presidencial — Triênio 2027–2029</h3>
+        <p class="card-meta"><span>Encerra em 27/11/2026 18:00</span><span>7 de 12 votaram</span></p>
+        <p>O card inteiro é um link (<code>a.card-link</code>).</p>
+        <div class="card-rodape">
+          <span class="badge badge-aberta">Aberta</span>
+          <span class="btn-link">Abrir →</span>
+        </div>
+      </a>
+    </div>
+  </section>
+
+  <!-- Botões -->
+  <section class="secao" id="botoes">
+    <h2 class="secao-titulo">Botões</h2>
+    <div class="card pilha">
+      <div class="acoes">
+        <button type="button" class="btn btn-primario">Primário</button>
+        <button type="button" class="btn btn-secundario">Secundário</button>
+        <button type="button" class="btn btn-perigo">Perigo</button>
+        <button type="button" class="btn">Neutro</button>
+        <button type="button" class="btn btn-link">Link</button>
+        <button type="button" class="btn btn-primario" disabled>Desabilitado</button>
+      </div>
+      <button type="button" class="btn btn-primario btn-grande">Confirmar voto (.btn-grande)</button>
+      <p class="ajuda">Todo botão tem pelo menos 44 px de altura; <code>.btn-grande</code> ocupa a largura toda
+        com 56 px. Ações destrutivas (encerrar, excluir) usam <code>.btn-perigo</code>.</p>
+    </div>
+  </section>
+
+  <!-- Status -->
+  <section class="secao" id="status">
+    <h2 class="secao-titulo">Status</h2>
+    <div class="card pilha">
+      <div class="acoes">
+        <span class="badge badge-rascunho">Rascunho</span>
+        <span class="badge badge-aberta">Aberta</span>
+        <span class="badge badge-encerrada">Encerrada</span>
+        <span class="badge badge-apurada">Apurada</span>
+        <span class="badge badge-info">2º turno</span>
+      </div>
+      <p class="ajuda">As cores seguem o diagrama de estados: cinza (configurando), verde (recebendo votos),
+        amarelo (aguardando apuração) e gramado (resultado publicado). Pelo status do domínio:</p>
+      <pre class="guia-codigo"><code>&lt;span th:replace="~{fragments/componentes :: badgeVotacao(${votacao.status()})}"&gt;&lt;/span&gt;
+&lt;span th:replace="~{fragments/componentes :: badgePremiacao(${premiacao.status()})}"&gt;&lt;/span&gt;</code></pre>
+      <span th:replace="~{fragments/componentes :: badgeVotacao('encerrada')}"></span>
+    </div>
+  </section>
+
+  <!-- Alertas -->
+  <section class="secao" id="alertas">
+    <h2 class="secao-titulo">Alertas</h2>
+    <div class="alerta alerta-sucesso" role="status">Votação aberta. Os eleitores já podem votar.</div>
+    <div class="alerta alerta-erro" role="alert">Você já votou nesta votação.</div>
+    <div class="alerta alerta-info" role="status">A apuração só fica disponível depois do encerramento.</div>
+    <pre class="guia-codigo"><code>// No controller (POST → redirect), o layout mostra sozinho:
+redirectAttributes.addFlashAttribute("alerta", Alerta.sucesso("Votação aberta."));
+// Erros do domínio:
+redirectAttributes.addFlashAttribute("alerta", Alerta.erro(MensagensErro.amigavel(e)));</code></pre>
+  </section>
+
+  <!-- Formulários -->
+  <section class="secao" id="formularios">
+    <h2 class="secao-titulo">Formulários</h2>
+    <form class="form card" action="#formularios" onsubmit="return false">
+      <div class="campo">
+        <label for="ex-pergunta">Pergunta</label>
+        <input id="ex-pergunta" type="text" placeholder="Quem deve presidir o clube?">
+        <p class="ajuda">Aparece no topo da cédula.</p>
+      </div>
+      <div class="campo campo-com-erro">
+        <label for="ex-opcoes">Opções (uma por linha)</label>
+        <textarea id="ex-opcoes" aria-describedby="ex-opcoes-erro">Chapa Azul</textarea>
+        <p class="erro-campo" id="ex-opcoes-erro">Informe pelo menos duas opções.</p>
+      </div>
+      <div class="campo-linha">
+        <div class="campo">
+          <label for="ex-inicio">Início</label>
+          <input id="ex-inicio" type="datetime-local">
+        </div>
+        <div class="campo">
+          <label for="ex-fim">Fim</label>
+          <input id="ex-fim" type="datetime-local">
+        </div>
+      </div>
+      <div class="campo">
+        <label for="ex-regra">Regra de apuração</label>
+        <select id="ex-regra">
+          <option>Maioria simples</option>
+          <option>Maioria absoluta com 2º turno</option>
+          <option>Maioria qualificada</option>
+        </select>
+      </div>
+      <label class="campo-check"><input type="checkbox"> Voto identificado (nominal)</label>
+      <div class="acoes">
+        <button type="button" class="btn btn-primario">Salvar rascunho</button>
+        <button type="button" class="btn btn-secundario">Cancelar</button>
+      </div>
+    </form>
+    <pre class="guia-codigo"><code>&lt;div class="campo" th:classappend="${#fields.hasErrors('pergunta')} ? 'campo-com-erro'"&gt;
+  &lt;label for="pergunta"&gt;Pergunta&lt;/label&gt;
+  &lt;input id="pergunta" th:field="*{pergunta}"&gt;
+  &lt;p class="erro-campo" th:if="${#fields.hasErrors('pergunta')}" th:errors="*{pergunta}"&gt;&lt;/p&gt;
+&lt;/div&gt;</code></pre>
+  </section>
+
+  <!-- Cédula -->
+  <section class="secao" id="cedula">
+    <h2 class="secao-titulo">Cédula</h2>
+    <form class="form" action="#cedula" onsubmit="return false">
+      <fieldset class="opcoes-radio">
+        <legend class="sr-only">Escolha uma chapa</legend>
+        <label class="opcao-radio"><input type="radio" name="ex-voto" value="a" checked><span>Chapa Azul</span></label>
+        <label class="opcao-radio"><input type="radio" name="ex-voto" value="b"><span>Chapa Verde</span></label>
+        <label class="opcao-radio"><input type="radio" name="ex-voto" value="c"><span>Chapa Branca</span></label>
+      </fieldset>
+      <button type="button" class="btn btn-primario btn-grande">Confirmar voto</button>
+    </form>
+    <pre class="guia-codigo"><code>&lt;fieldset class="opcoes-radio"&gt;
+  &lt;label class="opcao-radio"&gt;&lt;input type="radio" name="opcao" value="…"&gt;&lt;span&gt;Chapa Azul&lt;/span&gt;&lt;/label&gt;
+&lt;/fieldset&gt;</code></pre>
+  </section>
+
+  <!-- Dados -->
+  <section class="secao" id="dados">
+    <h2 class="secao-titulo">Dados</h2>
+    <div class="metricas">
+      <div class="metrica"><span class="metrica-valor">12</span><span class="metrica-rotulo">Aptos</span></div>
+      <div class="metrica"><span class="metrica-valor">7</span><span class="metrica-rotulo">Votantes</span></div>
+      <div class="metrica"><span class="metrica-valor" th:text="${@fmt.percentual(7.0 / 12)}">58,3%</span>
+        <span class="metrica-rotulo">Participação</span></div>
+      <div class="metrica"><span class="metrica-valor">2º turno</span><span class="metrica-rotulo">Situação</span></div>
+    </div>
+
+    <div class="card">
+      <div class="barra barra-vencedor">
+        <div class="barra-rotulo"><span>Chapa Azul</span><span>3 votos · 42,9%</span></div>
+        <div class="barra-trilho"><div class="barra-preenchimento" style="width: 42.9%"></div></div>
+      </div>
+      <div class="barra">
+        <div class="barra-rotulo"><span>Chapa Verde</span><span>2 votos · 28,6%</span></div>
+        <div class="barra-trilho"><div class="barra-preenchimento" style="width: 28.6%"></div></div>
+      </div>
+      <div class="barra">
+        <div class="barra-rotulo"><span>Chapa Branca</span><span>2 votos · 28,6%</span></div>
+        <div class="barra-trilho"><div class="barra-preenchimento" style="width: 28.6%"></div></div>
+      </div>
+      <p class="ajuda">A largura vai em <code>style</code>, com ponto decimal:
+        <code>th:style="|width: ${#numbers.formatDecimal(pct, 1, 'POINT', 1, 'POINT')}%|"</code>.</p>
+    </div>
+
+    <table class="tabela" style="margin-top: 1rem">
+      <caption class="sr-only">Exemplo de tabela</caption>
+      <thead>
+        <tr><th scope="col">Quando</th><th scope="col">Autor</th><th scope="col">Evento</th>
+          <th scope="col" class="numero">Votos</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>24/11/2026 18:30</td>
+          <td>organizador</td><td>Votação aberta</td><td class="numero">0</td></tr>
+        <tr><td>25/11/2026 09:12</td><td>sistema</td><td>Votação encerrada (fim do período)</td><td class="numero">7</td></tr>
+        <tr><td>25/11/2026 09:15</td><td>organizador</td><td>Votação apurada (2º turno entre Chapa Azul e Chapa Verde)</td>
+          <td class="numero">7</td></tr>
+      </tbody>
+    </table>
+    <p class="ajuda">No celular a tabela rola na horizontal sem empurrar a página.</p>
+  </section>
+
+  <!-- Outros -->
+  <section class="secao" id="outros">
+    <h2 class="secao-titulo">Outros</h2>
+    <div class="grade">
+      <div class="vazio">
+        <span class="vazio-icone" aria-hidden="true">🗳️</span>
+        <strong>Nenhuma votação por aqui</strong>
+        Crie a primeira votação para começar. (<code>.vazio</code>)
+      </div>
+      <div class="card">
+        <h3 class="card-titulo">Passos (<code>.passos</code>)</h3>
+        <ol class="passos">
+          <li class="feito">Configurar</li>
+          <li class="ativo">Votar</li>
+          <li>Apurar</li>
+        </ol>
+      </div>
+      <div class="card">
+        <h3 class="card-titulo">Comprovante (<code>.codigo</code>)</h3>
+        <p><span class="codigo">K7PX-M4QA</span></p>
+        <button type="button" class="btn btn-secundario nao-imprimir" onclick="window.print()">Imprimir (.nao-imprimir)</button>
+      </div>
+    </div>
+    <div class="card" style="margin-top: 1rem">
+      <h3 class="card-titulo">Linha do tempo (<code>.linha-tempo</code>)</h3>
+      <ol th:replace="~{fragments/componentes :: linhaTempo('encerrada')}"></ol>
+      <pre class="guia-codigo"><code>&lt;ol th:replace="~{fragments/componentes :: linhaTempo(${votacao.status()})}"&gt;&lt;/ol&gt;</code></pre>
+    </div>
+  </section>
+
+  <!-- Layout -->
+  <section class="secao" id="layout">
+    <h2 class="secao-titulo">Como usar o layout</h2>
+    <div class="card pilha">
+      <pre class="guia-codigo"><code>&lt;!DOCTYPE html&gt;
+&lt;html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{fragments/layout :: layout(~{::title}, ~{::main}, ~{::link})}"&gt;
+&lt;head&gt;
+  &lt;title&gt;Nova votação&lt;/title&gt;            &lt;!-- vira "Nova votação · VAR" --&gt;
+  &lt;link rel="stylesheet" th:href="@{/css/organizador.css}"&gt; &lt;!-- sem CSS extra: ~{} --&gt;
+&lt;/head&gt;
+&lt;body&gt;&lt;main&gt; … conteúdo … &lt;/main&gt;&lt;/body&gt;
+&lt;/html&gt;</code></pre>
+      <ul>
+        <li>Datas e números: <code>${@fmt.dataHora(instante)}</code>, <code>${@fmt.percentual(0.667)}</code>,
+          <code>${@fmt.numero(12.5)}</code>, <code>${@fmt.statusVotacao(v.status())}</code>.</li>
+        <li><code>Votacao</code> não é thread-safe: leia e escreva dentro de <code>synchronized (votacao)</code>.</li>
+        <li>Formulários POST precisam de CSRF: com <code>th:action</code> o token entra sozinho.</li>
+      </ul>
+    </div>
+  </section>
+</main>
+</body>
+</html>
