@@ -110,3 +110,12 @@ jobs:
           name: e2e-screenshots
           path: target/e2e-screenshots
           if-no-files-found: warn
+
+  # O Dockerfile do deploy (Render) precisa continuar construindo: build em todo PR, sem publicar.
+  docker:
+    name: docker
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build da imagem
+        run: docker build -t var-votacao:ci .
