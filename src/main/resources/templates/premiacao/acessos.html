@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{fragments/layout :: layout(~{::title}, ~{::main}, ~{::link})}">
+<head>
+  <title>Códigos de acesso</title>
+  <link rel="stylesheet" th:href="@{/css/premiacao.css}">
+</head>
+<body>
+<main>
+  <div class="pagina-cabecalho">
+    <div>
+      <h1>Códigos de acesso</h1>
+      <p class="subtitulo" th:text="${tituloPremiacao}">Premiação</p>
+    </div>
+    <div class="acoes nao-imprimir">
+      <button type="button" class="btn btn-secundario" data-imprimir th:if="${!acessos.isEmpty()}">Imprimir</button>
+      <a class="btn btn-primario" th:href="@{/organizador/premiacoes/{id}(id=${premiacaoId})}">Ir para a gestão</a>
+    </div>
+  </div>
+
+  <th:block th:unless="${acessos.isEmpty()}">
+    <div class="alerta alerta-info nao-imprimir" role="status">
+      Estes códigos aparecem só agora. Imprima ou anote e entregue a cada eleitor: ele entra com o id e o código.
+    </div>
+    <div class="tabela-rolagem">
+      <table class="tabela tabela-acessos">
+        <caption class="sr-only">Códigos de acesso dos eleitores novos</caption>
+        <thead><tr><th scope="col">Eleitor</th><th scope="col">Nome</th><th scope="col">Código de acesso</th></tr></thead>
+        <tbody>
+          <tr th:each="a : ${acessos}">
+            <td><strong th:text="${a.eleitorId()}">e13</strong></td>
+            <td th:text="${a.nome()}">Nome</td>
+            <td><span class="codigo codigo-pequeno" th:text="${a.codigo()}">ABCD2345</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </th:block>
+
+  <div class="vazio" th:if="${acessos.isEmpty()}">
+    <span class="vazio-icone" aria-hidden="true">🔑</span>
+    <strong>Nenhum código para mostrar</strong>
+    <p>Os códigos de acesso aparecem uma única vez, logo depois de criar a premiação. Os eleitores que já tinham
+      conta continuam entrando com a senha deles.</p>
+  </div>
+  <script th:src="@{/js/premiacao.js}" defer></script>
+</main>
+</body>
+</html>
