@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{fragments/layout :: layout(~{::title}, ~{::main}, ~{::link})}">
+<head>
+  <title>Nova votação</title>
+  <link rel="stylesheet" th:href="@{/css/organizador.css}">
+</head>
+<body>
+<main>
+  <div class="pagina-cabecalho">
+    <div>
+      <h1>Nova votação</h1>
+      <p class="subtitulo">A votação é criada em rascunho: você confere tudo e abre quando quiser.</p>
+    </div>
+    <div class="acoes"><a class="btn btn-secundario" th:href="@{/organizador}">Voltar ao painel</a></div>
+  </div>
+
+  <ol class="passos" aria-label="Seções do formulário">
+    <li><a href="#passo-1">Pergunta e opções</a></li>
+    <li><a href="#passo-2">Regra de apuração</a></li>
+    <li><a href="#passo-3">Sigilo e período</a></li>
+    <li><a href="#passo-4">Eleitores aptos</a></li>
+  </ol>
+
+  <form class="form form-votacao" method="post" th:action="@{/organizador/votacoes/nova}" th:object="${formulario}"
+        novalidate>
+
+    <!-- ① Pergunta e opções -->
+    <fieldset class="card passo" id="passo-1">
+      <legend class="passo-titulo"><span class="passo-numero">1</span> Pergunta e opções</legend>
+
+      <div class="campo" th:classappend="${erros.containsKey('pergunta')} ? 'campo-com-erro'">
+        <label for="pergunta">Pergunta</label>
+        <input id="pergunta" type="text" th:field="*{pergunta}" maxlength="200" required
+               placeholder="Quem deve presidir o clube no triênio 2027–2029?"
+               th:attr="aria-describedby=${erros.containsKey('pergunta')} ? 'pergunta-erro' : null">
+        <p class="erro-campo" id="pergunta-erro" th:if="${erros.containsKey('pergunta')}"
+           th:text="${erros['pergunta']}">Erro</p>
+      </div>
+
+      <div class="campo">
+        <label for="descricao">Descrição <span class="opcional">(opcional)</span></label>
+        <textarea id="descricao" th:field="*{descricao}" rows="2"
+                  placeholder="Contexto para o eleitor: mandato, regras, prazos…"></textarea>
+      </div>
+
+      <div class="campo" th:classappend="${erros.containsKey('opcoes')} ? 'campo-com-erro'">
+        <label for="opcoes">Opções (uma por linha)</label>
+        <textarea id="opcoes" th:field="*{opcoes}" rows="4" required placeholder="Chapa Azul&#10;Chapa Verde"
+                  aria-describedby="opcoes-ajuda"></textarea>
+        <p class="ajuda" id="opcoes-ajuda">Pelo menos duas, sem repetir. Linhas em branco são ignoradas.</p>
+        <p class="erro-campo" th:if="${erros.containsKey('opcoes')}" th:text="${erros['opcoes']}">Erro</p>
+      </div>
+    </fieldset>
+
+    <!-- ② Regra de apuração -->
+    <fieldset class="card passo" id="passo-2">
+      <legend class="passo-titulo"><span class="passo-numero">2</span> Regra de apuração</legend>
+
+      <div class="campo" th:classappend="${erros.containsKey('tipoRegra')} ? 'campo-com-erro'">
+        <div class="opcoes-radio opcoes-escolha" role="radiogroup" aria-label="Regra de apuração">
+          <label class="opcao-radio">
+            <input type="radio" th:field="*{tipoRegra}" value="SIMPLES" data-regra>
+            <span><span class="escolha-texto"><strong>Maioria simples</strong>
+              <small>Vence a opção mais votada. Bom para enquetes e decisões rápidas.</small></span></span>
+          </label>
+          <label class="opcao-radio">
+            <input type="radio" th:field="*{tipoRegra}" value="ABSOLUTA" data-regra>
+            <span><span class="escolha-texto"><strong>Maioria absoluta</strong>
+              <small>Mais da metade dos votos válidos. O padrão das eleições de clube.</small></span></span>
+          </label>
+          <label class="opcao-radio">
+            <input type="radio" th:field="*{tipoRegra}" value="QUALIFICADA" data-regra>
+            <span><span class="escolha-texto"><strong>Maioria qualificada</strong>
+              <small>Exige quórum e uma fração mínima, como 2/3. Para assembleias e estatuto.</small></span></span>
+          </label>
+        </div>
+        <p class="erro-campo" th:if="${erros.containsKey('tipoRegra')}" th:text="${erros['tipoRegra']}">Erro</p>
+      </div>
+
+      <div class="campo-dependente" data-mostrar-com="ABSOLUTA">
+        <label class="campo-check">
+          <input type="checkbox" th:field="*{segundoTurno}">
+          Fazer 2º turno entre os dois mais votados se ninguém tiver maioria absoluta
+        </label>
+      </div>
+
+      <div class="campo-linha campo-dependente" data-mostrar-com="QUALIFICADA">
+        <div class="campo" th:classappend="${erros.containsKey('quorum')} ? 'campo-com-erro'">
+          <label for="quorum">Quórum mínimo</label>
+          <input id="quorum" type="text" th:field="*{quorum}" inputmode="decimal" aria-describedby="quorum-ajuda">
+          <p class="ajuda" id="quorum-ajuda">Parte dos aptos que precisa votar: 50%, 2/3…</p>
+          <p class="erro-campo" th:if="${erros.containsKey('quorum')}" th:text="${erros['quorum']}">Erro</p>
+        </div>
+        <div class="campo" th:classappend="${erros.containsKey('fracaoExigida')} ? 'campo-com-erro'">
+          <label for="fracaoExigida">Fração exigida</label>
+          <input id="fracaoExigida" type="text" th:field="*{fracaoExigida}" inputmode="decimal"
+                 aria-describedby="fracao-ajuda">
+          <p class="ajuda" id="fracao-ajuda">Dos votos válidos, para aprovar: 2/3, 60%…</p>
+          <p class="erro-campo" th:if="${erros.containsKey('fracaoExigida')}" th:text="${erros['fracaoExigida']}">Erro</p>
+        </div>
+      </div>
+
+      <p class="ajuda regra-resumo">Regra atual: <strong th:text="${descricaoRegra}">Maioria absoluta…</strong></p>
+    </fieldset>
+
+    <!-- ③ Sigilo e período -->
+    <fieldset class="card passo" id="passo-3">
+      <legend class="passo-titulo"><span class="passo-numero">3</span> Sigilo e período</legend>
+
+      <div class="campo" th:classappend="${erros.containsKey('sigilo')} ? 'campo-com-erro'">
+        <span class="rotulo-grupo" id="sigilo-rotulo">Sigilo do voto</span>
+        <div class="opcoes-radio opcoes-escolha opcoes-lado-a-lado" role="radiogroup" aria-labelledby="sigilo-rotulo">
+          <label class="opcao-radio">
+            <input type="radio" th:field="*{sigilo}" value="SECRETO">
+            <span><span class="escolha-texto"><strong>🔒 Secreto</strong>
+              <small>Ninguém vê em quem cada eleitor votou. Recomendado para eleições.</small></span></span>
+          </label>
+          <label class="opcao-radio">
+            <input type="radio" th:field="*{sigilo}" value="IDENTIFICADO">
+            <span><span class="escolha-texto"><strong>🙋 Identificado</strong>
+              <small>O voto de cada um aparece depois do encerramento. Comum em reuniões e assembleias.</small></span></span>
+          </label>
+        </div>
+        <p class="erro-campo" th:if="${erros.containsKey('sigilo')}" th:text="${erros['sigilo']}">Erro</p>
+      </div>
+
+      <div class="campo-linha">
+        <div class="campo" th:classappend="${erros.containsKey('inicio')} ? 'campo-com-erro'">
+          <label for="inicio">Início <span class="opcional">(opcional)</span></label>
+          <input id="inicio" type="datetime-local" th:field="*{inicio}">
+          <p class="erro-campo" th:if="${erros.containsKey('inicio')}" th:text="${erros['inicio']}">Erro</p>
+        </div>
+        <div class="campo" th:classappend="${erros.containsKey('fim')} ? 'campo-com-erro'">
+          <label for="fim">Fim <span class="opcional">(opcional)</span></label>
+          <input id="fim" type="datetime-local" th:field="*{fim}">
+          <p class="erro-campo" th:if="${erros.containsKey('fim')}" th:text="${erros['fim']}">Erro</p>
+        </div>
+      </div>
+      <p class="ajuda">Com período, a votação abre e encerra sozinha (horário de Brasília). Sem período, você abre
+        e encerra pelos botões. Você sempre pode encerrar antes.</p>
+    </fieldset>
+
+    <!-- ④ Eleitores aptos -->
+    <fieldset class="card passo" id="passo-4">
+      <legend class="passo-titulo"><span class="passo-numero">4</span> Eleitores aptos</legend>
+
+      <div class="campo" th:classappend="${erros.containsKey('eleitores')} ? 'campo-com-erro'">
+        <label for="eleitores">Lista de aptos (id;nome, um por linha)</label>
+        <textarea id="eleitores" class="texto-mono" th:field="*{eleitores}" rows="8"
+                  placeholder="e01;Ana Ribeiro&#10;e02;Bruno Carvalho" aria-describedby="eleitores-ajuda"></textarea>
+        <p class="ajuda" id="eleitores-ajuda">O id é o login do eleitor. Quem ainda não tem conta recebe um código de
+          acesso, mostrado depois de criar a votação.</p>
+        <p class="erro-campo" th:if="${erros.containsKey('eleitores')}" th:text="${erros['eleitores']}">Erro</p>
+      </div>
+      <div>
+        <button type="submit" class="btn btn-secundario" name="usarDemonstracao" value="sim" formnovalidate>
+          Usar eleitores de demonstração (e01–e12)
+        </button>
+      </div>
+    </fieldset>
+
+    <div class="acoes acoes-formulario">
+      <button type="submit" class="btn btn-primario">Criar votação</button>
+      <a class="btn btn-secundario" th:href="@{/organizador}">Cancelar</a>
+    </div>
+  </form>
+  <script th:src="@{/js/organizador.js}" defer></script>
+</main>
+</body>
+</html>
