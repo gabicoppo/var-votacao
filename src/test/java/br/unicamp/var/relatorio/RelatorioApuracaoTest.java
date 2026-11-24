@@ -3,6 +3,7 @@ package br.unicamp.var.relatorio;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import br.unicamp.var.apuracao.MaioriaAbsoluta;
 import br.unicamp.var.apuracao.MaioriaSimples;
@@ -175,6 +176,21 @@ final class RelatorioApuracaoTest {
             assertEquals(antes, relatorio.formatar());
             assertFalse(antes.contains("2º turno criado"));
         }
+    }
+
+    @Test
+    @DisplayName("relatório do 1º turno montado depois do 2º turno termina com o evento \"2º turno criado\"")
+    void relatorioDoPrimeiroTurnoMostraSegundoTurnoCriado() {
+        Votacao votacao = eleicao().regra(new MaioriaAbsoluta(true)).build();
+        votacao.abrir();
+        votar(votacao, "Chapa A", "Chapa B", "Chapa C");
+        votacao.encerrar();
+        votacao.apurar();
+        Votacao segundoTurno = votacao.criarSegundoTurno("organizador");
+
+        String texto = RelatorioApuracao.de(votacao).formatar();
+
+        assertTrue(texto.endsWith("\n20/02/2027 09:00 - organizador - 2º turno criado (" + segundoTurno.id() + ")"));
     }
 
     @Nested
