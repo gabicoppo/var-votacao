@@ -77,6 +77,21 @@
       </ol>
     </section>
 
+    <div class="metricas">
+      <div class="metrica">
+        <span class="metrica-valor" th:text="${r.andamento().votantes()}">8</span>
+        <span class="metrica-rotulo">cédulas apuradas</span>
+      </div>
+      <div class="metrica">
+        <span class="metrica-valor" th:text="${r.andamento().aptos()}">12</span>
+        <span class="metrica-rotulo">eleitores aptos</span>
+      </div>
+      <div class="metrica">
+        <span class="metrica-valor" th:text="${r.andamento().participacaoTexto()}">66,7%</span>
+        <span class="metrica-rotulo">participação</span>
+      </div>
+    </div>
+
     <section class="secao" aria-labelledby="titulo-ranking">
       <h2 class="secao-titulo" id="titulo-ranking">Ranking completo</h2>
       <div class="tabela-rolagem">
@@ -110,28 +125,14 @@
         total. Assim dá para conferir o resultado.</p>
     </section>
 
-    <div class="gestao-colunas">
-      <section class="card criterios" aria-labelledby="titulo-criterios">
+    <section class="secao" aria-labelledby="titulo-criterios">
+      <div class="card criterios">
         <h2 class="card-titulo" id="titulo-criterios">Como os pontos foram calculados</h2>
         <ul>
           <li th:each="c : ${r.criterios()}" th:text="${c}">1º lugar = 5 pontos</li>
         </ul>
-      </section>
-      <div class="metricas">
-        <div class="metrica">
-          <span class="metrica-valor" th:text="${r.andamento().votantes()}">8</span>
-          <span class="metrica-rotulo">cédulas apuradas</span>
-        </div>
-        <div class="metrica">
-          <span class="metrica-valor" th:text="${r.andamento().aptos()}">12</span>
-          <span class="metrica-rotulo">eleitores aptos</span>
-        </div>
-        <div class="metrica">
-          <span class="metrica-valor" th:text="${r.andamento().participacaoTexto()}">66,7%</span>
-          <span class="metrica-rotulo">participação</span>
-        </div>
       </div>
-    </div>
+    </section>
   </th:block>
 
   <script th:src="@{/js/resultado.js}" defer></script>

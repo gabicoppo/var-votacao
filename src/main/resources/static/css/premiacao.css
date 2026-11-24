@@ -47,8 +47,14 @@
 }
 
 /* ---------- Códigos de acesso ---------- */
-.tabela-acessos td { white-space: nowrap; }
-.tabela-acessos .codigo-pequeno { font-size: 1.05rem; padding: .25rem .6rem; letter-spacing: .1em; }
+.tabela-acessos td:first-child, .tabela-acessos td:last-child { white-space: nowrap; }
+.tabela-acessos .codigo-pequeno { font-size: .95rem; padding: .2rem .45rem; letter-spacing: .06em; }
+@media (max-width: 420px) {
+  .tabela-acessos th, .tabela-acessos td { padding: .6rem .5rem; }
+}
+@media (min-width: 640px) {
+  .tabela-acessos .codigo-pequeno { font-size: 1.05rem; padding: .25rem .6rem; letter-spacing: .1em; }
+}
 
 /* ---------- Pódio: 2º à esquerda, 1º no centro e mais alto, 3º à direita ---------- */
 .podio {
@@ -106,7 +112,9 @@
 
 /* ---------- Ranking ---------- */
 .tabela-ranking td, .tabela-ranking th { white-space: nowrap; }
-.tabela-ranking tbody th { font-weight: 700; text-align: left; }
+.tabela-ranking tbody th {
+  background: none; color: var(--texto); font-size: 1rem; font-weight: 700; text-transform: none; letter-spacing: 0;
+}
 .tabela-ranking .colocacao { font-weight: 800; color: var(--texto-suave); }
 .tabela-ranking .pontos { font-weight: 800; color: var(--gramado); }
 .tabela-ranking .linha-podio .colocacao { color: var(--amarelo-texto); }
