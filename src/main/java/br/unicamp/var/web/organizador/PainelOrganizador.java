@@ -12,7 +12,7 @@ import java.util.List;
  * @param totalVotos    votos registrados em todas as votações
  * @param abas          abas de filtro por status
  * @param filtro        status filtrado, ou "todas"
- * @param votacoes      cards das votações do filtro, das mais novas para as mais antigas
+ * @param votacoes      cards das votações do filtro: abertas, encerradas, rascunhos e apuradas
  * @param totalVotacoes total de votações, sem filtro
  * @param premiacoes    premiações Top 3 cadastradas
  */

@@ -275,6 +275,21 @@ class GestaoVotacoesTest {
         }
 
         @Test
+        @DisplayName("ordena os cards pelo que pede ação: abertas, encerradas, rascunhos e apuradas")
+        void ordenaPorPrioridade() {
+            apurada("A\nB", "A");
+            criar(formulario("A\nB", "e1;Ana"));
+            String aberta = criar(formulario("A\nB", "e1;Ana"));
+            gestao.abrir(aberta, ORGANIZADOR);
+            String encerrada = criar(formulario("A\nB", "e1;Ana"));
+            gestao.abrir(encerrada, ORGANIZADOR);
+            gestao.encerrar(encerrada, ORGANIZADOR);
+
+            assertEquals(List.of("aberta", "encerrada", "rascunho", "apurada"),
+                    gestao.painel(null).votacoes().stream().map(CartaoVotacao::status).toList());
+        }
+
+        @Test
         @DisplayName("filtro desconhecido mostra todas")
         void filtroDesconhecido() {
             criar(formulario("A\nB", "e1;Ana"));

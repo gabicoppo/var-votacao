@@ -12,6 +12,7 @@ import br.unicamp.var.web.comum.RepositorioPremiacoes;
 import br.unicamp.var.web.comum.RepositorioVotacoes;
 import java.time.Clock;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
@@ -31,6 +32,8 @@ public class GestaoVotacoes {
 
     /** Status aceitos no filtro do painel, na ordem das abas. */
     static final List<String> STATUS = List.of("rascunho", "aberta", "encerrada", "apurada");
+    /** Ordem dos cards no painel: primeiro o que pede ação do organizador. */
+    private static final List<String> PRIORIDADE = List.of("aberta", "encerrada", "rascunho", "apurada");
     /** Filtro que mostra todas as votações. */
     static final String TODAS = "todas";
 
@@ -169,7 +172,10 @@ public class GestaoVotacoes {
      */
     public PainelOrganizador painel(String filtro) {
         String ativo = filtro != null && STATUS.contains(filtro) ? filtro : TODAS;
-        List<CartaoVotacao> todas = votacoes.listar().stream().map(GestaoVotacoes::cartao).toList();
+        List<CartaoVotacao> todas = votacoes.listar().stream()
+                .map(GestaoVotacoes::cartao)
+                .sorted(Comparator.comparingInt(cartao -> PRIORIDADE.indexOf(cartao.status())))
+                .toList();
         Map<String, Long> porStatus = todas.stream()
                 .collect(Collectors.groupingBy(CartaoVotacao::status, Collectors.counting()));
         List<PainelOrganizador.Aba> abas = new ArrayList<>();
