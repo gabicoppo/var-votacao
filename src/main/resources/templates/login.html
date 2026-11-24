@@ -38,7 +38,9 @@
       <caption class="sr-only">Usuários e senhas de demonstração</caption>
       <thead><tr><th scope="col">Papel</th><th scope="col">Usuário</th><th scope="col">Senha</th></tr></thead>
       <tbody>
-        <tr><td>Organizador</td><td><code>organizador</code></td><td><code>var2026</code></td></tr>
+        <!--/* No perfil prod a senha do organizador é secreta: a linha não aparece. */-->
+        <tr th:if="${senhaOrganizador != null}"><td>Organizador</td><td><code>organizador</code></td>
+          <td><code th:text="${senhaOrganizador}">var2026</code></td></tr>
         <tr><td>Eleitor</td><td><code>e01</code> a <code>e12</code></td><td><code>1234</code></td></tr>
       </tbody>
     </table>

@@ -9,9 +9,14 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.springframework.boot.test.system.CapturedOutput;
+import org.springframework.boot.test.system.OutputCaptureExtension;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -126,5 +131,44 @@ class ContasUsuariosEmMemoriaTest {
             papeis.add(autoridade.getAuthority());
         }
         return papeis;
+    }
+
+    @Nested
+    @DisplayName("Senha do organizador (deploy público)")
+    @ExtendWith(OutputCaptureExtension.class)
+    class SenhaOrganizador {
+
+        @Test
+        @DisplayName("usa a senha configurada (VAR_SENHA_ORGANIZADOR), e não a padrão")
+        void senhaConfigurada() {
+            ContasUsuariosEmMemoria demo = new ContasUsuariosEmMemoria(codificador, true, "segredo-da-banca");
+
+            String hash = demo.loadUserByUsername("organizador").getPassword();
+            assertTrue(codificador.matches("segredo-da-banca", hash));
+            assertFalse(codificador.matches(ContasUsuariosEmMemoria.SENHA_ORGANIZADOR_PADRAO, hash));
+        }
+
+        @Test
+        @DisplayName("sem senha configurada, gera uma aleatória, escreve no log e não aceita a padrão")
+        void senhaGerada(CapturedOutput saida) {
+            ContasUsuariosEmMemoria demo = new ContasUsuariosEmMemoria(codificador, true, " ");
+
+            Matcher gerada = Pattern.compile("senha gerada para o usuario organizador: ([A-Z2-9]{16})")
+                    .matcher(saida.getAll());
+            assertTrue(gerada.find(), "a senha gerada deve aparecer no log");
+            String hash = demo.loadUserByUsername("organizador").getPassword();
+            assertTrue(codificador.matches(gerada.group(1), hash));
+            assertFalse(codificador.matches(ContasUsuariosEmMemoria.SENHA_ORGANIZADOR_PADRAO, hash));
+        }
+
+        @Test
+        @DisplayName("senha nula também gera uma aleatória; os eleitores continuam com 1234")
+        void senhaNula() {
+            ContasUsuariosEmMemoria demo = new ContasUsuariosEmMemoria(codificador, true, null);
+
+            assertFalse(codificador.matches(ContasUsuariosEmMemoria.SENHA_ORGANIZADOR_PADRAO,
+                    demo.loadUserByUsername("organizador").getPassword()));
+            assertTrue(codificador.matches("1234", demo.loadUserByUsername("e01").getPassword()));
+        }
     }
 }

@@ -17,15 +17,24 @@ import org.springframework.web.bind.annotation.GetMapping;
 public class InicioController {
 
     private final boolean demoAtivo;
+    private final String senhaOrganizadorVisivel;
 
     /**
      * Cria o controller.
      *
-     * @param demoAtivo valor de {@code var.demo.ativo}; se verdadeiro, o login mostra as contas de
-     *                  demonstração
+     * @param demoAtivo               valor de {@code var.demo.ativo}; se verdadeiro, o login mostra as
+     *                                contas de demonstração
+     * @param mostrarSenhaOrganizador valor de {@code var.demo.mostrar-senha-organizador}; falso no perfil
+     *                                {@code prod}, em que a senha do organizador é secreta
+     * @param senhaOrganizador        valor de {@code var.senha-organizador}, mostrado só se permitido
      */
-    public InicioController(@Value("${var.demo.ativo:false}") boolean demoAtivo) {
+    public InicioController(@Value("${var.demo.ativo:false}") boolean demoAtivo,
+                            @Value("${var.demo.mostrar-senha-organizador:true}") boolean mostrarSenhaOrganizador,
+                            @Value("${var.senha-organizador:" + ContasUsuariosEmMemoria.SENHA_ORGANIZADOR_PADRAO + "}")
+                            String senhaOrganizador) {
         this.demoAtivo = demoAtivo;
+        this.senhaOrganizadorVisivel = mostrarSenhaOrganizador && senhaOrganizador != null
+                && !senhaOrganizador.isBlank() ? senhaOrganizador : null;
     }
 
     /**
@@ -54,6 +63,7 @@ public class InicioController {
     @GetMapping("/login")
     public String login(Model modelo) {
         modelo.addAttribute("demoAtivo", demoAtivo);
+        modelo.addAttribute("senhaOrganizador", senhaOrganizadorVisivel);
         return "login";
     }
 
