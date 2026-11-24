@@ -326,7 +326,7 @@
     todos("[data-previa-de]", formulario).forEach(function (previa) {
       var campo = formulario.querySelector("#" + previa.getAttribute("data-previa-de"));
       var legivel = dataLegivel(campo.value);
-      previa.textContent = legivel ? "" : "";
+      previa.textContent = "";
       if (legivel) {
         var forte = document.createElement("strong");
         forte.textContent = legivel;
