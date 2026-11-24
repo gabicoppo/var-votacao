@@ -47,6 +47,11 @@
       <groupId>org.thymeleaf.extras</groupId>
       <artifactId>thymeleaf-extras-springsecurity6</artifactId>
     </dependency>
+    <!-- Health check do deploy (/actuator/health); só o endpoint health fica exposto -->
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-actuator</artifactId>
+    </dependency>
 
     <!-- Testes: o starter traz JUnit Jupiter (com params), AssertJ, Mockito e MockMvc -->
     <dependency>

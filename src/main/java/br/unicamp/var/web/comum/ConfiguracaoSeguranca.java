@@ -16,8 +16,8 @@ import org.springframework.security.web.SecurityFilterChain;
  *   <li>{@code /eleitor/**}: só {@link Papel#ELEITOR};</li>
  *   <li>{@code /votacoes/**} e {@code /premiacoes/**}: qualquer usuário autenticado (cada controller
  *       confere se o eleitor é apto);</li>
- *   <li>página inicial, login, verificação de comprovante, guia de estilo, recursos estáticos e
- *       {@code /error}: públicos.</li>
+ *   <li>página inicial, login, verificação de comprovante, guia de estilo, recursos estáticos,
+ *       {@code /error} e o health check {@code /actuator/health} (usado pelo Render): públicos.</li>
  * </ul>
  */
 @Configuration
@@ -26,6 +26,7 @@ public class ConfiguracaoSeguranca {
     /** Rotas acessíveis sem login. */
     static final String[] ROTAS_PUBLICAS = {
         "/", "/login", "/verificar", "/estilo", "/css/**", "/js/**", "/img/**", "/favicon.svg", "/error",
+        "/actuator/health",
     };
 
     /**
