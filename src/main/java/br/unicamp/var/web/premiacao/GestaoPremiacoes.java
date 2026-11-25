@@ -76,11 +76,22 @@ public class GestaoPremiacoes {
      * @return o id e os códigos das contas novas, ou os erros por campo
      */
     public ResultadoCriacaoPremiacao criar(FormularioPremiacao f) {
+        return criar(f, null);
+    }
+
+    /**
+     * Cria a premiação em rascunho, registrando o organizador que a criou como dono.
+     *
+     * @param f    formulário digitado
+     * @param dono login do organizador; só ele vê e gerencia a premiação
+     * @return o id e os códigos das contas novas, ou os erros por campo
+     */
+    public ResultadoCriacaoPremiacao criar(FormularioPremiacao f, String dono) {
         List<ErroCampo> erros = ConversorFormularioPremiacao.validar(f);
         if (!erros.isEmpty()) {
             return new ResultadoCriacaoPremiacao(null, erros, List.of());
         }
-        PremiacaoCadastrada cadastrada = premiacoes.salvar(ConversorFormularioPremiacao.paraPremiacao(f));
+        PremiacaoCadastrada cadastrada = premiacoes.salvar(ConversorFormularioPremiacao.paraPremiacao(f), dono);
         List<AcessoPremiacao> acessos = new ArrayList<>();
         for (Eleitor eleitor : ConversorFormularioPremiacao.eleitores(f)) {
             contas.garantirContaEleitor(eleitor.id(), eleitor.nome())

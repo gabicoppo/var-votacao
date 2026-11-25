@@ -19,7 +19,7 @@
     <form class="form" th:action="@{/login}" method="post">
       <div class="campo" th:classappend="${param.error} ? 'campo-com-erro'">
         <label for="username">Usuário</label>
-        <input id="username" name="username" type="text" autocomplete="username" autocapitalize="none"
+        <input id="username" name="username" th:value="${usuarioCriado}" type="text" autocomplete="username" autocapitalize="none"
                spellcheck="false" required autofocus>
         <p class="ajuda">Eleitor: use o identificador da lista de aptos (ex.: e01).</p>
       </div>
@@ -29,11 +29,11 @@
       </div>
       <button type="submit" class="btn btn-primario btn-grande">Entrar</button>
     </form>
+    <p class="entrada-alternativa">Ainda não tem conta? <a th:href="@{/cadastro}">Criar conta</a></p>
   </div>
 
   <aside class="card demo-contas" th:if="${demoAtivo}" aria-labelledby="demo-titulo">
     <h2 id="demo-titulo" class="card-titulo">Contas de demonstração</h2>
-    <p class="card-meta">Dados fictícios, recriados a cada reinício.</p>
     <table class="tabela">
       <caption class="sr-only">Usuários e senhas de demonstração</caption>
       <thead><tr><th scope="col">Papel</th><th scope="col">Usuário</th><th scope="col">Senha</th></tr></thead>

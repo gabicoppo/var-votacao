@@ -92,7 +92,7 @@ public class DadosDemonstracao implements ApplicationRunner {
         votacoes.salvar(conselhoFiscal());
         votacoes.salvar(assembleia());
         votacoes.salvar(enquete());
-        premiacoes.salvar(craqueDoCampeonato());
+        premiacoes.salvar(craqueDoCampeonato(), ORGANIZADOR);
     }
 
     private Votacao eleicaoPresidencial() {

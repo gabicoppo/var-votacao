@@ -48,13 +48,15 @@ public class OrganizadorController {
     /**
      * Painel com métricas, votações filtradas por status e premiações.
      *
-     * @param status filtro opcional ({@code ?status=aberta})
-     * @param model  modelo da view
+     * @param status  filtro opcional ({@code ?status=aberta})
+     * @param usuario organizador logado: o painel mostra só o que ele criou
+     * @param model   modelo da view
      * @return a view do painel
      */
     @GetMapping
-    public String painel(@RequestParam(name = "status", required = false) String status, Model model) {
-        model.addAttribute("painel", gestao.painel(status));
+    public String painel(@RequestParam(name = "status", required = false) String status,
+                         @AuthenticationPrincipal UserDetails usuario, Model model) {
+        model.addAttribute("painel", gestao.painel(status, usuario.getUsername()));
         return "organizador/painel";
     }
 
