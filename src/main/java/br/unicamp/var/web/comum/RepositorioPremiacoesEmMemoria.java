@@ -17,6 +17,7 @@ import org.springframework.stereotype.Repository;
 public class RepositorioPremiacoesEmMemoria implements RepositorioPremiacoes {
 
     private final Map<String, PremiacaoCadastrada> premiacoes = new ConcurrentHashMap<>();
+    private final Map<String, String> donos = new ConcurrentHashMap<>();
     private final Clock relogio;
 
     /**
@@ -30,13 +31,26 @@ public class RepositorioPremiacoesEmMemoria implements RepositorioPremiacoes {
 
     @Override
     public PremiacaoCadastrada salvar(PremiacaoTop3 premiacao) {
+        return salvar(premiacao, null);
+    }
+
+    @Override
+    public PremiacaoCadastrada salvar(PremiacaoTop3 premiacao, String dono) {
         if (premiacao == null) {
             throw new IllegalArgumentException("premiacao nao pode ser nula");
         }
         PremiacaoCadastrada cadastro = new PremiacaoCadastrada(UUID.randomUUID().toString(), premiacao,
                 relogio.instant());
         premiacoes.put(cadastro.id(), cadastro);
+        if (dono != null && !dono.isBlank()) {
+            donos.put(cadastro.id(), dono);
+        }
         return cadastro;
+    }
+
+    @Override
+    public Optional<String> donoDe(String id) {
+        return id == null ? Optional.empty() : Optional.ofNullable(donos.get(id));
     }
 
     @Override

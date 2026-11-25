@@ -123,6 +123,15 @@ public class ContasUsuariosEmMemoria implements ContasUsuarios, UserDetailsServi
     }
 
     @Override
+    public boolean cadastrar(String login, String nome, String senha, Papel papel) {
+        if (login == null || login.isBlank() || nome == null || nome.isBlank() || senha == null || senha.isEmpty()
+                || papel == null) {
+            throw new IllegalArgumentException("login, nome, senha e papel sao obrigatorios");
+        }
+        return criarConta(login.strip(), nome.strip(), senha, papel);
+    }
+
+    @Override
     public Optional<String> nomeDe(String login) {
         return login == null ? Optional.empty() : Optional.ofNullable(contas.get(login)).map(Conta::nome);
     }

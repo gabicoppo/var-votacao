@@ -6,6 +6,8 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -68,14 +70,15 @@ public class PremiacaoOrganizadorController {
      * Cria a premiação ou mostra o formulário de novo, com os erros por campo.
      *
      * @param formulario dados digitados
+     * @param usuario    organizador logado, que vira o dono da premiação
      * @param model      modelo da view
      * @param redirect   atributos flash
      * @return redirecionamento para os códigos de acesso ou a gestão, ou o formulário com erros
      */
     @PostMapping("/nova")
-    public String criar(@ModelAttribute(FORMULARIO) FormularioPremiacao formulario, Model model,
-                        RedirectAttributes redirect) {
-        ResultadoCriacaoPremiacao resultado = gestao.criar(formulario);
+    public String criar(@ModelAttribute(FORMULARIO) FormularioPremiacao formulario,
+                        @AuthenticationPrincipal UserDetails usuario, Model model, RedirectAttributes redirect) {
+        ResultadoCriacaoPremiacao resultado = gestao.criar(formulario, usuario.getUsername());
         if (!resultado.criada()) {
             Map<String, String> erros = new LinkedHashMap<>();
             resultado.erros().forEach(erro -> erros.putIfAbsent(erro.campo(), erro.mensagem()));

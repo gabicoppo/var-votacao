@@ -20,6 +20,24 @@ public interface RepositorioPremiacoes {
     PremiacaoCadastrada salvar(PremiacaoTop3 premiacao);
 
     /**
+     * Cadastra a premiação registrando quem a criou; só esse organizador a vê e gerencia.
+     *
+     * @param premiacao premiação a guardar
+     * @param dono      login do organizador que criou, ou {@code null} para uma premiação sem dono
+     * @return o cadastro, com id e horário
+     * @throws IllegalArgumentException se a premiação for nula
+     */
+    PremiacaoCadastrada salvar(PremiacaoTop3 premiacao, String dono);
+
+    /**
+     * Organizador que criou a premiação.
+     *
+     * @param id identificador do cadastro
+     * @return o login do dono, ou vazio se a premiação não tiver dono ou não existir
+     */
+    Optional<String> donoDe(String id);
+
+    /**
      * Busca uma premiação pelo id.
      *
      * @param id identificador do cadastro

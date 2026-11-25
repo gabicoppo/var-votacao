@@ -561,3 +561,8 @@ a.card-link:hover .card-titulo { color: var(--campo-escuro); }
 @media (max-width: 479px) {
   .ods { flex-direction: column; }
 }
+
+/* ---------- Cadastro e link alternativo do login ---------- */
+.entrada-alternativa { text-align: center; margin: 1.25rem 0 0; }
+.entrada .cadastro { max-width: 520px; }
+.opcao-ajuda { display: block; font-weight: 400; font-size: .9rem; color: var(--texto-suave); margin-top: .15rem; }

@@ -6,6 +6,7 @@ import br.unicamp.var.processo.PeriodoVotacao;
 import br.unicamp.var.processo.Votacao;
 import br.unicamp.var.urna.Sigilo;
 import br.unicamp.var.web.comum.ContasUsuarios;
+import br.unicamp.var.web.comum.Donos;
 import br.unicamp.var.web.comum.MensagensErro;
 import br.unicamp.var.web.comum.PremiacaoCadastrada;
 import br.unicamp.var.web.comum.RepositorioPremiacoes;
@@ -254,8 +255,20 @@ public class GestaoVotacoes {
      * @return o painel
      */
     public PainelOrganizador painel(String filtro) {
+        return painel(filtro, null);
+    }
+
+    /**
+     * Monta o painel do organizador só com as votações e premiações que ele criou (e as sem dono).
+     *
+     * @param filtro      status das votações a listar ("rascunho", "aberta"...); outro valor lista todas
+     * @param organizador login do organizador; {@code null} lista tudo
+     * @return o painel
+     */
+    public PainelOrganizador painel(String filtro, String organizador) {
         String ativo = filtro != null && STATUS.contains(filtro) ? filtro : TODAS;
         List<CartaoVotacao> todas = votacoes.listar().stream()
+                .filter(votacao -> visivel(votacao, organizador))
                 .map(GestaoVotacoes::cartao)
                 .sorted(Comparator.comparingInt(cartao -> PRIORIDADE.indexOf(cartao.status())))
                 .toList();
@@ -272,11 +285,22 @@ public class GestaoVotacoes {
                 .toList();
         int totalVotos = todas.stream().mapToInt(CartaoVotacao::votantes).sum();
         List<PainelOrganizador.CartaoPremiacao> cartoesPremiacao = premiacoes.listar().stream()
+                .filter(cadastro -> organizador == null
+                        || Donos.podeGerenciar(premiacoes, cadastro.id(), organizador))
                 .map(GestaoVotacoes::cartao)
                 .toList();
         return new PainelOrganizador(quantidade(porStatus, "aberta"), quantidade(porStatus, "rascunho"),
                 quantidade(porStatus, "apurada"), totalVotos, abas, ativo, filtradas, todas.size(),
                 cartoesPremiacao);
+    }
+
+    private static boolean visivel(Votacao votacao, String organizador) {
+        if (organizador == null) {
+            return true;
+        }
+        synchronized (votacao) {
+            return Donos.podeGerenciar(votacao, organizador);
+        }
     }
 
     /**

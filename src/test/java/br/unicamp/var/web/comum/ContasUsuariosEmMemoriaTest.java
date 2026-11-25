@@ -171,4 +171,21 @@ class ContasUsuariosEmMemoriaTest {
             assertTrue(codificador.matches("1234", demo.loadUserByUsername("e01").getPassword()));
         }
     }
+
+    @Nested
+    @DisplayName("cadastrar (cadastro público)")
+    class Cadastrar {
+
+        @Test
+        @DisplayName("cria a conta só se o login for novo; campos obrigatórios")
+        void cadastrar() {
+            assertTrue(contas.cadastrar("org.novo", "Org Novo", "senhaforte", Papel.ORGANIZADOR));
+            assertFalse(contas.cadastrar("org.novo", "Outro", "outra", Papel.ELEITOR));
+            assertEquals(Set.of("ROLE_ORGANIZADOR"), papeis(contas.loadUserByUsername("org.novo")));
+            assertThrows(IllegalArgumentException.class, () -> contas.cadastrar(" ", "Nome", "s", Papel.ELEITOR));
+            assertThrows(IllegalArgumentException.class, () -> contas.cadastrar("x1", null, "s", Papel.ELEITOR));
+            assertThrows(IllegalArgumentException.class, () -> contas.cadastrar("x1", "Nome", "", Papel.ELEITOR));
+            assertThrows(IllegalArgumentException.class, () -> contas.cadastrar("x1", "Nome", "s", null));
+        }
+    }
 }
