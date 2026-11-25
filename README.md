@@ -116,7 +116,7 @@ Histórico de entregas: [CHANGELOG.md](CHANGELOG.md).
 - `release/*`: preparação de versão, a partir de `develop`, com PR para `main`.
 
 Toda mudança entra por Pull Request, com 1 aprovação de outro integrante, discussões resolvidas e
-checks verdes. Cada entrega tem uma tag (`a2-v1.0.0`, `a4-v1.0.0`, `a5-v1.0.0`...).
+checks verdes. Cada entrega tem uma tag (`a2-v1.0.0`, `a4-v1.0.0`, `a5-v1.0.0`, `final-v1.0.0`).
 
 Mensagens de commit: `tipo: descrição curta (#issue)`, por exemplo
 `feat: calcula maioria absoluta (#12)`.

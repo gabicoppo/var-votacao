@@ -3,10 +3,9 @@
 Entregas do VAR, montadas a partir do `git log` e dos pull requests. Cada entrega tem uma tag e
 um merge na `main`.
 
-## [Não lançado]: entrega final
+## [final-v1.0.0]: 2026-11-24 (`pom.xml` 1.3.0)
 
-Primeira versão com **aplicação web**. A tag e a versão do `pom.xml` desta entrega serão definidas
-na release.
+Entrega final: primeira versão com **aplicação web**.
 
 ### Domínio
 - `Proporcao` extraída das regras (Extract Class, resolve o code smell da A4); descrição das regras
@@ -37,6 +36,9 @@ na release.
   com código de verificação ([#73](https://github.com/gabicoppo/var-votacao/pull/73)).
 - Design system no celular e diálogo de confirmação (RNF-04)
   ([#70](https://github.com/gabicoppo/var-votacao/pull/70)).
+- Cadastro público de contas (organizador ou eleitor) e isolamento por dono: cada organizador vê
+  e gerencia só as votações e premiações que criou
+  ([#77](https://github.com/gabicoppo/var-votacao/pull/77)).
 
 ### Qualidade, entrega e documentação
 - Teste de carga do RNF-03 com 20.000 votos
