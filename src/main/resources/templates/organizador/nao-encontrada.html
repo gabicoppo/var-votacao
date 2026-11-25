@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{fragments/layout :: layout(~{::title}, ~{::main}, ~{})}">
+<head>
+  <title>Votação não encontrada</title>
+</head>
+<body>
+<main>
+  <div class="vazio">
+    <span class="vazio-icone" aria-hidden="true">🟨</span>
+    <strong>Votação não encontrada</strong>
+    <p>O link pode estar incompleto ou a votação não existe mais.</p>
+    <a class="btn btn-primario" th:href="@{/organizador}">Voltar ao painel</a>
+  </div>
+</main>
+</body>
+</html>

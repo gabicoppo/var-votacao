@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{fragments/layout :: layout(~{::title}, ~{::main}, ~{::link})}">
+<head>
+  <title>Cédula Top 3</title>
+  <link rel="stylesheet" th:href="@{/css/eleitor.css}">
+</head>
+<body>
+<main class="fluxo-voto">
+  <ol class="passos" aria-label="Etapas da cédula">
+    <li class="ativo" aria-current="step">Escolher</li>
+    <li>Revisar</li>
+    <li>Pronto</li>
+  </ol>
+
+  <div class="pagina-cabecalho">
+    <div>
+      <h1 th:text="${cedula.titulo()}">Craque do Campeonato</h1>
+      <p class="subtitulo" th:if="${!#strings.isEmpty(cedula.descricao())}" th:text="${cedula.descricao()}">Critério</p>
+    </div>
+  </div>
+
+  <div class="card regra-top3">
+    <p>Você vota como <strong th:text="${cedula.categoria()}">Torcedores</strong>
+      (peso <strong th:text="${cedula.peso()}">1</strong>).</p>
+    <p class="ajuda">1º = 5 pontos, 2º = 3, 3º = 1, multiplicados pelo peso do seu grupo.</p>
+  </div>
+
+  <form class="form form-top3" th:action="@{/eleitor/premiacoes/{id}/revisar(id=${cedula.id()})}" method="post"
+        data-top3>
+    <!--/* Sem JS, a cédula são estes 3 selects. Com JS, eles somem e os cartões abaixo preenchem os valores. */-->
+    <div class="campos-top3" data-campos-top3>
+      <div th:replace="~{eleitor/premiacao-cedula :: lugar('primeiro', '1º lugar', ${escolhas?.primeiro()})}"></div>
+      <div th:replace="~{eleitor/premiacao-cedula :: lugar('segundo', '2º lugar', ${escolhas?.segundo()})}"></div>
+      <div th:replace="~{eleitor/premiacao-cedula :: lugar('terceiro', '3º lugar', ${escolhas?.terceiro()})}"></div>
+    </div>
+
+    <div class="ranking-top3" data-ranking hidden>
+      <ol class="podio-mini" aria-label="Seu pódio">
+        <li class="lugar-1" data-vaga><span class="vaga-selo" aria-hidden="true">🥇</span>
+          <span class="vaga-nome" data-vaga-nome>1º lugar</span></li>
+        <li class="lugar-2" data-vaga><span class="vaga-selo" aria-hidden="true">🥈</span>
+          <span class="vaga-nome" data-vaga-nome>2º lugar</span></li>
+        <li class="lugar-3" data-vaga><span class="vaga-selo" aria-hidden="true">🥉</span>
+          <span class="vaga-nome" data-vaga-nome>3º lugar</span></li>
+      </ol>
+
+      <div class="ranking-barra">
+        <p class="ranking-contador" data-contador>Toque nos jogadores, na ordem: 1º, 2º e 3º.</p>
+        <button type="button" class="btn btn-link" data-limpar>Limpar</button>
+      </div>
+
+      <ul class="candidatos-top3" aria-label="Candidatos">
+        <li th:each="candidato : ${cedula.candidatos()}">
+          <button type="button" class="candidato-top3" aria-pressed="false" th:attr="data-candidato=${candidato}">
+            <span class="candidato-selo" aria-hidden="true" data-selo></span>
+            <span class="candidato-nome" th:text="${candidato}">Rafa Lima</span>
+          </button>
+        </li>
+      </ul>
+      <p class="sr-only" aria-live="polite" data-anuncio></p>
+    </div>
+
+    <p th:if="${erro != null}" class="erro-campo" role="alert" th:text="${erro}">Escolha três candidatos.</p>
+    <button type="submit" class="btn btn-primario btn-grande" data-revisar-top3>Revisar cédula</button>
+  </form>
+
+  <!--/* Um select de lugar. */-->
+  <th:block th:if="${false}">
+    <div th:fragment="lugar(nome, rotulo, atual)" class="campo" th:classappend="${erro != null} ? 'campo-com-erro'">
+      <label th:for="${nome}" th:text="${rotulo}">1º lugar</label>
+      <select th:id="${nome}" th:name="${nome}" required data-lugar>
+        <option value="">Escolha um candidato</option>
+        <option th:each="candidato : ${cedula.candidatos()}" th:value="${candidato}" th:text="${candidato}"
+                th:selected="${candidato == atual}">Candidato</option>
+      </select>
+    </div>
+  </th:block>
+  <script th:src="@{/js/eleitor.js}" defer></script>
+</main>
+</body>
+</html>

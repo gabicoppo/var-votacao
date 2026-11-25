@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{fragments/layout :: layout(~{::title}, ~{::main}, ~{::link})}">
+<head>
+  <title>Ranking</title>
+  <link rel="stylesheet" th:href="@{/css/resultado.css}">
+  <link rel="stylesheet" th:href="@{/css/premiacao.css}">
+</head>
+<body>
+<main th:with="r=${pagina}">
+  <div class="pagina-cabecalho">
+    <div>
+      <p class="selos">
+        <span th:replace="~{fragments/componentes :: badgePremiacao(${r.status()})}"></span>
+        <span class="badge badge-info">Top 3 ponderado</span>
+      </p>
+      <h1 th:text="${r.titulo()}">Craque do Campeonato</h1>
+      <p class="subtitulo" th:unless="${#strings.isEmpty(r.descricao())}">
+        <strong>Critério:</strong> <span th:text="${r.descricao()}">Entrega ao time</span></p>
+    </div>
+    <div class="acoes nao-imprimir">
+      <button type="button" class="btn btn-secundario" data-imprimir th:if="${r.apurada()}">Imprimir</button>
+      <a class="btn btn-secundario" th:if="${organizador}" target="_blank" rel="noopener"
+         th:href="@{/premiacoes/{id}/telao(id=${r.id()})}">Abrir no telão <span class="sr-only">(nova aba)</span></a>
+      <a class="btn btn-secundario" th:if="${organizador}"
+         th:href="@{/organizador/premiacoes/{id}(id=${r.id()})}">Voltar à gestão</a>
+    </div>
+  </div>
+
+  <!--/* Antes da apuração: só a participação, atualizada a cada 10 s. */-->
+  <section th:unless="${r.apurada()}" class="andamento" aria-labelledby="titulo-andamento"
+           th:with="a=${r.andamento()}"
+           th:attr="data-andamento-url=@{/premiacoes/{id}/andamento.json(id=${r.id()})},data-status=${a.status()}">
+    <div class="card card-destaque andamento-card">
+      <h2 class="card-titulo" id="titulo-andamento"
+          th:text="${a.status() == 'encerrada'} ? 'Premiação encerrada' : 'Premiação em andamento'">
+        Premiação em andamento</h2>
+      <p class="participacao-destaque">
+        <span class="participacao-numero" data-participacao th:text="${a.participacaoTexto()}">42%</span>
+        <span class="participacao-legenda">de participação</span>
+      </p>
+      <p class="participacao-contagem">
+        <strong data-votantes th:text="${a.votantes()}">5</strong> de <strong data-aptos th:text="${a.aptos()}">12</strong>
+        eleitores aptos já entregaram a cédula
+      </p>
+      <div class="barra">
+        <div class="barra-trilho" role="progressbar" aria-label="Participação" aria-valuemin="0" aria-valuemax="100"
+             th:attr="aria-valuenow=${a.largura()}">
+          <div class="barra-preenchimento" data-barra th:style="|width: ${a.largura()}%|"></div>
+        </div>
+      </div>
+      <p class="ajuda" th:if="${a.status() == 'rascunho'}">A premiação ainda não foi aberta pelo organizador.</p>
+      <p class="ajuda" th:unless="${a.status() == 'rascunho'}">O ranking só aparece depois da apuração. Esta página
+        se atualiza sozinha.</p>
+    </div>
+  </section>
+
+  <th:block th:if="${r.apurada()}">
+    <!--/* Pódio: as três primeiras colocações; empates dividem o degrau. */-->
+    <section class="secao" aria-labelledby="titulo-podio">
+      <h2 class="secao-titulo" id="titulo-podio">Pódio</h2>
+      <div class="vazio" th:if="${r.podio().vazio()}">
+        <span class="vazio-icone" aria-hidden="true">🏆</span>
+        <strong>Nenhuma cédula registrada</strong>
+        <p>Sem votos, não há pódio. A tabela abaixo lista todos os candidatos com zero ponto.</p>
+      </div>
+      <ol class="podio" th:unless="${r.podio().vazio()}">
+        <li th:each="l : ${r.podio().lugares()}" class="degrau" th:classappend="|degrau-${l.medalha()}|">
+          <div class="degrau-nomes">
+            <p class="degrau-candidato" th:each="c : ${l.candidatos()}">
+              <strong th:text="${c.nome()}">Rafa Lima</strong>
+              <span th:text="${c.pontosTexto()}">23 pts</span>
+            </p>
+          </div>
+          <div class="degrau-bloco">
+            <span class="degrau-numero" th:text="|${l.colocacao()}º|">1º</span>
+          </div>
+        </li>
+      </ol>
+    </section>
+
+    <div class="metricas">
+      <div class="metrica">
+        <span class="metrica-valor" th:text="${r.andamento().votantes()}">8</span>
+        <span class="metrica-rotulo">cédulas apuradas</span>
+      </div>
+      <div class="metrica">
+        <span class="metrica-valor" th:text="${r.andamento().aptos()}">12</span>
+        <span class="metrica-rotulo">eleitores aptos</span>
+      </div>
+      <div class="metrica">
+        <span class="metrica-valor" th:text="${r.andamento().participacaoTexto()}">66,7%</span>
+        <span class="metrica-rotulo">participação</span>
+      </div>
+    </div>
+
+    <section class="secao" aria-labelledby="titulo-ranking">
+      <h2 class="secao-titulo" id="titulo-ranking">Ranking completo</h2>
+      <!--/* Celular: um cartão por candidato. A partir de 640 px: a tabela. */-->
+      <ol class="ranking-cartoes" aria-label="Ranking completo">
+        <li th:each="l : ${r.linhas()}" class="card cartao-ranking"
+            th:classappend="${l.colocacao() <= 3} ? 'cartao-ranking-podio'">
+          <span class="cartao-ranking-colocacao" th:text="|${l.colocacao()}º|">1º</span>
+          <p class="cartao-ranking-nome" th:text="${l.candidato()}">Rafa Lima</p>
+          <span class="cartao-ranking-pontos"><span th:text="${l.pontos()}">23</span><small>pontos</small></span>
+          <p class="cartao-ranking-detalhes">
+            <span>1º: <strong th:text="${l.primeiros()}">3</strong></span>
+            <span>2º: <strong th:text="${l.segundos()}">1</strong></span>
+            <span>3º: <strong th:text="${l.terceiros()}">0</strong></span>
+          </p>
+          <p class="cartao-ranking-detalhes">
+            <span th:each="g, i : ${r.grupos()}"><th:block th:text="|${g}:|">Jornalistas:</th:block>
+              <strong th:text="${l.pontosPorGrupo()[i.index]}">10</strong></span>
+          </p>
+        </li>
+      </ol>
+      <div class="tabela-rolagem ranking-tabela">
+        <table class="tabela tabela-ranking">
+          <caption class="sr-only">Ranking completo, com os pontos dados por cada grupo de votantes</caption>
+          <thead>
+            <tr>
+              <th scope="col">Colocação</th>
+              <th scope="col">Candidato</th>
+              <th scope="col" class="numero">Pontos</th>
+              <th scope="col" class="numero"><abbr title="Vezes escolhido em 1º lugar">1º</abbr></th>
+              <th scope="col" class="numero"><abbr title="Vezes escolhido em 2º lugar">2º</abbr></th>
+              <th scope="col" class="numero"><abbr title="Vezes escolhido em 3º lugar">3º</abbr></th>
+              <th scope="col" class="numero coluna-grupo" th:each="g : ${r.grupos()}" th:text="${g}">Jornalistas</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr th:each="l : ${r.linhas()}" th:classappend="${l.colocacao() <= 3} ? 'linha-podio'">
+              <td class="colocacao" th:text="|${l.colocacao()}º|">1º</td>
+              <th scope="row" th:text="${l.candidato()}">Rafa Lima</th>
+              <td class="numero pontos" th:text="${l.pontos()}">23</td>
+              <td class="numero" th:text="${l.primeiros()}">3</td>
+              <td class="numero" th:text="${l.segundos()}">1</td>
+              <td class="numero" th:text="${l.terceiros()}">0</td>
+              <td class="numero coluna-grupo" th:each="pg : ${l.pontosPorGrupo()}" th:text="${pg}">10</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="ajuda">Os pontos de cada grupo mostram quanto ele deu ao candidato; a soma deles é o total. Assim
+        dá para conferir o resultado.</p>
+    </section>
+
+    <section class="secao" aria-labelledby="titulo-criterios">
+      <div class="card criterios">
+        <h2 class="card-titulo" id="titulo-criterios">Como os pontos foram calculados</h2>
+        <ul>
+          <li th:each="c : ${r.criterios()}" th:text="${c}">1º lugar = 5 pontos</li>
+        </ul>
+      </div>
+    </section>
+  </th:block>
+
+  <script th:src="@{/js/resultado.js}" defer></script>
+</main>
+</body>
+</html>

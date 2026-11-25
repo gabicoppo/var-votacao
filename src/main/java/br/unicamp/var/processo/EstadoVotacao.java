@@ -2,6 +2,9 @@ package br.unicamp.var.processo;
 
 import br.unicamp.var.apuracao.RegraApuracao;
 import br.unicamp.var.apuracao2turno.ResultadoApuracao;
+import br.unicamp.var.resultado.ResultadoDetalhado;
+import br.unicamp.var.urna.Comprovante;
+import java.util.Optional;
 
 /**
  * Estado do ciclo de vida de uma {@link Votacao} (padrão State).
@@ -20,6 +23,16 @@ interface EstadoVotacao {
      */
     String nome();
 
+    /**
+     * Aplica o período de votação ao estado atual (história #20). Por padrão não faz nada:
+     * só rascunho (que abre no início) e aberta (que encerra no fim) reagem ao relógio.
+     *
+     * @param votacao votação cujo relógio e período são consultados
+     */
+    default void atualizarPeloRelogio(Votacao votacao) {
+        // nenhum efeito nos estados que não dependem do horário
+    }
+
     default void alterarRegra(Votacao votacao, RegraApuracao novaRegra) {
         throw operacaoProibida("alterar a regra de apuração");
     }
@@ -28,7 +41,7 @@ interface EstadoVotacao {
         throw operacaoProibida("abrir");
     }
 
-    default void registrarVoto(Votacao votacao, String opcao) {
+    default Comprovante registrarVoto(Votacao votacao, String eleitorId, String opcao) {
         throw operacaoProibida("registrar voto");
     }
 
@@ -38,6 +51,19 @@ interface EstadoVotacao {
 
     default ResultadoApuracao apurar(Votacao votacao) {
         throw operacaoProibida("apurar");
+    }
+
+    default ResultadoDetalhado resultadoDetalhado(Votacao votacao) {
+        throw operacaoProibida("ver o resultado detalhado");
+    }
+
+    /**
+     * Resultado da apuração, se já houver (usado para decidir se existe 2º turno).
+     *
+     * @return o resultado, ou vazio antes da apuração
+     */
+    default Optional<ResultadoApuracao> resultado() {
+        return Optional.empty();
     }
 
     private IllegalStateException operacaoProibida(String operacao) {

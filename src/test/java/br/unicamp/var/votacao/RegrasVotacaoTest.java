@@ -54,4 +54,20 @@ class RegrasVotacaoTest {
     void aprovadaSemVotosValidosLancaExcecao() {
         assertThrows(IllegalArgumentException.class, () -> RegrasVotacao.aprovada(0, 0, 0.5));
     }
+
+    @Test
+    void quorumComMaisPresentesQueMembrosLancaExcecao() {
+        assertThrows(IllegalArgumentException.class, () -> RegrasVotacao.quorumAtingido(11, 10, 0.5));
+    }
+
+    @Test
+    void quorumComPresentesNegativosLancaExcecao() {
+        assertThrows(IllegalArgumentException.class, () -> RegrasVotacao.quorumAtingido(-1, 10, 0.5));
+    }
+
+    @Test
+    void aprovadaComVotosNegativosLancaExcecao() {
+        assertThrows(IllegalArgumentException.class, () -> RegrasVotacao.aprovada(-1, 5, 0.5));
+        assertThrows(IllegalArgumentException.class, () -> RegrasVotacao.aprovada(5, -1, 0.5));
+    }
 }

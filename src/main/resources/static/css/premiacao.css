@@ -1,0 +1,209 @@
+/*
+ * Premiações Top 3 (área do João): formulário, gestão, códigos de acesso e ranking com pódio.
+ * Só o que é específico destas telas; o resto vem de var.css. Selos e participação vêm de
+ * resultado.css, que as páginas de gestão e de ranking também carregam.
+ */
+
+.migalha { margin: 0 0 .75rem; }
+.opcional { font-weight: 400; color: var(--texto-suave); font-size: .9em; }
+.texto-mono { font-family: var(--fonte-mono); font-size: .95rem; }
+
+/* ---------- Formulário ---------- */
+.form-premiacao { max-width: 760px; }
+.passos a { color: inherit; text-decoration: none; }
+.passos a:hover { text-decoration: underline; }
+.passo { border: 0; display: flex; flex-direction: column; gap: 1.1rem; min-width: 0; scroll-margin-top: 1rem; }
+.passo-titulo {
+  float: left; width: 100%; display: flex; align-items: center; gap: .6rem; padding: 0;
+  margin-bottom: .25rem; font-size: 1.15rem; font-weight: 800;
+}
+.passo-titulo + * { clear: both; }
+.passo-numero {
+  display: grid; place-items: center; width: 2rem; height: 2rem; border-radius: 50%; flex-shrink: 0;
+  background: var(--cartao-amarelo); color: var(--texto); font-weight: 800;
+}
+.exemplo {
+  display: flex; flex-direction: column; gap: .75rem; align-items: flex-start;
+  background: var(--azul-suave); border-color: #C8D7EE;
+}
+.exemplo p { margin: 0; }
+@media (min-width: 640px) {
+  .exemplo { flex-direction: row; align-items: center; justify-content: space-between; }
+  .exemplo .btn { flex-shrink: 0; }
+}
+
+/* ---------- Gestão ---------- */
+.acoes-premiacao { margin-bottom: 1.5rem; }
+.acoes-premiacao form { display: flex; flex-direction: column; align-items: flex-start; gap: .75rem; margin: 0; }
+.gestao-colunas { display: grid; gap: 0 1.5rem; }
+@media (min-width: 860px) {
+  .gestao-colunas { grid-template-columns: 1fr 1fr; align-items: start; }
+}
+.gestao-colunas .secao { margin: 1rem 0; }
+.lista-candidatos { display: flex; flex-wrap: wrap; gap: .5rem; list-style: none; padding: 0; margin: 0 0 1rem; }
+.lista-candidatos li {
+  padding: .4rem .85rem; border-radius: 999px; background: var(--superficie); border: 1px solid var(--cinza-200);
+  font-weight: 600; box-shadow: var(--sombra);
+}
+
+/* ---------- Códigos de acesso ---------- */
+.tabela-acessos td:first-child, .tabela-acessos td:last-child { white-space: nowrap; }
+.tabela-acessos .codigo-pequeno { font-size: .95rem; padding: .2rem .45rem; letter-spacing: .06em; }
+@media (max-width: 420px) {
+  .tabela-acessos th, .tabela-acessos td { padding: .6rem .5rem; }
+}
+@media (min-width: 640px) {
+  .tabela-acessos .codigo-pequeno { font-size: 1.05rem; padding: .25rem .6rem; letter-spacing: .1em; }
+}
+
+/* ---------- Pódio: 2º à esquerda, 1º no centro e mais alto, 3º à direita ---------- */
+.podio {
+  list-style: none; margin: 0 auto; padding: 0; max-width: 720px;
+  display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); align-items: end; gap: .5rem;
+}
+.degrau { grid-row: 1; display: flex; flex-direction: column; justify-content: flex-end; min-width: 0; }
+.degrau-prata { grid-column: 1; }
+.degrau-ouro { grid-column: 2; }
+.degrau-bronze { grid-column: 3; }
+.degrau-nomes { display: flex; flex-direction: column; gap: .4rem; margin-bottom: .5rem; text-align: center; }
+.degrau-candidato {
+  margin: 0; padding: .5rem .4rem; border-radius: var(--raio-pequeno); background: var(--superficie);
+  border: 1px solid var(--cinza-200); box-shadow: var(--sombra); line-height: 1.25;
+}
+.degrau-candidato strong { display: block; font-size: .95rem; overflow-wrap: anywhere; }
+.degrau-candidato span { display: block; font-size: .85rem; color: var(--texto-suave); font-weight: 700;
+  font-variant-numeric: tabular-nums; }
+.degrau-bloco {
+  display: grid; place-items: start center; padding-top: .6rem; border-radius: 10px 10px 0 0;
+  color: rgba(0, 0, 0, .7); box-shadow: inset 0 -6px 0 rgba(0, 0, 0, .12), var(--sombra);
+  transform-origin: bottom center; animation: sobe-degrau .8s cubic-bezier(.2, .9, .3, 1.15) both;
+}
+.degrau-numero { font-size: clamp(1.5rem, 7vw, 2.4rem); font-weight: 800; text-shadow: 0 1px 0 rgba(255, 255, 255, .5); }
+.degrau-ouro .degrau-bloco {
+  height: 9.5rem; background: linear-gradient(160deg, #FBE58A, #E2B714 55%, #B8900B); animation-delay: .5s;
+}
+.degrau-prata .degrau-bloco {
+  height: 6.75rem; background: linear-gradient(160deg, #F1F3F4, #C4CACD 55%, #9AA2A6); animation-delay: .25s;
+}
+.degrau-bronze .degrau-bloco {
+  height: 5rem; background: linear-gradient(160deg, #F2C9A0, #CD8B4E 55%, #A1652F); animation-delay: 0s;
+}
+.degrau-ouro .degrau-candidato { border-color: #E2B714; box-shadow: 0 0 0 2px rgba(226, 183, 20, .35), var(--sombra); }
+.degrau-ouro .degrau-candidato strong::before { content: "🏆 "; }
+.degrau-nomes { animation: aparece-nome .5s ease both; }
+.degrau-ouro .degrau-nomes { animation-delay: 1.1s; }
+.degrau-prata .degrau-nomes { animation-delay: .85s; }
+.degrau-bronze .degrau-nomes { animation-delay: .6s; }
+
+@keyframes sobe-degrau {
+  from { transform: scaleY(0); }
+  to { transform: scaleY(1); }
+}
+@keyframes aparece-nome {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: none; }
+}
+
+@media (min-width: 640px) {
+  .podio { gap: 1rem; }
+  .degrau-candidato { padding: .65rem .75rem; }
+  .degrau-candidato strong { font-size: 1.05rem; }
+}
+
+/* ---------- Ranking ---------- */
+.tabela-ranking td, .tabela-ranking th { white-space: nowrap; }
+.tabela-ranking tbody th {
+  background: none; color: var(--texto); font-size: 1rem; font-weight: 700; text-transform: none; letter-spacing: 0;
+}
+.tabela-ranking .colocacao { font-weight: 800; color: var(--texto-suave); }
+.tabela-ranking .pontos { font-weight: 800; color: var(--gramado); }
+.tabela-ranking .linha-podio .colocacao { color: var(--amarelo-texto); }
+.tabela-ranking .coluna-grupo { background: rgba(227, 236, 248, .45); }
+.tabela-ranking thead .coluna-grupo { background: var(--azul-suave); color: var(--azul); }
+.tabela-ranking abbr { text-decoration: none; }
+.criterios ul { margin: 0; padding-left: 1.2rem; display: grid; gap: .35rem; }
+
+@media print {
+  .degrau-bloco, .degrau-nomes { animation: none; }
+  .degrau-bloco { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+}
+
+/* ---------- Gestão no celular ---------- */
+.tabela-pesos { display: table; }
+@media (max-width: 420px) {
+  .linha-tempo li { flex-basis: 4.2rem; font-size: .78rem; }
+}
+
+/* ---------- Ranking: cartões no celular, tabela a partir de 640 px ---------- */
+.ranking-cartoes { list-style: none; margin: 0 0 .75rem; padding: 0; display: grid; gap: .75rem; }
+.ranking-tabela { display: none; }
+.cartao-ranking {
+  display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: .2rem .75rem; padding: .9rem 1rem;
+}
+.cartao-ranking-podio { border-left: 6px solid var(--cartao-amarelo); }
+.cartao-ranking-colocacao {
+  min-width: 2.2rem; font-size: 1.25rem; font-weight: 800; color: var(--texto-suave); font-variant-numeric: tabular-nums;
+}
+.cartao-ranking-podio .cartao-ranking-colocacao { color: var(--amarelo-texto); }
+.cartao-ranking-nome { margin: 0; font-size: 1.1rem; font-weight: 800; overflow-wrap: break-word; hyphens: auto; min-width: 0; }
+.cartao-ranking-pontos {
+  font-size: 1.7rem; font-weight: 800; line-height: 1; color: var(--gramado); text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.cartao-ranking-pontos small { display: block; font-size: .75rem; font-weight: 700; color: var(--texto-suave); }
+.cartao-ranking-detalhes {
+  grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: .15rem .9rem; margin: .35rem 0 0;
+  font-size: .875rem; color: var(--texto-suave); font-variant-numeric: tabular-nums;
+}
+.cartao-ranking-detalhes + .cartao-ranking-detalhes { margin-top: 0; }
+.cartao-ranking-detalhes strong { color: var(--texto); }
+@media (min-width: 640px) {
+  .ranking-cartoes { display: none; }
+  .ranking-tabela { display: block; }
+}
+
+/* Pódio a 360 px: três degraus visíveis, nomes longos quebram sem cortar */
+@media (max-width: 420px) {
+  .podio { gap: .35rem; }
+  .degrau-candidato { padding: .45rem .3rem; }
+  .degrau-candidato strong { font-size: .82rem; overflow-wrap: break-word; hyphens: auto; }
+  .degrau-candidato span { font-size: .75rem; }
+  .degrau-ouro .degrau-candidato strong::before { content: "🏆"; display: block; }
+}
+
+/* ---------- Telão da premiação: pódio revelado com suspense ---------- */
+.telao-podio { margin-top: 3vh; }
+.telao .podio { max-width: 1250px; gap: 2vw; }
+.telao .degrau-candidato {
+  background: rgba(255, 255, 255, .08); border-color: rgba(255, 255, 255, .22); color: #fff; padding: 1.4vh 1vw;
+  box-shadow: none;
+}
+.telao .degrau-candidato strong { font-size: clamp(1.1rem, 2.6vw, 2.9rem); line-height: 1.1; }
+.telao .degrau-candidato span { color: rgba(255, 255, 255, .8); font-size: clamp(.95rem, 1.8vw, 1.9rem); }
+.telao .degrau-ouro .degrau-bloco { height: 34vh; }
+.telao .degrau-prata .degrau-bloco { height: 24vh; }
+.telao .degrau-bronze .degrau-bloco { height: 17vh; }
+.telao .degrau-numero { font-size: clamp(2.5rem, 6vw, 6.5rem); }
+.telao .degrau-ouro .degrau-candidato { border-color: #E2B714; }
+.podio-suspense .degrau .degrau-nomes, .podio-suspense .degrau .degrau-bloco { animation: none; }
+.podio-suspense .degrau-oculto .degrau-nomes { visibility: hidden; }
+.podio-suspense .degrau-oculto .degrau-bloco { filter: grayscale(1) brightness(.4); }
+.podio-suspense .degrau-revelado .degrau-nomes { animation: revela-degrau .7s cubic-bezier(.2, 1.4, .4, 1) both; }
+.podio-suspense .degrau-revelado .degrau-bloco { animation: acende-degrau .6s ease both; }
+.podio-suspense .degrau-ouro.degrau-revelado .degrau-candidato {
+  box-shadow: 0 0 0 3px #E2B714, 0 0 60px rgba(245, 197, 24, .7);
+  animation: brilho-ouro 1.6s ease-in-out .8s infinite alternate;
+}
+@keyframes revela-degrau {
+  from { opacity: 0; transform: translateY(-30px) scale(.9); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes acende-degrau { from { filter: grayscale(1) brightness(.4); } to { filter: none; } }
+@keyframes brilho-ouro { to { box-shadow: 0 0 0 4px #FBE58A, 0 0 110px rgba(245, 197, 24, .95); } }
+.telao-podio-controles { display: flex; justify-content: center; margin-top: 4vh; }
+.telao-podio-controles .btn-grande { width: auto; padding-inline: 2rem; font-size: clamp(1rem, 1.6vw, 1.6rem); }
+.telao-proximo { background: rgba(255, 255, 255, .12); color: #fff; border-color: rgba(255, 255, 255, .45); }
+.telao-proximo:hover { background: rgba(255, 255, 255, .2); color: #fff; }
+.telao-proximo[hidden], .telao-ranking[hidden] { display: none; }
+.telao-vazio { background: rgba(255, 255, 255, .06); color: #fff; border-color: rgba(255, 255, 255, .3); }
+.telao-vazio strong { color: #fff; }

@@ -1,0 +1,213 @@
+/* Área do eleitor (histórias #23, #26, #28). Mobile-first (360 px); usa os tokens de var.css. */
+
+[data-ranking][hidden], [data-campos-top3][hidden], [data-dica][hidden], .acoes-comprovante [hidden] {
+  display: none !important;
+}
+
+.fluxo-voto { max-width: 640px; margin: 0 auto; }
+.fluxo-voto .form { max-width: none; }
+.voltar { margin-top: .75rem; }
+
+/* Passos: no celular, o número fica em cima e o rótulo embaixo, sem quebrar palavra. */
+.fluxo-voto .passos { margin-bottom: 1.25rem; grid-auto-flow: column; grid-auto-columns: 1fr; gap: .25rem; }
+.fluxo-voto .passos li {
+  padding: 2.6rem 0 0; text-align: center; font-size: .85rem; overflow-wrap: normal; word-break: normal;
+}
+.fluxo-voto .passos li::before { left: 50%; transform: translateX(-50%); }
+@media (min-width: 640px) {
+  .fluxo-voto .passos li { padding: .35rem 0 .35rem 2.75rem; text-align: left; font-size: .9rem; }
+  .fluxo-voto .passos li::before { left: 0; transform: none; }
+}
+
+/* ---------- Painel ---------- */
+.cartao-eleitor { display: flex; flex-direction: column; }
+.cartao-eleitor .card-rodape { margin-top: auto; }
+.cartao-etiquetas { display: flex; flex-wrap: wrap; gap: .35rem; margin-bottom: .6rem; }
+.cartao-descricao { overflow-wrap: break-word; }
+.badge-urgente { background: var(--vermelho-suave); color: #8E1526; }
+.badge-urgente::before { display: none; }
+
+.em-dia {
+  display: flex; flex-direction: column; align-items: center; gap: .5rem; text-align: center;
+  margin: 0 0 2rem; padding: 1.75rem 1.25rem; border-radius: var(--raio);
+  background: linear-gradient(160deg, var(--campo-suave), var(--superficie) 70%);
+  border: 1px solid #C8E3D3;
+}
+.em-dia-ilustracao { width: 120px; height: 96px; }
+.em-dia-titulo { display: block; font-size: 1.3rem; font-weight: 800; color: var(--gramado); }
+.em-dia p { margin: .25rem 0 0; color: var(--texto-suave); }
+@media (min-width: 640px) {
+  .em-dia { flex-direction: row; text-align: left; gap: 1.5rem; padding: 1.5rem 2rem; }
+}
+
+/* ---------- Cédula ---------- */
+.aviso-sigilo { font-weight: 600; }
+.aviso-sigilo::before { content: "🔒"; font-style: normal; font-family: inherit; }
+.opcoes-radio.campo-com-erro .opcao-radio input[type="radio"] + span { border-color: var(--cartao-vermelho); }
+.opcao-radio input[type="radio"]:checked + span { font-weight: 800; }
+.opcao-radio input[type="radio"]:checked + span::after {
+  content: "Escolhida"; margin-left: auto; padding: .15rem .6rem; border-radius: 999px;
+  font-size: .8rem; font-weight: 700; background: var(--campo); color: #fff;
+}
+.dica-revisar { text-align: center; margin-top: -.25rem; }
+
+/* ---------- Revisão ---------- */
+.escolha-revisao { text-align: center; padding: 1.5rem 1rem; margin: 1rem 0; }
+.escolha-rotulo { display: block; color: var(--texto-suave); font-weight: 600; }
+.escolha-opcao {
+  display: block; font-size: 1.75rem; font-weight: 800; color: var(--gramado); margin-top: .25rem;
+  overflow-wrap: anywhere;
+}
+.btn[aria-busy="true"] { cursor: progress; }
+
+/* ---------- Comprovante e sucesso ---------- */
+.comprovante { text-align: center; padding: 2rem 1.25rem; }
+.check-grande {
+  width: 88px; height: 88px; margin: 0 auto 1rem; border-radius: 50%;
+  display: grid; place-items: center; font-size: 3rem; font-weight: 800; color: #fff;
+  background: var(--campo); box-shadow: 0 0 0 8px var(--campo-suave);
+  animation: check-entrada .5s cubic-bezier(.2, .9, .3, 1.4) both;
+}
+@keyframes check-entrada {
+  from { transform: scale(.3); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+.comprovante-rotulo { margin: 1.25rem 0 .35rem; font-weight: 700; color: var(--texto-suave); }
+.comprovante-data { justify-content: center; }
+.comprovante-aviso {
+  margin: 1rem auto 0; max-width: 34rem; padding: .75rem 1rem; border-radius: var(--raio-pequeno);
+  background: var(--amarelo-suave); color: var(--texto); text-align: left;
+}
+.acoes-comprovante { justify-content: center; margin-top: 1.25rem; }
+.acoes-comprovante .btn { flex: 1 1 100%; }
+@media (min-width: 480px) {
+  .acoes-comprovante .btn { flex: 0 1 auto; }
+}
+[data-dica-salvar] { margin-top: .75rem; }
+.copiado { min-height: 1.5em; margin: .5rem 0 0; color: var(--campo-escuro); font-weight: 700; }
+.so-impressao { display: none; }
+
+/* ---------- Avisos (já votou, fechada) ---------- */
+.aviso-voto { text-align: center; padding: 2rem 1.25rem; }
+.aviso-icone { font-size: 2.5rem; margin: 0 0 .5rem; line-height: 1; }
+.datas-votacao {
+  display: grid; grid-template-columns: auto auto; justify-content: center; gap: .25rem 1rem; margin: 1rem 0;
+}
+.datas-votacao dt { font-weight: 700; text-align: right; }
+.datas-votacao dd { margin: 0; text-align: left; font-variant-numeric: tabular-nums; }
+
+/* ---------- Top 3 ---------- */
+.regra-top3 { margin-bottom: 1.25rem; }
+.regra-top3 p { margin: 0; }
+.regra-top3 .ajuda { margin-top: .35rem; }
+.podio { list-style: none; padding: 1rem 1.25rem; margin: 1rem 0; display: grid; gap: .75rem; }
+.podio li { display: flex; align-items: center; gap: .75rem; font-size: 1.1rem; }
+.podio strong { overflow-wrap: anywhere; }
+.podio small { margin-left: auto; white-space: nowrap; }
+.podio-lugar {
+  display: inline-flex; align-items: center; gap: .2rem; flex-shrink: 0; min-height: 2.25rem;
+  padding: 0 .65rem; border-radius: 999px; background: var(--ouro-suave, #FBE7A1); color: var(--texto);
+  font-weight: 800; font-size: 1rem;
+}
+.podio li:nth-child(2) .podio-lugar { background: #E4E8EB; }
+.podio li:nth-child(3) .podio-lugar { background: #F1D9C2; }
+
+/* Ranking por toque (o JS mostra; sem JS ficam os selects) */
+.campos-top3 { display: grid; gap: 1rem; }
+.ranking-top3 { display: grid; gap: 1rem; }
+.podio-mini {
+  list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: .5rem;
+}
+.podio-mini li {
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: .15rem;
+  min-height: 76px; padding: .5rem .35rem; border-radius: var(--raio-pequeno); text-align: center;
+  border: 2px dashed var(--cinza-300); background: var(--superficie); color: var(--texto-suave);
+  font-size: .85rem; font-weight: 600; transition: background-color .2s, border-color .2s, transform .2s;
+}
+.vaga-selo { font-size: 1.5rem; line-height: 1; filter: grayscale(1); opacity: .55; transition: filter .2s, opacity .2s; }
+.vaga-nome { overflow-wrap: anywhere; line-height: 1.2; }
+.podio-mini li.preenchida { border-style: solid; color: var(--texto); font-weight: 800; }
+.podio-mini li.preenchida .vaga-selo { filter: none; opacity: 1; }
+.podio-mini li.lugar-1.preenchida { background: #FDF3C8; border-color: #D4A20A; }
+.podio-mini li.lugar-2.preenchida { background: #EEF1F3; border-color: #8C979F; }
+.podio-mini li.lugar-3.preenchida { background: #F8E6D5; border-color: #B0703A; }
+
+.ranking-barra { display: flex; align-items: center; justify-content: space-between; gap: .5rem; }
+.ranking-contador { margin: 0; font-weight: 700; color: var(--texto-suave); }
+.ranking-contador.pronto { color: var(--campo-escuro); }
+.ranking-barra .btn-link { flex-shrink: 0; white-space: nowrap; }
+.ranking-barra .btn-link:disabled { opacity: .45; cursor: default; text-decoration: none; }
+
+.candidatos-top3 { list-style: none; margin: 0; padding: 0; display: grid; gap: .6rem; }
+@media (min-width: 640px) {
+  .candidatos-top3 { grid-template-columns: 1fr 1fr; }
+}
+.candidato-top3 {
+  display: flex; align-items: center; gap: .75rem; width: 100%; min-height: 60px; padding: .75rem 1rem;
+  font: inherit; font-size: 1.1rem; font-weight: 700; text-align: left; color: var(--texto); cursor: pointer;
+  background: var(--superficie); border: 2px solid var(--cinza-300); border-radius: var(--raio);
+  box-shadow: var(--sombra); transition: border-color .15s, background-color .15s, transform .15s;
+}
+.candidato-top3:hover { border-color: var(--campo); }
+.candidato-top3:focus-visible { outline: none; box-shadow: var(--foco); }
+.candidato-top3:active { transform: scale(.98); }
+.candidato-nome { flex: 1; overflow-wrap: anywhere; }
+.candidato-selo {
+  order: 2; flex-shrink: 0; padding: .15rem .6rem; border-radius: 999px; font-size: .9rem; font-weight: 800;
+}
+.candidato-selo:empty { display: none; }
+.candidato-top3.lugar-1 { border-color: #D4A20A; background: #FDF3C8; }
+.candidato-top3.lugar-1 .candidato-selo { background: #F5C518; color: #3D2F00; }
+.candidato-top3.lugar-2 { border-color: #8C979F; background: #EEF1F3; }
+.candidato-top3.lugar-2 .candidato-selo { background: #C9D1D6; color: #1F282E; }
+.candidato-top3.lugar-3 { border-color: #B0703A; background: #F8E6D5; }
+.candidato-top3.lugar-3 .candidato-selo { background: #E2B48A; color: #3A1F06; }
+.candidato-top3[aria-pressed="true"] .candidato-selo { animation: selo-entrada .25s ease-out both; }
+@keyframes selo-entrada {
+  from { transform: scale(.4); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+/* ---------- Verificação ---------- */
+.campo-codigo { font-family: var(--fonte-mono); font-size: 1.25rem; letter-spacing: .1em; text-transform: uppercase; }
+.resultado-verificacao { margin-bottom: 1.5rem; }
+.resultado-verificacao:empty { display: none; }
+.veredito { text-align: center; padding: 1.75rem 1.25rem; border-top-width: 6px; }
+.veredito h2 { font-size: 1.75rem; margin: 0; }
+.veredito p { margin: .6rem auto 0; max-width: 34rem; }
+.veredito .subtitulo { margin-top: .25rem; }
+.veredito-icone {
+  width: 80px; height: 80px; margin: 0 auto .85rem; border-radius: 50%; display: grid; place-items: center;
+  font-size: 2.75rem; font-weight: 800; color: #fff;
+  animation: check-entrada .5s cubic-bezier(.2, .9, .3, 1.4) both;
+}
+.veredito-ok { border-top-color: var(--campo); }
+.veredito-ok h2 { color: var(--campo-escuro); }
+.veredito-ok .veredito-icone { background: var(--campo); box-shadow: 0 0 0 8px var(--campo-suave); }
+.veredito-erro { border-top-color: var(--cartao-vermelho); }
+.veredito-erro h2 { color: #8E1526; }
+.veredito-erro .veredito-icone { background: var(--cartao-vermelho); box-shadow: 0 0 0 8px var(--vermelho-suave); }
+.veredito-nota { font-size: .95rem; color: var(--texto-suave); }
+.form-verificar-titulo { font-size: 1.15rem; margin: 0 0 .25rem; }
+
+@media (prefers-reduced-motion: reduce) {
+  .check-grande, .veredito-icone, .candidato-top3[aria-pressed="true"] .candidato-selo { animation: none; }
+  .candidato-top3, .podio-mini li, .vaga-selo { transition: none; }
+}
+
+/* ---------- Impressão: só o cartão do comprovante ---------- */
+@media print {
+  .fluxo-voto { max-width: none; }
+  .comprovante {
+    max-width: 13cm; margin: 0 auto; padding: 1cm; border: 2px solid #000 !important; border-radius: 12px;
+  }
+  .so-impressao { display: block; }
+  .comprovante-marca {
+    display: flex; align-items: center; justify-content: center; gap: .5rem; margin: 0 0 .5cm;
+    font-weight: 800; font-size: 13pt;
+  }
+  .comprovante .codigo { color: #000; background: none; border: 2px dashed #000; font-size: 20pt; }
+  .comprovante-aviso { background: none; border: 1px solid #000; text-align: center; }
+  .comprovante-link { margin-top: .4cm; font-size: 9pt; overflow-wrap: anywhere; }
+}

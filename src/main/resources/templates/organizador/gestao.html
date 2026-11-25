@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{fragments/layout :: layout(~{::title}, ~{::main}, ~{::link})}">
+<head>
+  <title>Gestão da votação</title>
+  <link rel="stylesheet" th:href="@{/css/organizador.css}">
+</head>
+<body>
+<main th:with="v=${votacao}"
+      th:attr="data-gestao-ao-vivo=${v.podeEncerrar()} ? 'sim' : null,
+               data-url-andamento=@{/votacoes/{id}/andamento.json(id=${v.id()})},
+               data-url-presenca=@{/organizador/votacoes/{id}/presenca.json(id=${v.id()})},
+               data-status=${v.status()}">
+  <p class="nao-imprimir migalha"><a th:href="@{/organizador}">← Painel</a></p>
+
+  <div class="pagina-cabecalho">
+    <div>
+      <div class="cartao-selos">
+        <span th:replace="~{fragments/componentes :: badgeVotacao(${v.status()})}"></span>
+        <span class="badge badge-info" th:if="${v.turno() > 1}" th:text="|${v.turno()}º turno|">2º turno</span>
+        <span class="ao-vivo" th:if="${v.podeEncerrar()}" data-indicador-ao-vivo hidden>
+          <span class="ao-vivo-ponto" aria-hidden="true"></span> Ao vivo
+        </span>
+      </div>
+      <h1 th:text="${v.pergunta()}">Pergunta</h1>
+      <p class="subtitulo" th:if="${!#strings.isEmpty(v.descricao())}" th:text="${v.descricao()}">Descrição</p>
+      <p class="subtitulo" th:if="${v.turnoAnteriorId() != null}">
+        <a th:href="@{/organizador/votacoes/{id}(id=${v.turnoAnteriorId()})}">Ver o 1º turno</a>
+      </p>
+    </div>
+    <div class="acoes nao-imprimir">
+      <a class="btn btn-secundario" th:if="${v.podeEncerrar() or v.apurada()}"
+         th:href="@{/votacoes/{id}/telao(id=${v.id()})}" target="_blank" rel="noopener">
+        Abrir no telão <span class="sr-only">(abre em nova aba)</span></a>
+      <a class="btn btn-secundario" th:href="@{/organizador/votacoes/{id}/duplicar(id=${v.id()})}">Duplicar</a>
+    </div>
+  </div>
+
+  <ol th:replace="~{fragments/componentes :: linhaTempo(${v.status()})}"></ol>
+
+  <!-- Ações conforme o estado -->
+  <section class="card card-destaque acoes-votacao nao-imprimir" aria-labelledby="titulo-acoes">
+    <h2 class="card-titulo" id="titulo-acoes" th:text="${v.apurada()} ? 'Resultado' : 'Próximo passo'">Próximo passo</h2>
+
+    <form th:if="${v.podeAbrir()}" method="post" th:action="@{/organizador/votacoes/{id}/abrir(id=${v.id()})}"
+          data-confirmar="Abrir a votação? Depois de aberta, a configuração não muda mais.">
+      <p class="ajuda">Confira a configuração abaixo. Ao abrir, os eleitores aptos já podem votar
+        <th:block th:if="${v.configuracao().temPeriodo()}">(ou ela abre sozinha no início do período)</th:block>.</p>
+      <button type="submit" class="btn btn-primario">Abrir votação</button>
+    </form>
+
+    <form th:if="${v.podeEncerrar()}" method="post"
+          th:action="@{/organizador/votacoes/{id}/encerrar(id=${v.id()})}"
+          data-confirmar="Encerrar a votação agora? Ninguém mais poderá votar.">
+      <p class="ajuda">A votação está recebendo votos. O resultado só aparece depois de encerrar e apurar.</p>
+      <button type="submit" class="btn btn-perigo">Encerrar votação</button>
+    </form>
+
+    <form th:if="${v.podeApurar()}" method="post" th:action="@{/organizador/votacoes/{id}/apurar(id=${v.id()})}"
+          data-confirmar="Apurar a votação? O resultado será publicado.">
+      <p class="ajuda">Votação encerrada. Apure para publicar o resultado.</p>
+      <button type="submit" class="btn btn-primario">Apurar</button>
+    </form>
+
+    <div th:if="${v.apurada()}" class="pilha">
+      <p class="situacao" th:text="${v.situacao()}">Eleito: Chapa A</p>
+      <div class="acoes">
+        <a class="btn btn-primario" th:href="@{/votacoes/{id}/resultado(id=${v.id()})}">Ver resultado</a>
+        <a class="btn btn-secundario" th:href="@{/votacoes/{id}/relatorio(id=${v.id()})}">Relatório</a>
+        <form th:if="${v.podeCriarSegundoTurno()}" method="post"
+              th:action="@{/organizador/votacoes/{id}/segundo-turno(id=${v.id()})}"
+              data-confirmar="Criar o 2º turno com os dois mais votados?">
+          <button type="submit" class="btn btn-primario">Criar 2º turno</button>
+        </form>
+        <a th:if="${v.segundoTurnoId() != null}" class="btn btn-secundario"
+           th:href="@{/organizador/votacoes/{id}(id=${v.segundoTurnoId()})}">Ir para o 2º turno →</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Convite (rascunho e aberta) -->
+  <section class="card convite nao-imprimir" th:if="${v.podeAbrir() or v.podeEncerrar()}"
+           aria-labelledby="titulo-convite">
+    <h2 class="card-titulo" id="titulo-convite">Convide os eleitores</h2>
+    <p class="ajuda">Envie o link da cédula. Cada eleitor entra com o login (o id na lista) e o código de acesso.</p>
+    <label class="sr-only" for="link-cedula">Link da cédula</label>
+    <input id="link-cedula" class="convite-link" type="text" readonly th:value="${convite.link()}">
+    <textarea class="sr-only" id="texto-convite" readonly tabindex="-1" aria-hidden="true"
+              th:text="${convite.texto()}"></textarea>
+    <div class="acoes" data-copiar-acoes hidden>
+      <button type="button" class="btn btn-primario" data-copiar="#link-cedula">Copiar link</button>
+      <button type="button" class="btn btn-secundario" data-copiar="#texto-convite">Copiar convite</button>
+    </div>
+    <p class="copiado" data-copiado aria-live="polite"></p>
+  </section>
+
+  <!-- Alterar regra (só rascunho, RNF-07) -->
+  <details class="card alterar-regra nao-imprimir" th:if="${v.podeAbrir()}" th:open="${!erros.isEmpty()}">
+    <summary>Alterar regra de apuração</summary>
+    <form class="form" method="post" th:action="@{/organizador/votacoes/{id}/regra(id=${v.id()})}"
+          th:object="${formularioRegra}" novalidate>
+      <p class="ajuda">Só é possível enquanto a votação está em rascunho. A troca fica registrada na auditoria.</p>
+      <th:block th:replace="~{organizador/fragmentos :: camposRegra}"></th:block>
+      <div class="acoes"><button type="submit" class="btn btn-primario">Salvar regra</button></div>
+    </form>
+  </details>
+
+  <div class="gestao-colunas">
+    <!-- Andamento -->
+    <section class="secao" aria-labelledby="titulo-andamento">
+      <h2 class="secao-titulo" id="titulo-andamento">Andamento</h2>
+      <div class="card">
+        <p class="participacao-grande">
+          <span class="participacao-valor" aria-live="polite" data-participacao-valor
+                th:text="${@fmt.percentual(v.participacao())}">0%</span>
+          <span data-participacao-texto th:text="|${v.votantes()} de ${v.aptos()} aptos votaram|">0 de 0</span>
+        </p>
+        <div class="barra">
+          <div class="barra-trilho"><div class="barra-preenchimento" data-participacao-barra
+               th:style="|width: ${#numbers.formatDecimal(v.participacao() * 100, 1, 'POINT', 1, 'POINT')}%|"></div></div>
+        </div>
+        <p class="ajuda" th:unless="${v.apurada()}">Por sigilo, os votos por opção só aparecem depois da apuração.</p>
+        <p class="ajuda" th:if="${v.podeEncerrar()}" data-aviso-ao-vivo hidden>Atualiza sozinho a cada 10 segundos.</p>
+      </div>
+    </section>
+
+    <!-- Configuração -->
+    <section class="secao" aria-labelledby="titulo-configuracao">
+      <h2 class="secao-titulo" id="titulo-configuracao">Configuração</h2>
+      <dl class="card lista-config">
+        <dt>Regra</dt><dd th:text="${v.configuracao().regra()}">Maioria absoluta…</dd>
+        <dt>Sigilo</dt><dd th:text="${v.configuracao().sigilo()}">Secreto</dd>
+        <dt>Período</dt>
+        <dd th:if="${v.configuracao().temPeriodo()}"
+            th:text="|${@fmt.dataHora(v.configuracao().inicio())} até ${@fmt.dataHora(v.configuracao().fim())}|">período</dd>
+        <dd th:unless="${v.configuracao().temPeriodo()}">Sem período: abre e encerra manualmente</dd>
+        <dt>Aptos</dt><dd th:text="|${v.aptos()} ${v.aptos() == 1 ? 'eleitor' : 'eleitores'}|">12 eleitores</dd>
+      </dl>
+    </section>
+  </div>
+
+  <!-- Lista de presença -->
+  <section class="secao presenca" aria-labelledby="titulo-presenca" data-presenca
+           th:with="pendenteRotulo=${v.podeAbrir() or v.podeEncerrar()} ? 'Pendente' : 'Não votou'"
+           th:attr="data-rotulo-pendente=${pendenteRotulo}">
+    <h2 class="secao-titulo" id="titulo-presenca">Lista de presença</h2>
+    <p class="ajuda" th:if="${v.mostraEscolhas()}">Votação identificada: a escolha de cada eleitor aparece após o
+      encerramento.</p>
+
+    <div class="presenca-filtros nao-imprimir" data-presenca-filtros hidden>
+      <div class="campo presenca-busca">
+        <label for="busca-presenca">Buscar eleitor</label>
+        <input id="busca-presenca" type="search" placeholder="Nome ou id" autocomplete="off" data-presenca-busca>
+      </div>
+      <div class="abas abas-compactas" role="group" aria-label="Filtrar por situação">
+        <button type="button" class="aba" data-filtro="todos" aria-pressed="true">Todos
+          <span class="aba-contador" data-contador="todos" th:text="${v.aptos()}">0</span></button>
+        <button type="button" class="aba" data-filtro="votou" aria-pressed="false">Votaram
+          <span class="aba-contador" data-contador="votou" th:text="${v.votantes()}">0</span></button>
+        <button type="button" class="aba" data-filtro="pendente" aria-pressed="false">
+          <span th:text="${pendenteRotulo == 'Pendente' ? 'Pendentes' : 'Não votaram'}">Pendentes</span>
+          <span class="aba-contador" data-contador="pendente" th:text="${v.aptos() - v.votantes()}">0</span></button>
+      </div>
+      <p class="ajuda" aria-live="polite" data-presenca-resumo></p>
+    </div>
+
+    <div class="tabela-rolagem">
+      <table class="tabela tabela-compacta tabela-cartoes tabela-presenca">
+        <caption class="sr-only">Quem já votou</caption>
+        <thead>
+          <tr><th scope="col">Eleitor</th><th scope="col">Nome</th><th scope="col">Situação</th>
+            <th scope="col" th:if="${v.mostraEscolhas()}">Escolha</th></tr>
+        </thead>
+        <tbody>
+          <tr th:each="e : ${v.presenca()}" data-eleitor
+              th:attr="data-id=${e.eleitorId()}, data-nome=${e.nome()}, data-votou=${e.votou()}">
+            <td data-rotulo="Eleitor" class="celula-id" th:text="${e.eleitorId()}">e01</td>
+            <td data-rotulo="Nome" class="celula-nome" th:text="${e.nome()}">Nome</td>
+            <td data-rotulo="Situação" class="celula-situacao"><span class="selo-presenca" data-selo
+                      th:classappend="${e.votou()} ? 'votou' : 'pendente'"
+                      th:text="${e.votou()} ? 'Votou' : ${pendenteRotulo}">Pendente</span></td>
+            <td data-rotulo="Escolha" class="celula-escolha" th:if="${v.mostraEscolhas()}"
+                th:text="${e.escolha() != null ? e.escolha() : '—'}">—</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="vazio presenca-vazia" data-presenca-vazia hidden>Ninguém encontrado com esse filtro.</p>
+  </section>
+
+  <!-- Auditoria -->
+  <section class="secao" aria-labelledby="titulo-auditoria">
+    <h2 class="secao-titulo" id="titulo-auditoria">Auditoria</h2>
+    <div class="tabela-rolagem">
+      <table class="tabela tabela-compacta tabela-cartoes">
+        <caption class="sr-only">Trilha de auditoria da votação</caption>
+        <thead>
+          <tr><th scope="col">Data e hora</th><th scope="col">Evento</th><th scope="col">Autor</th>
+            <th scope="col">Detalhe</th></tr>
+        </thead>
+        <tbody>
+          <tr th:each="ev : ${v.auditoria()}">
+            <td data-rotulo="Data e hora" th:text="${@fmt.dataHora(ev.quando())}">24/11/2026 18:30</td>
+            <td data-rotulo="Evento" class="celula-destaque" th:text="${ev.evento()}">Votação criada</td>
+            <td data-rotulo="Autor" th:text="${ev.autor()}">organizador</td>
+            <td data-rotulo="Detalhe" th:text="${#strings.isEmpty(ev.detalhe()) ? '—' : ev.detalhe()}">—</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+  <script th:src="@{/js/organizador.js}" defer></script>
+</main>
+</body>
+</html>

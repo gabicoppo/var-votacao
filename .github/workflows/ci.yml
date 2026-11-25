@@ -58,12 +58,21 @@ jobs:
         run: |
           CSV=target/site/jacoco/jacoco.csv
           if [ -f "$CSV" ]; then
-            awk -F, 'NR>1 { lm+=$8; lc+=$9; bm+=$6; bc+=$7 }
+            # O nome do projeto (1a coluna) tem virgula: as colunas sao contadas a partir do fim.
+            awk -F, 'NR>1 {
+                lm = $(NF-5); lc = $(NF-4); bm = $(NF-7); bc = $(NF-6)
+                web = ($0 ~ /br\.unicamp\.var\.web/ || $(NF-10) == "VarApplication")
+                if (web) { wlm+=lm; wlc+=lc; wbm+=bm; wbc+=bc } else { dlm+=lm; dlc+=lc; dbm+=bm; dbc+=bc }
+              }
+              function linha(nome, lm, lc, bm, bc) {
+                printf "| %s | %.1f%% (%d de %d) | %.1f%% (%d de %d) |\n", nome,
+                  (lm+lc ? 100*lc/(lm+lc) : 0), lc, lm+lc, (bm+bc ? 100*bc/(bm+bc) : 0), bc, bm+bc
+              }
               END {
-                lt = lm + lc; bt = bm + bc
-                printf "### Cobertura de testes (JaCoCo)\n\n"
-                printf "- Linhas: %.1f%% (%d de %d)\n", (lt ? 100*lc/lt : 0), lc, lt
-                printf "- Branches: %.1f%% (%d de %d)\n", (bt ? 100*bc/bt : 0), bc, bt
+                printf "### Cobertura de testes (JaCoCo)\n\n| Parte | Linhas | Branches |\n|---|---|---|\n"
+                linha("Dominio", dlm, dlc, dbm, dbc)
+                linha("Web", wlm, wlc, wbm, wbc)
+                linha("Total", dlm+wlm, dlc+wlc, dbm+wbm, dbc+wbc)
               }' "$CSV" >> "$GITHUB_STEP_SUMMARY"
           else
             echo "Relatorio de cobertura nao encontrado." >> "$GITHUB_STEP_SUMMARY"
@@ -75,3 +84,38 @@ jobs:
           name: jacoco-report
           path: target/site/jacoco
           if-no-files-found: warn
+
+  # Testes de ponta a ponta no navegador (Playwright + Chromium). Nao e check obrigatorio por enquanto.
+  e2e:
+    name: e2e
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+          cache: maven
+      - name: Instalar o Chromium do Playwright
+        run: >
+          mvn -B -ntp -Pe2e test-compile exec:java -Dexec.classpathScope=test
+          -Dexec.mainClass=com.microsoft.playwright.CLI -Dexec.args="install --with-deps chromium"
+      - name: Testes E2E
+        run: mvn -B -ntp verify -Pe2e
+      - name: Publicar screenshots dos cenarios
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-screenshots
+          path: target/e2e-screenshots
+          if-no-files-found: warn
+
+  # O Dockerfile do deploy (Render) precisa continuar construindo: build em todo PR, sem publicar.
+  docker:
+    name: docker
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build da imagem
+        run: docker build -t var-votacao:ci .

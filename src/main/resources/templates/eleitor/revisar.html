@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{fragments/layout :: layout(~{::title}, ~{::main}, ~{::link})}">
+<head>
+  <title>Confira seu voto</title>
+  <link rel="stylesheet" th:href="@{/css/eleitor.css}">
+</head>
+<body>
+<main class="fluxo-voto">
+  <ol class="passos" aria-label="Etapas do voto">
+    <li class="feito">Escolher</li>
+    <li class="ativo" aria-current="step">Revisar</li>
+    <li>Comprovante</li>
+  </ol>
+
+  <h1>Confira seu voto</h1>
+  <p class="subtitulo" th:text="${cedula.pergunta()}">Pergunta</p>
+
+  <div class="card card-destaque escolha-revisao">
+    <span class="escolha-rotulo">Você está votando em</span>
+    <strong class="escolha-opcao" th:text="${opcao}">Opção</strong>
+  </div>
+  <p class="ajuda">Depois de confirmar, o voto não pode ser alterado.
+    <span th:text="${cedula.avisoSigilo()}">Seu voto é secreto.</span></p>
+
+  <form class="form" th:action="@{/eleitor/votacoes/{id}/voto(id=${cedula.id()})}" method="post">
+    <input type="hidden" name="opcao" th:value="${opcao}">
+    <button type="submit" class="btn btn-primario btn-grande" data-registrando>Confirmar voto</button>
+  </form>
+  <form class="form voltar" th:action="@{/eleitor/votacoes/{id}(id=${cedula.id()})}" method="get">
+    <input type="hidden" name="opcao" th:value="${opcao}">
+    <button type="submit" class="btn btn-secundario btn-grande">Voltar e mudar</button>
+  </form>
+  <script th:src="@{/js/eleitor.js}" defer></script>
+</main>
+</body>
+</html>

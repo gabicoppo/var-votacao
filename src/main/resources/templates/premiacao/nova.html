@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{fragments/layout :: layout(~{::title}, ~{::main}, ~{::link})}">
+<head>
+  <title>Nova premiação</title>
+  <link rel="stylesheet" th:href="@{/css/premiacao.css}">
+</head>
+<body>
+<main>
+  <div class="pagina-cabecalho">
+    <div>
+      <h1>Nova premiação Top 3</h1>
+      <p class="subtitulo">Cada eleitor escolhe 1º, 2º e 3º lugar. Os pontos (5, 3 e 1) são multiplicados pelo peso
+        do grupo dele.</p>
+    </div>
+    <div class="acoes"><a class="btn btn-secundario" th:href="@{/organizador}">Voltar ao painel</a></div>
+  </div>
+
+  <ol class="passos" aria-label="Seções do formulário">
+    <li><a href="#secao-dados">Dados</a></li>
+    <li><a href="#secao-candidatos">Candidatos</a></li>
+    <li><a href="#secao-grupos">Grupos e pesos</a></li>
+    <li><a href="#secao-eleitores">Eleitores</a></li>
+  </ol>
+
+  <form class="form form-premiacao" method="post" th:action="@{/organizador/premiacoes/nova}"
+        th:object="${formulario}" novalidate>
+
+    <div class="card exemplo">
+      <p><strong>Quer testar rápido?</strong> Preencha com um cenário fictício: 5 jogadores, Jornalistas com peso 2
+        (e01 a e03) e Torcedores com peso 1 (e04 a e12).</p>
+      <button type="submit" class="btn btn-secundario" name="preencherExemplo" value="sim" formnovalidate>
+        Preencher exemplo
+      </button>
+    </div>
+
+    <fieldset class="card passo" id="secao-dados">
+      <legend class="passo-titulo"><span class="passo-numero">1</span> Dados da premiação</legend>
+      <div class="campo" th:classappend="${erros.containsKey('titulo')} ? 'campo-com-erro'">
+        <label for="titulo">Título</label>
+        <input id="titulo" type="text" th:field="*{titulo}" maxlength="120" required
+               placeholder="Craque do Campeonato 2026"
+               th:attr="aria-describedby=${erros.containsKey('titulo')} ? 'titulo-erro' : null">
+        <p class="erro-campo" id="titulo-erro" th:if="${erros.containsKey('titulo')}"
+           th:text="${erros['titulo']}">Erro</p>
+      </div>
+      <div class="campo">
+        <label for="descricao">Critério de avaliação <span class="opcional">(opcional)</span></label>
+        <textarea id="descricao" th:field="*{descricao}" rows="2" aria-describedby="descricao-ajuda"
+                  placeholder="Ex.: entrega ao time durante todo o campeonato"></textarea>
+        <p class="ajuda" id="descricao-ajuda">Aparece para o eleitor na cédula e junto ao ranking.</p>
+      </div>
+    </fieldset>
+
+    <fieldset class="card passo" id="secao-candidatos">
+      <legend class="passo-titulo"><span class="passo-numero">2</span> Candidatos</legend>
+      <div class="campo" th:classappend="${erros.containsKey('candidatos')} ? 'campo-com-erro'">
+        <label for="candidatos">Candidatos (um por linha)</label>
+        <textarea id="candidatos" th:field="*{candidatos}" rows="5" required
+                  placeholder="Rafa Lima&#10;Davi Prado&#10;Caio Torres" aria-describedby="candidatos-ajuda"></textarea>
+        <p class="ajuda" id="candidatos-ajuda">Pelo menos três, sem repetir. Linhas em branco são ignoradas.</p>
+        <p class="erro-campo" th:if="${erros.containsKey('candidatos')}" th:text="${erros['candidatos']}">Erro</p>
+      </div>
+    </fieldset>
+
+    <fieldset class="card passo" id="secao-grupos">
+      <legend class="passo-titulo"><span class="passo-numero">3</span> Grupos de votantes e pesos</legend>
+      <div class="campo" th:classappend="${erros.containsKey('categorias')} ? 'campo-com-erro'">
+        <label for="categorias">Grupos (Nome;peso, um por linha)</label>
+        <textarea id="categorias" class="texto-mono" th:field="*{categorias}" rows="3" required
+                  placeholder="Jornalistas;2&#10;Torcedores;1" aria-describedby="categorias-ajuda"></textarea>
+        <p class="ajuda" id="categorias-ajuda">O peso multiplica os pontos de quem é do grupo. Use vírgula para
+          decimais (1,5). Peso zero não é aceito: o voto de todo grupo conta.</p>
+        <p class="erro-campo" th:if="${erros.containsKey('categorias')}" th:text="${erros['categorias']}">Erro</p>
+      </div>
+    </fieldset>
+
+    <fieldset class="card passo" id="secao-eleitores">
+      <legend class="passo-titulo"><span class="passo-numero">4</span> Eleitores aptos</legend>
+      <div class="campo" th:classappend="${erros.containsKey('eleitores')} ? 'campo-com-erro'">
+        <label for="eleitores">Eleitores (id;nome;grupo, um por linha)</label>
+        <textarea id="eleitores" class="texto-mono" th:field="*{eleitores}" rows="8" required
+                  placeholder="e01;Ana Ribeiro;Jornalistas&#10;e04;Diego Fonseca;Torcedores"
+                  aria-describedby="eleitores-ajuda"></textarea>
+        <p class="ajuda" id="eleitores-ajuda">O id é o login do eleitor. Quem ainda não tem conta recebe um código de
+          acesso, mostrado uma única vez depois de criar a premiação.</p>
+        <p class="erro-campo" th:if="${erros.containsKey('eleitores')}" th:text="${erros['eleitores']}">Erro</p>
+      </div>
+    </fieldset>
+
+    <div class="acoes">
+      <button type="submit" class="btn btn-primario">Criar premiação</button>
+      <a class="btn btn-secundario" th:href="@{/organizador}">Cancelar</a>
+    </div>
+  </form>
+</main>
+</body>
+</html>

@@ -4,42 +4,96 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
 
-  <!-- TEMPLATE: ajuste groupId/artifactId ao projeto existente e faca MERGE
-       das secoes abaixo no pom.xml do repositorio (nao sobrescreva). -->
+  <!-- Spring Boot 3.5 (linha 3.x): gerencia versoes de Spring, Thymeleaf, JUnit e plugins basicos -->
+  <parent>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-parent</artifactId>
+    <version>3.5.16</version>
+    <relativePath/>
+  </parent>
+
   <groupId>br.unicamp.var</groupId>
   <artifactId>var</artifactId>
-  <version>1.2.0</version>
+  <version>1.3.0</version>
   <packaging>jar</packaging>
   <name>VAR - Votacao, Apuracao e Resultados</name>
 
   <properties>
+    <java.version>21</java.version>
     <maven.compiler.release>21</maven.compiler.release>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <junit.version>5.11.4</junit.version>
+    <playwright.version>1.65.1</playwright.version>
   </properties>
 
   <dependencies>
+    <!-- Aplicacao web (Fase 2): adaptador sobre o dominio, que continua em Java puro -->
     <dependency>
-      <groupId>org.junit.jupiter</groupId>
-      <artifactId>junit-jupiter</artifactId>
-      <version>${junit.version}</version>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-web</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-thymeleaf</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-security</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-validation</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.thymeleaf.extras</groupId>
+      <artifactId>thymeleaf-extras-springsecurity6</artifactId>
+    </dependency>
+    <!-- Health check do deploy (/actuator/health); só o endpoint health fica exposto -->
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-actuator</artifactId>
+    </dependency>
+
+    <!-- Testes: o starter traz JUnit Jupiter (com params), AssertJ, Mockito e MockMvc -->
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-test</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework.security</groupId>
+      <artifactId>spring-security-test</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <!-- Testes de ponta a ponta no navegador (perfil e2e): ./mvnw verify -Pe2e -->
+    <dependency>
+      <groupId>com.microsoft.playwright</groupId>
+      <artifactId>playwright</artifactId>
+      <version>${playwright.version}</version>
       <scope>test</scope>
     </dependency>
   </dependencies>
 
   <build>
     <plugins>
-      <!-- Plugin do Compilador para suportar Java 21 -->
+      <!-- Jar executavel: `./mvnw spring-boot:run` ou `java -jar target/var-*.jar` -->
       <plugin>
-          <groupId>org.apache.maven.plugins</groupId>
-          <artifactId>maven-compiler-plugin</artifactId>
-          <version>3.13.0</version>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-maven-plugin</artifactId>
+      </plugin>
+
+      <!-- Plugin do Compilador para suportar Java 21 (versao gerenciada pelo parent) -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-compiler-plugin</artifactId>
       </plugin>
       <!-- Testes: falha em qualquer teste => build (e pipeline) falham -->
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-surefire-plugin</artifactId>
-        <version>3.5.2</version>
+        <configuration>
+          <!-- E2E (navegador real) so no perfil e2e, pelo failsafe: o verify normal continua rapido -->
+          <excludes><exclude>**/*E2E.java</exclude></excludes>
+        </configuration>
       </plugin>
 
       <!-- Cobertura: relatorio em target/site/jacoco (HTML, XML e CSV) apos `mvn verify` -->
@@ -111,6 +165,8 @@
           <effort>Default</effort>
           <threshold>Medium</threshold>
           <failOnError>true</failOnError>
+          <!-- So EI_EXPOSE_REP/EI_EXPOSE_REP2 em br.unicamp.var.web.* (injecao de beans Spring) -->
+          <excludeFilterFile>config/spotbugs/exclude.xml</excludeFilterFile>
         </configuration>
       </plugin>
 
@@ -124,12 +180,18 @@
           <dependency>
             <groupId>org.pitest</groupId>
             <artifactId>pitest-junit5-plugin</artifactId>
-            <version>1.2.1</version>
+            <!-- 1.2.3: compativel com o JUnit 5.12 que vem do Spring Boot 3.5 (a 1.2.1 nao descobre os testes) -->
+            <version>1.2.3</version>
           </dependency>
         </dependencies>
         <configuration>
           <targetClasses><param>br.unicamp.var.processo.*</param></targetClasses>
           <targetTests><param>br.unicamp.var.*</param></targetTests>
+          <!-- Testes web sobem o contexto Spring: lentos demais para rodar a cada mutante -->
+          <excludedTestClasses>
+            <param>br.unicamp.var.web.*</param>
+            <param>br.unicamp.var.e2e.*</param>
+          </excludedTestClasses>
           <timestampedReports>false</timestampedReports>
           <outputFormats><param>HTML</param><param>XML</param></outputFormats>
         </configuration>
@@ -137,4 +199,30 @@
 
     </plugins>
   </build>
+
+  <profiles>
+    <!-- E2E com Playwright: ./mvnw verify -Pe2e (veja o javadoc de br.unicamp.var.e2e) -->
+    <profile>
+      <id>e2e</id>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-failsafe-plugin</artifactId>
+            <configuration>
+              <includes><include>**/e2e/**/*E2E.java</include></includes>
+            </configuration>
+            <executions>
+              <execution>
+                <goals>
+                  <goal>integration-test</goal>
+                  <goal>verify</goal>
+                </goals>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+  </profiles>
 </project>

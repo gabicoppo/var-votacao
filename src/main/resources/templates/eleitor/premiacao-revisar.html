@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{fragments/layout :: layout(~{::title}, ~{::main}, ~{::link})}">
+<head>
+  <title>Confira sua cédula</title>
+  <link rel="stylesheet" th:href="@{/css/eleitor.css}">
+</head>
+<body>
+<main class="fluxo-voto">
+  <ol class="passos" aria-label="Etapas da cédula">
+    <li class="feito">Escolher</li>
+    <li class="ativo" aria-current="step">Revisar</li>
+    <li>Pronto</li>
+  </ol>
+
+  <h1>Confira sua cédula</h1>
+  <p class="subtitulo" th:text="${cedula.titulo()}">Craque do Campeonato</p>
+
+  <ol class="card card-destaque podio">
+    <li><span class="podio-lugar"><span aria-hidden="true">🥇</span> 1º</span> <strong th:text="${escolhas.primeiro()}">A</strong>
+      <small th:text="|5 pts × ${cedula.peso()}|">5 pts × 1</small></li>
+    <li><span class="podio-lugar"><span aria-hidden="true">🥈</span> 2º</span> <strong th:text="${escolhas.segundo()}">B</strong>
+      <small th:text="|3 pts × ${cedula.peso()}|">3 pts × 1</small></li>
+    <li><span class="podio-lugar"><span aria-hidden="true">🥉</span> 3º</span> <strong th:text="${escolhas.terceiro()}">C</strong>
+      <small th:text="|1 pt × ${cedula.peso()}|">1 pt × 1</small></li>
+  </ol>
+  <p class="ajuda">Depois de confirmar, a cédula não pode ser alterada.</p>
+
+  <form class="form" th:action="@{/eleitor/premiacoes/{id}/voto(id=${cedula.id()})}" method="post">
+    <input type="hidden" name="primeiro" th:value="${escolhas.primeiro()}">
+    <input type="hidden" name="segundo" th:value="${escolhas.segundo()}">
+    <input type="hidden" name="terceiro" th:value="${escolhas.terceiro()}">
+    <button type="submit" class="btn btn-primario btn-grande" data-registrando>Confirmar cédula</button>
+  </form>
+  <a class="btn btn-secundario btn-grande voltar" th:href="@{/eleitor/premiacoes/{id}(id=${cedula.id()})}">
+    Voltar e mudar</a>
+  <script th:src="@{/js/eleitor.js}" defer></script>
+</main>
+</body>
+</html>

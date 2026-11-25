@@ -1,0 +1,15 @@
+# Blueprint do Render: deploy automático da branch main a partir do Dockerfile (veja docs/deploy.md).
+services:
+  - type: web
+    name: var-votacao
+    runtime: docker
+    plan: free
+    dockerfilePath: ./Dockerfile
+    branch: main
+    autoDeploy: true
+    healthCheckPath: /actuator/health
+    envVars:
+      - key: SPRING_PROFILES_ACTIVE
+        value: prod
+      - key: VAR_SENHA_ORGANIZADOR
+        sync: false

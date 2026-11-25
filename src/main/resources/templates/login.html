@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{fragments/layout :: layout(~{::title}, ~{::main}, ~{})}">
+<head>
+  <title>Entrar</title>
+</head>
+<body>
+<main class="entrada">
+  <div class="card card-destaque">
+    <img class="entrada-logo" th:src="@{/img/logo-var.svg}" alt="" width="72" height="81">
+    <h1>Entrar no VAR</h1>
+    <p class="subtitulo">Votação, apuração e resultados com transparência.</p>
+
+    <div th:if="${param.error}" class="alerta alerta-erro" role="alert">
+      Usuário ou senha incorretos. Confira e tente de novo.
+    </div>
+    <div th:if="${param.saiu}" class="alerta alerta-info" role="status">Você saiu da sua conta.</div>
+
+    <form class="form" th:action="@{/login}" method="post">
+      <div class="campo" th:classappend="${param.error} ? 'campo-com-erro'">
+        <label for="username">Usuário</label>
+        <input id="username" name="username" th:value="${usuarioCriado}" type="text" autocomplete="username" autocapitalize="none"
+               spellcheck="false" required autofocus>
+        <p class="ajuda">Eleitor: use o identificador da lista de aptos (ex.: e01).</p>
+      </div>
+      <div class="campo" th:classappend="${param.error} ? 'campo-com-erro'">
+        <label for="password">Senha ou código de acesso</label>
+        <input id="password" name="password" type="password" autocomplete="current-password" required>
+      </div>
+      <button type="submit" class="btn btn-primario btn-grande">Entrar</button>
+    </form>
+    <p class="entrada-alternativa">Ainda não tem conta? <a th:href="@{/cadastro}">Criar conta</a></p>
+  </div>
+
+  <aside class="card demo-contas" th:if="${demoAtivo}" aria-labelledby="demo-titulo">
+    <h2 id="demo-titulo" class="card-titulo">Contas de demonstração</h2>
+    <table class="tabela">
+      <caption class="sr-only">Usuários e senhas de demonstração</caption>
+      <thead><tr><th scope="col">Papel</th><th scope="col">Usuário</th><th scope="col">Senha</th></tr></thead>
+      <tbody>
+        <!--/* No perfil prod a senha do organizador é secreta: a linha não aparece. */-->
+        <tr th:if="${senhaOrganizador != null}"><td>Organizador</td><td><code>organizador</code></td>
+          <td><code th:text="${senhaOrganizador}">var2026</code></td></tr>
+        <tr><td>Eleitor</td><td><code>e01</code> a <code>e12</code></td><td><code>1234</code></td></tr>
+      </tbody>
+    </table>
+    <p class="ajuda">Na eleição presidencial, e01 a e04 ainda não votaram.</p>
+  </aside>
+</main>
+</body>
+</html>

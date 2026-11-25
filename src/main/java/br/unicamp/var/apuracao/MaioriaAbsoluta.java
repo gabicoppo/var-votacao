@@ -9,7 +9,7 @@ import br.unicamp.var.apuracao2turno.ResultadoApuracao;
  *
  * <p>A decisão é delegada a {@link ApuracaoMajoritaria}. Se o segundo turno
  * estiver desabilitado, a votação sem maioria absoluta fica sem vencedor.
- * Empates continuam fora do escopo de {@link ApuracaoMajoritaria}.</p>
+ * Empates são desfeitos pela ordem de cadastro das opções (ver {@link ApuracaoMajoritaria}).</p>
  */
 public final class MaioriaAbsoluta implements RegraApuracao {
 
@@ -44,5 +44,16 @@ public final class MaioriaAbsoluta implements RegraApuracao {
             return new ResultadoApuracao.SemVencedor();
         }
         return resultado;
+    }
+
+    /**
+     * Descrição da regra em pt-BR, dizendo se há segundo turno.
+     *
+     * @return texto legível da maioria absoluta
+     */
+    @Override
+    public String descricao() {
+        String complemento = segundoTurnoHabilitado ? "com 2º turno entre os dois mais votados" : "sem 2º turno";
+        return "Maioria absoluta: mais da metade dos votos válidos, " + complemento + ".";
     }
 }

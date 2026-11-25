@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{fragments/layout :: layout(~{::title}, ~{::main}, ~{::link})}">
+<head>
+  <title>Minhas votações</title>
+  <link rel="stylesheet" th:href="@{/css/eleitor.css}">
+</head>
+<body>
+<main>
+  <div class="pagina-cabecalho">
+    <div>
+      <h1 th:text="|Olá, ${primeiroNome}!|">Olá, Ana!</h1>
+      <p class="subtitulo" th:switch="${painel.totalParaVotar()}"
+         th:unless="${!painel.vazio() and painel.votarAgora().isEmpty()}">
+        <span th:case="0">Nenhuma votação esperando seu voto agora.</span>
+        <span th:case="1">Você tem <strong>1 votação</strong> esperando seu voto.</span>
+        <span th:case="*">Você tem <strong th:text="|${painel.totalParaVotar()} votações|">2 votações</strong>
+          esperando seu voto.</span>
+      </p>
+    </div>
+  </div>
+
+  <div th:if="${painel.vazio()}" class="vazio">
+    <span class="vazio-icone" aria-hidden="true">🗳️</span>
+    <strong>Nenhuma votação para você agora</strong>
+    Quando o organizador abrir uma votação em que você é apto, ela aparece aqui.
+  </div>
+
+  <div th:if="${!painel.vazio() and painel.votarAgora().isEmpty()}" class="em-dia">
+    <svg class="em-dia-ilustracao" viewBox="0 0 120 96" width="120" height="96" aria-hidden="true" focusable="false">
+      <rect x="18" y="44" width="84" height="44" rx="8" fill="#1F7A4D"/>
+      <rect x="18" y="44" width="84" height="12" rx="6" fill="#17603C"/>
+      <rect x="44" y="47" width="32" height="5" rx="2.5" fill="#0B3D2E"/>
+      <rect x="40" y="10" width="40" height="42" rx="4" fill="#fff" stroke="#C9D1CD" stroke-width="2"
+            transform="rotate(-6 60 31)"/>
+      <path d="M49 31l7 7 14-15" fill="none" stroke="#1F7A4D" stroke-width="6" stroke-linecap="round"
+            stroke-linejoin="round"/>
+      <circle cx="14" cy="22" r="4" fill="#F5C518"/>
+      <circle cx="106" cy="16" r="3" fill="#F5C518"/>
+      <circle cx="100" cy="34" r="2.5" fill="#1F7A4D"/>
+      <circle cx="24" cy="8" r="2.5" fill="#1F7A4D"/>
+    </svg>
+    <div>
+      <strong class="em-dia-titulo">Você está em dia!</strong>
+      <p>Nenhuma votação esperando seu voto. Quando abrir uma nova, ela aparece aqui.</p>
+    </div>
+  </div>
+
+  <section class="secao" th:unless="${painel.votarAgora().isEmpty()}" aria-labelledby="s-votar">
+    <h2 class="secao-titulo" id="s-votar">Para votar agora</h2>
+    <div class="grade">
+      <th:block th:each="c : ${painel.votarAgora()}">
+        <a th:replace="~{eleitor/painel :: cartao(${c}, true)}"></a>
+      </th:block>
+    </div>
+  </section>
+
+  <section class="secao" th:unless="${painel.jaVotei().isEmpty()}" aria-labelledby="s-votei">
+    <h2 class="secao-titulo" id="s-votei">Já votei</h2>
+    <div class="grade">
+      <th:block th:each="c : ${painel.jaVotei()}"><a th:replace="~{eleitor/painel :: cartao(${c}, false)}"></a></th:block>
+    </div>
+  </section>
+
+  <section class="secao" th:unless="${painel.emBreve().isEmpty()}" aria-labelledby="s-breve">
+    <h2 class="secao-titulo" id="s-breve">Em breve</h2>
+    <div class="grade">
+      <th:block th:each="c : ${painel.emBreve()}"><a th:replace="~{eleitor/painel :: cartao(${c}, false)}"></a></th:block>
+    </div>
+  </section>
+
+  <section class="secao" th:unless="${painel.aguardandoApuracao().isEmpty()}" aria-labelledby="s-aguardando">
+    <h2 class="secao-titulo" id="s-aguardando">Aguardando apuração</h2>
+    <div class="grade">
+      <th:block th:each="c : ${painel.aguardandoApuracao()}">
+        <a th:replace="~{eleitor/painel :: cartao(${c}, false)}"></a>
+      </th:block>
+    </div>
+  </section>
+
+  <section class="secao" th:unless="${painel.resultados().isEmpty()}" aria-labelledby="s-resultados">
+    <h2 class="secao-titulo" id="s-resultados">Resultados</h2>
+    <div class="grade">
+      <th:block th:each="c : ${painel.resultados()}"><a th:replace="~{eleitor/painel :: cartao(${c}, false)}"></a></th:block>
+    </div>
+  </section>
+
+  <!--/* Card do painel: link quando há ação, bloco simples quando não há. */-->
+  <th:block th:if="${false}">
+    <th:block th:fragment="cartao(c, destaque)">
+      <a th:if="${c.link() != null}" class="card card-link cartao-eleitor" th:href="@{${c.link()}}"
+         th:classappend="${destaque} ? 'card-destaque'">
+        <div th:replace="~{eleitor/painel :: corpoCartao(${c}, ${destaque})}"></div>
+      </a>
+      <div th:unless="${c.link() != null}" class="card cartao-eleitor">
+        <div th:replace="~{eleitor/painel :: corpoCartao(${c}, ${destaque})}"></div>
+      </div>
+    </th:block>
+    <th:block th:fragment="corpoCartao(c, destaque)">
+      <div class="cartao-etiquetas">
+        <span class="badge" th:classappend="${'badge-' + c.status()}" th:text="${c.textoStatus()}">Aberta</span>
+        <span th:if="${c.top3()}" class="badge badge-info">Top 3</span>
+        <span th:if="${c.encerraHoje()}" class="badge badge-urgente">⏰ Encerra hoje</span>
+        <span th:if="${c.jaVotou()}" class="badge badge-info">✓ Você votou</span>
+      </div>
+      <h3 class="card-titulo" th:text="${c.pergunta()}">Pergunta</h3>
+      <p class="card-meta"><span th:text="${c.prazo()}">encerra hoje às 18:00</span>
+        <span class="cartao-modalidade" th:text="${c.modalidade()}">Voto secreto</span></p>
+      <p th:if="${!#strings.isEmpty(c.descricaoCurta())}" class="cartao-descricao" th:text="${c.descricaoCurta()}">
+        Descrição</p>
+      <div class="card-rodape" th:if="${c.link() != null}">
+        <span th:if="${c.podeVotar()}" class="btn btn-primario">Votar</span>
+        <span th:unless="${c.podeVotar()}" class="btn-link"
+              th:text="${c.top3() and c.status() == 'apurada'} ? 'Ver ranking →'
+                      : (${c.status() == 'apurada'} ? 'Ver resultado →'
+                      : (${c.jaVotou()} ? 'Verificar comprovante →' : 'Ver detalhes →'))">Abrir →</span>
+      </div>
+    </th:block>
+  </th:block>
+</main>
+</body>
+</html>

@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<!--/*
+  Fragmentos da área do organizador.
+  camposRegra: campos da regra de apuração (história #21). Use dentro de um <form th:object="...">;
+  espera no modelo o mapa "erros" (campo -> mensagem) e "descricaoRegra".
+*/-->
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+<th:block th:fragment="camposRegra">
+  <div class="campo" th:classappend="${erros.containsKey('tipoRegra')} ? 'campo-com-erro'">
+    <div class="opcoes-radio opcoes-escolha" role="radiogroup" aria-label="Regra de apuração">
+      <label class="opcao-radio">
+        <input type="radio" th:field="*{tipoRegra}" value="SIMPLES" data-regra>
+        <span><span class="escolha-texto"><strong>Maioria simples</strong>
+          <small>Vence a opção mais votada. Bom para enquetes e decisões rápidas.</small></span></span>
+      </label>
+      <label class="opcao-radio">
+        <input type="radio" th:field="*{tipoRegra}" value="ABSOLUTA" data-regra>
+        <span><span class="escolha-texto"><strong>Maioria absoluta</strong>
+          <small>Mais da metade dos votos válidos. O padrão das eleições de clube.</small></span></span>
+      </label>
+      <label class="opcao-radio">
+        <input type="radio" th:field="*{tipoRegra}" value="QUALIFICADA" data-regra>
+        <span><span class="escolha-texto"><strong>Maioria qualificada</strong>
+          <small>Exige quórum e uma fração mínima, como 2/3. Para assembleias e estatuto.</small></span></span>
+      </label>
+    </div>
+    <p class="erro-campo" th:if="${erros.containsKey('tipoRegra')}" th:text="${erros['tipoRegra']}">Erro</p>
+  </div>
+
+  <div class="campo-dependente" data-mostrar-com="ABSOLUTA">
+    <label class="campo-check">
+      <input type="checkbox" th:field="*{segundoTurno}">
+      Fazer 2º turno entre os dois mais votados se ninguém tiver maioria absoluta
+    </label>
+  </div>
+
+  <div class="campo-linha campo-dependente" data-mostrar-com="QUALIFICADA">
+    <div class="campo" th:classappend="${erros.containsKey('quorum')} ? 'campo-com-erro'">
+      <label for="quorum">Quórum mínimo</label>
+      <input type="text" th:field="*{quorum}" inputmode="decimal">
+      <p class="ajuda">Parte dos aptos que precisa votar: 50%, 2/3…</p>
+      <p class="erro-campo" th:if="${erros.containsKey('quorum')}" th:text="${erros['quorum']}">Erro</p>
+    </div>
+    <div class="campo" th:classappend="${erros.containsKey('fracaoExigida')} ? 'campo-com-erro'">
+      <label for="fracaoExigida">Fração exigida</label>
+      <input type="text" th:field="*{fracaoExigida}" inputmode="decimal">
+      <p class="ajuda">Dos votos válidos, para aprovar: 2/3, 60%…</p>
+      <p class="erro-campo" th:if="${erros.containsKey('fracaoExigida')}" th:text="${erros['fracaoExigida']}">Erro</p>
+    </div>
+  </div>
+
+  <p class="ajuda regra-resumo">Regra atual: <strong data-descricao-regra th:text="${descricaoRegra}">Maioria absoluta…</strong></p>
+</th:block>
+</body>
+</html>

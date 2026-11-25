@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{fragments/layout :: layout(~{::title}, ~{::main}, ~{::link})}">
+<head>
+  <title>Cédula</title>
+  <link rel="stylesheet" th:href="@{/css/eleitor.css}">
+</head>
+<body>
+<main class="fluxo-voto">
+  <ol class="passos" aria-label="Etapas do voto">
+    <li class="ativo" aria-current="step">Escolher</li>
+    <li>Revisar</li>
+    <li>Comprovante</li>
+  </ol>
+
+  <div class="pagina-cabecalho">
+    <div>
+      <h1 th:text="${cedula.pergunta()}">Pergunta</h1>
+      <p class="subtitulo" th:text="${cedula.prazo()}">encerra hoje às 18:00</p>
+    </div>
+  </div>
+  <p th:if="${!#strings.isEmpty(cedula.descricao())}" th:text="${cedula.descricao()}">Descrição</p>
+
+  <div class="alerta alerta-info aviso-sigilo" role="note" th:text="${cedula.avisoSigilo()}">Seu voto é secreto.</div>
+
+  <form class="form" th:action="@{/eleitor/votacoes/{id}/revisar(id=${cedula.id()})}" method="post" data-cedula>
+    <fieldset class="opcoes-radio" th:classappend="${erro != null} ? 'campo-com-erro'"
+              th:attr="aria-describedby=${erro != null} ? 'erro-opcao' : null">
+      <legend class="sr-only">Escolha uma opção</legend>
+      <label class="opcao-radio" th:each="opcao, i : ${cedula.opcoes()}">
+        <input type="radio" name="opcao" th:value="${opcao}" th:checked="${opcao == selecionada}"
+               th:attr="required=${i.first} ? 'required' : null">
+        <span th:text="${opcao}">Opção</span>
+      </label>
+    </fieldset>
+    <p th:if="${erro != null}" id="erro-opcao" class="erro-campo" role="alert" th:text="${erro}">Escolha uma opção.</p>
+    <button type="submit" class="btn btn-primario btn-grande" data-revisar aria-describedby="dica-revisar">
+      Revisar voto</button>
+    <p id="dica-revisar" class="ajuda dica-revisar" data-dica hidden>Toque numa opção para continuar.</p>
+  </form>
+  <script th:src="@{/js/eleitor.js}" defer></script>
+</main>
+</body>
+</html>

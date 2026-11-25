@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<!--/*
+  Layout comum (Fase 2). Uso em cada página:
+    <html xmlns:th="http://www.thymeleaf.org"
+          th:replace="~{fragments/layout :: layout(~{::title}, ~{::main}, ~{::link})}">
+  Sem CSS extra, passe ~{} no 3º argumento. O título vira "<título> · VAR".
+  O atributo flash "alerta" (br.unicamp.var.web.comum.Alerta), se existir, aparece no topo.
+*/-->
+<html lang="pt-BR"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      th:fragment="layout(titulo, conteudo, estilos)">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0B3D2E">
+  <title th:text="${#strings.substringBefore(#strings.substringAfter(titulo, '>'), '<')} + ' · VAR'">VAR</title>
+  <link rel="icon" type="image/svg+xml" th:href="@{/favicon.svg}">
+  <link rel="stylesheet" th:href="@{/css/var.css}">
+  <th:block th:replace="${estilos}"/>
+</head>
+<body>
+  <a class="pular" href="#conteudo">Pular para o conteúdo</a>
+
+  <header class="topo">
+    <div class="topo-interno">
+      <a class="marca" th:href="@{/}" aria-label="VAR — página inicial">
+        <img th:src="@{/img/logo-var.svg}" alt="" width="36" height="40">
+        <span>VAR</span>
+      </a>
+
+      <nav class="navegacao" aria-label="Navegação principal" sec:authorize="isAuthenticated()">
+        <a sec:authorize="hasRole('ORGANIZADOR')" th:href="@{/organizador}"
+           th:attr="aria-current=${caminhoAtual != null and #strings.startsWith(caminhoAtual, '/organizador')} ? 'page' : null">Painel</a>
+        <a sec:authorize="hasRole('ELEITOR')" th:href="@{/eleitor}"
+           th:attr="aria-current=${caminhoAtual != null and #strings.startsWith(caminhoAtual, '/eleitor')} ? 'page' : null"
+           aria-label="Minhas votações"><span class="so-desktop">Minhas votações</span><span class="so-celular"
+           aria-hidden="true">Votações</span></a>
+        <a sec:authorize="hasRole('ELEITOR')" th:href="@{/verificar}"
+           th:attr="aria-current=${caminhoAtual != null and #strings.startsWith(caminhoAtual, '/verificar')} ? 'page' : null"
+           aria-label="Verificar comprovante"><span class="so-desktop">Verificar comprovante</span><span
+           class="so-celular" aria-hidden="true">Verificar</span></a>
+      </nav>
+
+      <div class="usuario" sec:authorize="isAuthenticated()"
+           th:with="nome=${nomeUsuario != null ? nomeUsuario : #authentication.name}">
+        <!--/* No celular o nome some (var.css); continua no title e no aria-label do botão Sair. */-->
+        <span class="usuario-nome" th:text="${nome}">Usuário</span>
+        <form th:action="@{/logout}" method="post">
+          <button type="submit" class="btn btn-sair" th:title="|Sair (${nome})|"
+                  th:attr="aria-label=|Sair (${nome})|">Sair</button>
+        </form>
+      </div>
+      <a sec:authorize="!isAuthenticated()" class="btn btn-entrar" th:href="@{/login}">Entrar</a>
+    </div>
+  </header>
+
+  <div class="container" id="conteudo">
+    <div th:if="${alerta != null}" class="alerta" th:classappend="${alerta.tipo().classeCss()}"
+         th:attr="role=${alerta.tipo().name() == 'ERRO'} ? 'alert' : 'status'"
+         th:text="${alerta.texto()}">Mensagem</div>
+    <th:block th:replace="${conteudo}"/>
+  </div>
+
+  <footer class="rodape">
+    VAR — Votação, Apuração e Resultados · MC656 Unicamp
+  </footer>
+  <script th:src="@{/js/var.js}" defer></script>
+</body>
+</html>

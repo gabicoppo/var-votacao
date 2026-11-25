@@ -1,0 +1,27 @@
+@startuml c4-containers
+' Diagrama C4 nivel 2 (containers) do VAR, versao final.
+!pragma layout smetana
+!include <C4/C4_Container>
+
+LAYOUT_TOP_DOWN()
+
+title VAR: containers (nível 2)
+
+Person(organizador, "Organizador", "Configura, acompanha e apura.")
+Person(eleitor, "Eleitor", "Vota e verifica o comprovante.")
+Person(plateia, "Plateia / telão", "Acompanha o resultado.")
+
+System_Boundary(var, "VAR") {
+    Container(navegador, "Navegador", "HTML, CSS e JavaScript sem framework", "Páginas renderizadas no servidor (Thymeleaf). O JS só melhora a experiência (diálogo de confirmação, cédula Top 3 por toque, atualização ao vivo); tudo funciona sem ele.")
+    Container(app, "Aplicação web VAR", "Java 21, Spring Boot 3.5 (um único .jar / container Docker)", "Adaptadores web (controllers, Spring Security, Thymeleaf) sobre o núcleo de domínio em Java puro.")
+    ContainerDb(memoria, "Armazenamento em memória", "ConcurrentHashMap no processo da aplicação", "Votações, premiações e contas. Não há banco de dados: os dados somem a cada reinício e os dados de demonstração voltam.")
+}
+
+Rel_D(organizador, navegador, "usa")
+Rel_D(eleitor, navegador, "usa")
+Rel_D(plateia, navegador, "usa")
+Rel_D(navegador, app, "requisições HTTP(S): GET, POST de formulários com CSRF, JSON de andamento")
+Rel_D(app, memoria, "lê e grava por RepositorioVotacoes / RepositorioPremiacoes / ContasUsuarios")
+
+SHOW_LEGEND()
+@enduml

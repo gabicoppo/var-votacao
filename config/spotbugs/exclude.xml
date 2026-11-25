@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Exclusoes do SpotBugs. Na camada web, os beans Spring recebem colaboradores por injecao no
+  construtor (repositorios, Clock, servicos), o que dispara EI_EXPOSE_REP/EI_EXPOSE_REP2 sem haver
+  vazamento de estado mutavel. A exclusao vale SO para esses dois padroes e SO em br.unicamp.var.web;
+  o dominio continua sem nenhuma exclusao.
+-->
+<FindBugsFilter>
+  <Match>
+    <Package name="~br\.unicamp\.var\.web(\..*)?"/>
+    <Bug pattern="EI_EXPOSE_REP,EI_EXPOSE_REP2"/>
+  </Match>
+</FindBugsFilter>

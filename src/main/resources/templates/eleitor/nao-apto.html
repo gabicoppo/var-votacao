@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{fragments/layout :: layout(~{::title}, ~{::main}, ~{})}">
+<head>
+  <title>Fora da lista de eleitores</title>
+</head>
+<body>
+<main class="erro-pagina">
+  <div class="card card-destaque">
+    <p class="erro-codigo" aria-hidden="true">🟥</p>
+    <h1>Você não está na lista de eleitores desta votação</h1>
+    <p class="subtitulo" th:text="${tituloVotacao}">Pergunta</p>
+    <p>Só eleitores aptos podem votar. Se acha que deveria estar na lista, fale com o organizador.</p>
+    <a class="btn btn-primario btn-grande" th:href="@{/eleitor}">Voltar às minhas votações</a>
+  </div>
+</main>
+</body>
+</html>

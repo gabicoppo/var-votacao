@@ -1,0 +1,27 @@
+@startuml c4-contexto
+' Diagrama C4 nivel 1 (contexto) do VAR, versao final.
+' Gerar a imagem (sem Graphviz, layout interno smetana):
+'   java -jar plantuml.jar -tpng docs/diagramas/*.puml
+!pragma layout smetana
+!include <C4/C4_Context>
+
+LAYOUT_TOP_DOWN()
+
+title VAR – Votação, Apuração e Resultados: contexto (nível 1)
+
+Person(organizador, "Organizador", "Diretoria do clube, gestão da atlética ou comissão da premiação. Configura votações, cadastra os aptos, acompanha e apura.")
+Person(eleitor, "Eleitor", "Sócio, membro ou jurado apto. Vota pelo celular ou computador e confere o comprovante.")
+Person(plateia, "Plateia / telão", "Quem acompanha a apuração num telão ou consulta o resultado e a ata depois.")
+
+System(var, "VAR", "Aplicação web que configura, recebe e apura votações e premiações Top 3, com sigilo, auditoria e relatório.")
+System_Ext(render, "Render", "Hospedagem em container (plano gratuito), com deploy automático a cada merge na main.")
+System_Ext(github, "GitHub", "Repositório, pull requests e GitHub Actions (build, lint, test, e2e, docker).")
+
+Rel_D(organizador, var, "cria votações e premiações, abre, encerra e apura", "HTTPS")
+Rel_D(eleitor, var, "vota e verifica o comprovante", "HTTPS")
+Rel_D(plateia, var, "vê resultado, telão e relatório", "HTTPS")
+Rel_R(var, render, "roda em")
+Rel_D(github, render, "dispara o deploy (merge na main)")
+
+SHOW_LEGEND()
+@enduml

@@ -2,6 +2,10 @@ package br.unicamp.var.apuracao;
 
 import br.unicamp.var.apuracao2turno.ResultadoApuracao;
 import br.unicamp.var.votacao.RegrasVotacao;
+import java.math.RoundingMode;
+import java.text.DecimalFormat;
+import java.text.DecimalFormatSymbols;
+import java.util.Locale;
 
 /**
  * Maioria qualificada com quórum: exige que uma fração mínima dos aptos vote e
@@ -14,6 +18,9 @@ import br.unicamp.var.votacao.RegrasVotacao;
  * "contra".</p>
  */
 public final class MaioriaQualificada implements RegraApuracao {
+
+    private static final Locale LOCALE_TEXTO = Locale.forLanguageTag("pt-BR");
+    private static final double CEM_POR_CENTO = 100.0;
 
     private final double quorumMinimo;
     private final double fracaoExigida;
@@ -57,6 +64,26 @@ public final class MaioriaQualificada implements RegraApuracao {
     private boolean aprovada(ContagemVotos contagem, String opcao, int votantes) {
         int votosDaOpcao = contagem.votosPorOpcao().get(opcao);
         return RegrasVotacao.aprovada(votosDaOpcao, votantes - votosDaOpcao, fracaoExigida);
+    }
+
+    /**
+     * Descrição da regra em pt-BR, com o quórum e a fração em percentual (uma
+     * casa decimal, vírgula decimal e sem ",0" no fim, ex.: 50% e 66,7%),
+     * qualquer que seja o locale da máquina.
+     *
+     * @return texto legível da maioria qualificada
+     */
+    @Override
+    public String descricao() {
+        return "Maioria qualificada: quórum de " + percentual(quorumMinimo) + " dos aptos e pelo menos "
+                + percentual(fracaoExigida) + " dos votos válidos.";
+    }
+
+    private static String percentual(double fracao) {
+        // DecimalFormat não é thread-safe: um por chamada.
+        DecimalFormat formato = new DecimalFormat("0.#", DecimalFormatSymbols.getInstance(LOCALE_TEXTO));
+        formato.setRoundingMode(RoundingMode.HALF_UP);
+        return formato.format(fracao * CEM_POR_CENTO) + "%";
     }
 
     private static void validarFracao(double fracao, String nome) {

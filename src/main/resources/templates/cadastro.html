@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{fragments/layout :: layout(~{::title}, ~{::main}, ~{})}">
+<head>
+  <title>Criar conta</title>
+</head>
+<body>
+<main class="entrada">
+  <div class="card card-destaque cadastro">
+    <img class="entrada-logo" th:src="@{/img/logo-var.svg}" alt="" width="72" height="81">
+    <h1>Criar conta no VAR</h1>
+    <p class="subtitulo">Para organizar votações ou para votar.</p>
+
+    <form class="form" th:action="@{/cadastro}" method="post" th:object="${formulario}" novalidate>
+      <fieldset class="campo" th:classappend="${erros.containsKey('papel')} ? 'campo-com-erro'">
+        <legend>Tipo de conta</legend>
+        <div class="opcoes-radio">
+          <label class="opcao-radio">
+            <input type="radio" name="papel" value="ORGANIZADOR" th:checked="*{papel == 'ORGANIZADOR'}">
+            <span><span>Organizador<small class="opcao-ajuda">Crio votações e premiações e vejo só as que eu
+              criei.</small></span></span>
+          </label>
+          <label class="opcao-radio">
+            <input type="radio" name="papel" value="ELEITOR" th:checked="*{papel == 'ELEITOR'}">
+            <span><span>Eleitor<small class="opcao-ajuda">Voto quando o meu usuário estiver na lista de aptos
+              de uma votação.</small></span></span>
+          </label>
+        </div>
+        <p class="erro-campo" th:if="${erros.containsKey('papel')}" th:text="${erros['papel']}">Escolha.</p>
+      </fieldset>
+
+      <div class="campo" th:classappend="${erros.containsKey('nome')} ? 'campo-com-erro'">
+        <label for="nome">Nome</label>
+        <input id="nome" name="nome" type="text" th:value="*{nome}" autocomplete="name" maxlength="80" required
+               th:attr="aria-describedby=${erros.containsKey('nome')} ? 'erro-nome' : null">
+        <p class="erro-campo" id="erro-nome" th:if="${erros.containsKey('nome')}" th:text="${erros['nome']}">Erro</p>
+      </div>
+
+      <div class="campo" th:classappend="${erros.containsKey('usuario')} ? 'campo-com-erro'">
+        <label for="usuario">Usuário</label>
+        <input id="usuario" name="usuario" type="text" th:value="*{usuario}" autocomplete="username"
+               autocapitalize="none" spellcheck="false" maxlength="30" required
+               th:attr="aria-describedby=${erros.containsKey('usuario')} ? 'erro-usuario ajuda-usuario' : 'ajuda-usuario'">
+        <p class="ajuda" id="ajuda-usuario">De 3 a 30 letras sem acento, números, ponto, hífen ou sublinhado.
+          Eleitor: use o identificador que o organizador vai colocar na lista de aptos.</p>
+        <p class="erro-campo" id="erro-usuario" th:if="${erros.containsKey('usuario')}"
+           th:text="${erros['usuario']}">Erro</p>
+      </div>
+
+      <div class="campo-linha">
+        <div class="campo" th:classappend="${erros.containsKey('senha')} ? 'campo-com-erro'">
+          <label for="senha">Senha</label>
+          <input id="senha" name="senha" type="password" autocomplete="new-password" minlength="8" required
+                 th:attr="aria-describedby=${erros.containsKey('senha')} ? 'erro-senha' : null">
+          <p class="erro-campo" id="erro-senha" th:if="${erros.containsKey('senha')}" th:text="${erros['senha']}">Erro</p>
+        </div>
+        <div class="campo" th:classappend="${erros.containsKey('confirmar')} ? 'campo-com-erro'">
+          <label for="confirmar">Repita a senha</label>
+          <input id="confirmar" name="confirmar" type="password" autocomplete="new-password" required
+                 th:attr="aria-describedby=${erros.containsKey('confirmar')} ? 'erro-confirmar' : null">
+          <p class="erro-campo" id="erro-confirmar" th:if="${erros.containsKey('confirmar')}"
+             th:text="${erros['confirmar']}">Erro</p>
+        </div>
+      </div>
+      <p class="ajuda">A senha precisa ter pelo menos 8 caracteres.</p>
+
+      <button type="submit" class="btn btn-primario btn-grande">Criar conta</button>
+    </form>
+    <p class="entrada-alternativa">Já tem conta? <a th:href="@{/login}">Entrar</a></p>
+  </div>
+</main>
+</body>
+</html>

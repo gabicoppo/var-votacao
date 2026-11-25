@@ -1,0 +1,158 @@
+package br.unicamp.var.web.comum;
+
+import java.security.SecureRandom;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.core.userdetails.User;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
+
+/**
+ * Contas em memória; também é o {@link UserDetailsService} do login (RNF-05). Senhas e códigos de
+ * acesso são guardados só como hash BCrypt.
+ *
+ * <p>O código de acesso do eleitor tem {@value #TAMANHO_CODIGO} caracteres sorteados com
+ * {@link SecureRandom} entre maiúsculas e dígitos, sem os ambíguos (0/O, 1/I/L), para ser ditado
+ * ou digitado no celular sem confusão.</p>
+ *
+ * <p>Com {@code var.demo.ativo=true}, cria no início a conta {@code organizador} e os eleitores
+ * {@code e01} a {@code e12} (senha {@code 1234}), com nomes fictícios. A senha do organizador vem de
+ * {@code var.senha-organizador} (variável de ambiente {@code VAR_SENHA_ORGANIZADOR}; no perfil padrão,
+ * {@code var2026}). Se ela estiver vazia, como no perfil {@code prod} sem a variável, é gerada uma senha
+ * aleatória, escrita uma única vez no log de inicialização: num deploy público, ninguém entra como
+ * organizador com uma senha conhecida.</p>
+ */
+@Service
+public class ContasUsuariosEmMemoria implements ContasUsuarios, UserDetailsService {
+
+    /** Tamanho do código de acesso gerado para o eleitor. */
+    public static final int TAMANHO_CODIGO = 8;
+    /** Alfabeto do código de acesso: sem 0, O, 1, I e L. */
+    public static final String ALFABETO_CODIGO = "ABCDEFGHJKMNPQRSTUVWXYZ23456789";
+    /** Senha do organizador usada quando nenhuma é configurada (perfil padrão, desenvolvimento). */
+    public static final String SENHA_ORGANIZADOR_PADRAO = "var2026";
+    /** Tamanho da senha do organizador gerada quando a configurada está vazia. */
+    public static final int TAMANHO_SENHA_GERADA = 16;
+
+    private static final Logger LOG = LoggerFactory.getLogger(ContasUsuariosEmMemoria.class);
+
+    private static final List<String> NOMES_DEMO = List.of(
+            "Ana Ribeiro", "Bruno Carvalho", "Carla Mendes", "Diego Fonseca", "Elisa Martins",
+            "Fábio Teixeira", "Gabriel Rocha", "Helena Duarte", "Igor Pacheco", "Joana Moreira",
+            "Kátia Nogueira", "Lucas Barreto");
+
+    private record Conta(String login, String nome, String hashSenha, Papel papel) {
+    }
+
+    private final Map<String, Conta> contas = new ConcurrentHashMap<>();
+    private final PasswordEncoder codificador;
+    private final SecureRandom aleatorio = new SecureRandom();
+
+    /**
+     * Cria o cadastro de contas, com as contas de demonstração se {@code demoAtivo} e a senha padrão
+     * do organizador ({@value #SENHA_ORGANIZADOR_PADRAO}).
+     *
+     * @param codificador codificador de senhas (BCrypt)
+     * @param demoAtivo   valor de {@code var.demo.ativo}
+     */
+    public ContasUsuariosEmMemoria(PasswordEncoder codificador, boolean demoAtivo) {
+        this(codificador, demoAtivo, SENHA_ORGANIZADOR_PADRAO);
+    }
+
+    /**
+     * Cria o cadastro de contas, com as contas de demonstração se {@code demoAtivo}.
+     *
+     * @param codificador       codificador de senhas (BCrypt)
+     * @param demoAtivo         valor de {@code var.demo.ativo}
+     * @param senhaOrganizador  valor de {@code var.senha-organizador}; vazia ou nula gera uma senha
+     *                          aleatória, escrita no log
+     */
+    @Autowired
+    public ContasUsuariosEmMemoria(PasswordEncoder codificador, @Value("${var.demo.ativo:false}") boolean demoAtivo,
+                                   @Value("${var.senha-organizador:" + SENHA_ORGANIZADOR_PADRAO + "}")
+                                   String senhaOrganizador) {
+        this.codificador = codificador;
+        if (demoAtivo) {
+            criarConta("organizador", "Organização do VAR", senhaDoOrganizador(senhaOrganizador), Papel.ORGANIZADOR);
+            for (int i = 0; i < NOMES_DEMO.size(); i++) {
+                criarConta(String.format("e%02d", i + 1), NOMES_DEMO.get(i), "1234", Papel.ELEITOR);
+            }
+        }
+    }
+
+    private String senhaDoOrganizador(String configurada) {
+        if (configurada != null && !configurada.isBlank()) {
+            return configurada;
+        }
+        StringBuilder gerada = new StringBuilder(TAMANHO_SENHA_GERADA);
+        for (int i = 0; i < TAMANHO_SENHA_GERADA; i++) {
+            gerada.append(ALFABETO_CODIGO.charAt(aleatorio.nextInt(ALFABETO_CODIGO.length())));
+        }
+        LOG.warn("VAR_SENHA_ORGANIZADOR nao definida: senha gerada para o usuario organizador: {}", gerada);
+        return gerada.toString();
+    }
+
+    private boolean criarConta(String login, String nome, String senha, Papel papel) {
+        Conta conta = new Conta(login, nome, codificador.encode(senha), papel);
+        return contas.putIfAbsent(login, conta) == null;
+    }
+
+    @Override
+    public Optional<String> garantirContaEleitor(String eleitorId, String nome) {
+        if (eleitorId == null || eleitorId.isBlank()) {
+            throw new IllegalArgumentException("id do eleitor nao pode ser vazio");
+        }
+        if (nome == null || nome.isBlank()) {
+            throw new IllegalArgumentException("nome do eleitor nao pode ser vazio");
+        }
+        String login = eleitorId.strip();
+        if (contas.containsKey(login)) {
+            return Optional.empty();
+        }
+        String codigo = gerarCodigo();
+        return criarConta(login, nome.strip(), codigo, Papel.ELEITOR) ? Optional.of(codigo) : Optional.empty();
+    }
+
+    @Override
+    public boolean cadastrar(String login, String nome, String senha, Papel papel) {
+        if (login == null || login.isBlank() || nome == null || nome.isBlank() || senha == null || senha.isEmpty()
+                || papel == null) {
+            throw new IllegalArgumentException("login, nome, senha e papel sao obrigatorios");
+        }
+        return criarConta(login.strip(), nome.strip(), senha, papel);
+    }
+
+    @Override
+    public Optional<String> nomeDe(String login) {
+        return login == null ? Optional.empty() : Optional.ofNullable(contas.get(login)).map(Conta::nome);
+    }
+
+    @Override
+    public UserDetails loadUserByUsername(String login) {
+        Conta conta = login == null ? null : contas.get(login);
+        if (conta == null) {
+            throw new UsernameNotFoundException("conta inexistente");
+        }
+        return User.withUsername(conta.login())
+                .password(conta.hashSenha())
+                .authorities(conta.papel().authority())
+                .build();
+    }
+
+    private String gerarCodigo() {
+        StringBuilder codigo = new StringBuilder(TAMANHO_CODIGO);
+        for (int i = 0; i < TAMANHO_CODIGO; i++) {
+            codigo.append(ALFABETO_CODIGO.charAt(aleatorio.nextInt(ALFABETO_CODIGO.length())));
+        }
+        return codigo.toString();
+    }
+}
